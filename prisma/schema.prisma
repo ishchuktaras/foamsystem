@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // url      = env("DATABASE_URL")
+}
+
+// Číselník materiálů (Zde budou předvyplněny Ekoprodur systémy)
+model Material {
+  id                String   @id @default(uuid())
+  name              String   // např. "Ekoprodur S11E-MAX"
+  type              String   // "OPEN_CELL" (Měkká) nebo "CLOSED_CELL" (Tvrdá)
+  density           Float    // Hustota jádra (např. 8.0 nebo 36.0 kg/m3)
+  yieldPerSetM3     Float    // Vydatnost sady (39 pro měkkou, 11 pro tvrdou)
+  wasteFactor       Float    // Koeficient ztráty z praxe (např. 1.05 pro 5% prořez)
+  buyPricePerSet    Float?   // Nákupní cena za sadu (pro výpočet marže)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  orders            Order[]
+}
+
+// Zakázky a výpočty
+model Order {
+  id                String   @id @default(uuid())
+  customerName      String
+  address           String?  // Pro výpočet dopravy
+
+  // Vstupní parametry od technika
+  areaSqm           Float    // Zadaná plocha v m2
+  thicknessM        Float    // Zadaná tloušťka v metrech (např. 0.25)
+  
+  // Vypočtené hodnoty na pozadí (podle Sergejova vzorce)
+  pureVolumeM3      Float    // Čistý objem = areaSqm * thicknessM
+  totalVolumeM3     Float    // Celkový objem = pureVolumeM3 * wasteFactor
+  requiredSets      Float    // Potřebný počet sad = totalVolumeM3 / yieldPerSetM3
+
+  // Vazba na materiál
+  materialId        String
+  material          Material @relation(fields: [materialId], references: [id])
+  
+  // Finance
+  calculatedMargin  Float?   // Vypočtený zisk (Cena pro klienta - Náklady na materiál a provoz)
+  status            String   @default("DRAFT") // DRAFT, SENT, REALIZED, INVOICED
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
