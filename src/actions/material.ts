@@ -84,3 +84,16 @@ export async function getAllMaterialsAdmin() {
     throw new Error('Nepodařilo se načíst materiály.')
   }
 }
+
+// 4. READ - Načtení jednoho konkrétního materiálu pro editaci
+export async function getMaterialById(id: string) {
+  try {
+    const material = await prisma.material.findUnique({
+      where: { id }
+    })
+    return material
+  } catch (error) {
+    console.error('Chyba při načítání detailu materiálu:', error)
+    return null
+  }
+}

@@ -1,5 +1,8 @@
+// src/components/AdminMaterialsTable.tsx
+
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { deleteMaterial } from '@/actions/material'
 
@@ -15,6 +18,7 @@ type Material = {
 }
 
 export default function AdminMaterialsTable({ initialMaterials }: { initialMaterials: Material[] }) {
+  const router = useRouter() // <-- Zde jsme inicializovali router
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
 
   const handleDelete = async (id: string, name: string) => {
@@ -32,9 +36,8 @@ export default function AdminMaterialsTable({ initialMaterials }: { initialMater
   }
 
   const handleEdit = (id: string) => {
-    // V dalším kroku sem napojíme otevření modálního okna nebo přesměrování na formulář
-    console.log('Otevřít úpravu pro ID:', id)
-    alert(`Zde se otevře formulář pro úpravu materiálu.`)
+    // Přesměrování na naši novou dynamickou editační podstránku
+    router.push(`/admin/materials/${id}/edit`)
   }
 
   return (

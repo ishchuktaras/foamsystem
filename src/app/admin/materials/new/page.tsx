@@ -1,3 +1,5 @@
+// src/app/admin/materials/new/page.tsx
+
 import MaterialForm from '@/components/MaterialForm'
 
 export default function NewMaterialPage() {
