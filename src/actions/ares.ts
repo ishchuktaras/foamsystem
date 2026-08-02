@@ -12,36 +12,50 @@ export type AresCompanyData = {
 }
 
 export async function fetchCompanyByIco(ico: string): Promise<{ success: boolean; data?: AresCompanyData; error?: string }> {
-  // Očistíme IČO od mezer
   const cleanIco = ico.trim().replace(/\s+/g, '')
 
-  // Základní validace formátu (IČO v ČR má 8 čísel)
   if (!/^\d{8}$/.test(cleanIco)) {
     return { success: false, error: 'IČO musí mít přesně 8 čísel.' }
   }
 
   try {
-    // Oficiální REST API ARES v3
-    const response = await fetch(`https://ares.gov.cz/ekonomicke-subjekty-v-zaznamech/v-res/ekonomicke-subjekty/${cleanIco}`, {
+    // POST požadavek s koncovým lomítkem zabrání chybovému přesměrování
+    const response = await fetch('https://ares.gov.cz/ekonomicke-subjekty-v-zaznamech/v-res/ekonomicke-subjekty/vyhledat/', {
+      method: 'POST',
       headers: {
         'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) FoamSystemApp'
       },
+      body: JSON.stringify({
+        ico: [cleanIco],
+        pocetZaznamu: 1
+      }),
     })
 
     if (!response.ok) {
-      if (response.status === 404) {
-        return { success: false, error: 'Subjekt s tímto IČO nebyl v registru ARES nalezen.' }
-      }
-      return { success: false, error: 'Chyba při komunikaci se serverem ARES.' }
+      return { success: false, error: `Chyba serveru ARES (kód: ${response.status})` }
     }
 
-    const data = await response.json()
-
-    // Zpracování odpovědi dle struktury ARES API
-    const name = data.obchodniJmeno || ''
-    const dic = data.dic || ''
+    const text = await response.text()
     
-    const sidlo = data.sidlo || {}
+    if (text.trim().startsWith('<')) {
+      return { success: false, error: 'ARES vrátil chybovou stránku místo dat.' }
+    }
+
+    const data = JSON.parse(text)
+    const ekonomickeSubjekty = data.ekonomickeSubjekty || []
+
+    if (ekonomickeSubjekty.length === 0) {
+      return { success: false, error: 'Subjekt s tímto IČO nebyl v registru ARES nalezen.' }
+    }
+
+    const subject = ekonomickeSubjekty[0]
+
+    const name = subject.obchodniJmeno || ''
+    const dic = subject.dic || ''
+    
+    const sidlo = subject.sidlo || {}
     const streetName = sidlo.nazevUlice || sidlo.nazevCastiObce || ''
     const houseNumber = sidlo.cisloDomovni 
       ? `${sidlo.cisloDomovni}${sidlo.cisloOrientacni ? `/${sidlo.cisloOrientacni}` : ''}` 
@@ -62,8 +76,9 @@ export async function fetchCompanyByIco(ico: string): Promise<{ success: boolean
         zip,
       }
     }
-  } catch (error) {
-    console.error('ARES fetch error:', error)
-    return { success: false, error: 'Nepodařilo se připojit k registru ARES.' }
+  } catch (error: unknown) {
+    console.error('ARES fetch error detail:', error)
+    const message = error instanceof Error ? error.message : 'Neznámá chyba'
+    return { success: false, error: `Nelze se připojit k ARES: ${message}` }
   }
 }
