@@ -1,6 +1,7 @@
 'use server'
 
 import prisma from '@/lib/prisma'
+import { calculatorSchema } from '@/lib/validations/calculator'
 
 // 1. Funkce pro načtení materiálů do Select boxu ve formuláři
 export async function getMaterials() {
@@ -16,29 +17,35 @@ export async function getMaterials() {
 }
 
 // 2. Hlavní výpočetní logika
-export async function calculateOrder(areaM2: number, thicknessCm: number, materialId: string) {
+export async function calculateOrder(data: unknown) {
   try {
-    // Najdeme konkrétní materiál v databázi
+    // a) Zod validace dat ze serveru (odchytí všechny nesmysly)
+    const validatedFields = calculatorSchema.safeParse(data)
+
+    if (!validatedFields.success) {
+      return {
+        success: false,
+        error: 'Chybně zadaná data.',
+        issues: validatedFields.error.flatten().fieldErrors
+      }
+    }
+
+    const { areaM2, thicknessCm, materialId } = validatedFields.data
+
+    // b) Najdeme konkrétní materiál v databázi
     const material = await prisma.material.findUnique({
       where: { id: materialId }
     })
 
     if (!material) {
-      throw new Error('Materiál nebyl nalezen.')
+      return { success: false, error: 'Materiál nebyl nalezen v databázi.' }
     }
 
     // VÝPOČETNÍ JÁDRO
-    // a) Převod tloušťky na metry a výpočet čistého objemu v m3
     const thicknessM = thicknessCm / 100
     const rawVolumeM3 = areaM2 * thicknessM
-
-    // b) Aplikace koeficientu ztráty (wasteFactor, např. 1.05 pro 5% zástřik)
     const totalVolumeM3 = rawVolumeM3 * material.wasteFactor
-
-    // c) Výpočet potřebného počtu sad na základě vydatnosti (yieldPerSetM3)
     const exactSetsRequired = totalVolumeM3 / material.yieldPerSetM3
-
-    // d) Zaokrouhlení nahoru (technik s sebou musí mít vždy celé sady navíc)
     const setsToLoad = Math.ceil(exactSetsRequired)
 
     return {
@@ -48,7 +55,7 @@ export async function calculateOrder(areaM2: number, thicknessCm: number, materi
         rawVolumeM3: Number(rawVolumeM3.toFixed(2)),
         totalVolumeM3: Number(totalVolumeM3.toFixed(2)),
         exactSetsRequired: Number(exactSetsRequired.toFixed(2)),
-        setsToLoad: setsToLoad // Fyzický počet sudů do dodávky
+        setsToLoad: setsToLoad
       }
     }
 
@@ -56,7 +63,7 @@ export async function calculateOrder(areaM2: number, thicknessCm: number, materi
     console.error('Chyba při výpočtu zakázky:', error)
     return {
       success: false,
-      error: 'Nastala chyba při výpočtu. Zkontrolujte zadání.'
+      error: 'Nastala neočekávaná chyba při výpočtu.'
     }
   }
 }
