@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: foamsystem_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: foamsystem
+    ports:
+      - "5433:5432"
+    volumes:
+      - foamsystem_pgdata:/var/lib/postgresql/data
+
+volumes:
+  foamsystem_pgdata:
