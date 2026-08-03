@@ -1,3 +1,5 @@
+// src/app/admin/materials/page.tsx
+
 import Link from 'next/link'
 import { getAllMaterialsAdmin } from '@/actions/material'
 import AdminMaterialsTable from '@/components/AdminMaterialsTable'

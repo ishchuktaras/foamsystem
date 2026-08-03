@@ -19,43 +19,32 @@ export async function fetchCompanyByIco(ico: string): Promise<{ success: boolean
   }
 
   try {
-    // POST požadavek s koncovým lomítkem zabrání chybovému přesměrování
-    const response = await fetch('https://ares.gov.cz/ekonomicke-subjekty-v-zaznamech/v-res/ekonomicke-subjekty/vyhledat/', {
-      method: 'POST',
+    // Opravená URL: směřujeme do BE (backendu), nikoliv do V-ZAZNAMECH (frontendu)
+    const url = `https://ares.gov.cz/ekonomicke-subjekty-v-be/rest/ekonomicke-subjekty/${cleanIco}`
+    
+    const response = await fetch(url, {
+      method: 'GET',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) FoamSystemApp'
       },
-      body: JSON.stringify({
-        ico: [cleanIco],
-        pocetZaznamu: 1
-      }),
+      cache: 'no-store'
     })
 
     if (!response.ok) {
+      if (response.status === 404) {
+        return { success: false, error: 'Subjekt s tímto IČO nebyl v registru ARES nalezen.' }
+      }
       return { success: false, error: `Chyba serveru ARES (kód: ${response.status})` }
     }
 
-    const text = await response.text()
+    // Nyní již bezpečně dostaneme čistý JSON
+    const data = await response.json()
+
+    const name = data.obchodniJmeno || ''
+    const dic = data.dic || ''
     
-    if (text.trim().startsWith('<')) {
-      return { success: false, error: 'ARES vrátil chybovou stránku místo dat.' }
-    }
-
-    const data = JSON.parse(text)
-    const ekonomickeSubjekty = data.ekonomickeSubjekty || []
-
-    if (ekonomickeSubjekty.length === 0) {
-      return { success: false, error: 'Subjekt s tímto IČO nebyl v registru ARES nalezen.' }
-    }
-
-    const subject = ekonomickeSubjekty[0]
-
-    const name = subject.obchodniJmeno || ''
-    const dic = subject.dic || ''
-    
-    const sidlo = subject.sidlo || {}
+    const sidlo = data.sidlo || {}
     const streetName = sidlo.nazevUlice || sidlo.nazevCastiObce || ''
     const houseNumber = sidlo.cisloDomovni 
       ? `${sidlo.cisloDomovni}${sidlo.cisloOrientacni ? `/${sidlo.cisloOrientacni}` : ''}` 
