@@ -10,12 +10,17 @@ datasource db {
 // Číselník materiálů (Zde budou předvyplněny Ekoprodur systémy)
 model Material {
   id                String   @id @default(uuid())
-  name              String   // např. "Ekoprodur S11E-MAX"
-  type              String   // "OPEN_CELL" (Měkká) nebo "CLOSED_CELL" (Tvrdá)
-  density           Float    // Hustota jádra (např. 8.0 nebo 36.0 kg/m3)
-  yieldPerSetM3     Float    // Vydatnost sady (39 pro měkkou, 11 pro tvrdou)
-  wasteFactor       Float    // Koeficient ztráty z praxe (např. 1.05 pro 5% prořez)
-  buyPricePerSet    Float?   // Nákupní cena za sadu (pro výpočet marže)
+  name              String   
+  type              String   
+  density           Float    
+  yieldPerSetM3     Float    
+  wasteFactor       Float    
+  buyPricePerSet    Float?   
+  
+  // Nové pole pro bezpečné mazání (Soft Delete)
+  isArchived        Boolean  @default(false)
+  archivedAt        DateTime?
+
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

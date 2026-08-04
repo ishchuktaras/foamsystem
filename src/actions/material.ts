@@ -1,4 +1,4 @@
-// src/actions/material.tsa
+// src/actions/material.ts
 
 'use server'
 
@@ -59,11 +59,16 @@ export async function updateMaterial(id: string, data: unknown) {
   }
 }
 
-// 3. DELETE - Smazání materiálu
+// 3. DELETE (SOFT DELETE) - Přesunutí do archivu místo tvrdého smazání
 export async function deleteMaterial(id: string) {
   try {
-    await prisma.material.delete({
-      where: { id }
+    // Upravíme stav materiálu, místo abychom volali prisma.material.delete
+    await prisma.material.update({
+      where: { id },
+      data: { 
+        isArchived: true,
+        archivedAt: new Date()
+      }
     })
 
     revalidatePath('/admin/materials')
@@ -71,15 +76,16 @@ export async function deleteMaterial(id: string) {
     
   } catch (error) {
     console.error('Chyba při mazání materiálu:', error)
-    return { success: false, error: 'Nepodařilo se smazat materiál.' }
+    return { success: false, error: 'Nepodařilo se přesunout materiál do archivu.' }
   }
 }
 
-// (Read operaci už máme částečně v calculator.ts, ale můžeme si ji sem přidat pro úplnost administrace)
+// 4. READ - Načtení pro administraci (pouze aktivní materiály)
 export async function getAllMaterialsAdmin() {
   try {
     return await prisma.material.findMany({
-      orderBy: { createdAt: 'desc' } // V adminu chceme vidět nejnovější nahoře
+      where: { isArchived: false }, // Tento řádek skryje archivované položky
+      orderBy: { createdAt: 'desc' }
     })
   } catch (error) {
     console.error('Chyba načítání pro admina:', error)
@@ -87,7 +93,7 @@ export async function getAllMaterialsAdmin() {
   }
 }
 
-// 4. READ - Načtení jednoho konkrétního materiálu pro editaci
+// 5. READ ONE - Načtení jednoho konkrétního materiálu pro editaci
 export async function getMaterialById(id: string) {
   try {
     const material = await prisma.material.findUnique({
@@ -97,5 +103,39 @@ export async function getMaterialById(id: string) {
   } catch (error) {
     console.error('Chyba při načítání detailu materiálu:', error)
     return null
+  }
+}
+
+// 6. SEED - Záchranná funkce pro nahrání základních pěn
+export async function seedBasicMaterials() {
+  try {
+    const defaultMaterials = [
+      {
+        name: 'Ekoprodur S11E-MAX',
+        type: 'OPEN_CELL',
+        density: 8.0,
+        yieldPerSetM3: 39.0,
+        wasteFactor: 1.05,
+        buyPricePerSet: 45000
+      },
+      {
+        name: 'Ekoprodur S0329',
+        type: 'CLOSED_CELL',
+        density: 36.0,
+        yieldPerSetM3: 11.0,
+        wasteFactor: 1.10,
+        buyPricePerSet: 48000
+      }
+    ]
+
+    for (const mat of defaultMaterials) {
+      await prisma.material.create({ data: mat })
+    }
+
+    revalidatePath('/admin/materials')
+    return { success: true }
+  } catch (error) {
+    console.error('Chyba při nahrávání výchozích pěn:', error)
+    return { success: false, error: 'Nepodařilo se nahrát výchozí materiály.' }
   }
 }

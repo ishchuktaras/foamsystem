@@ -3,10 +3,9 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { deleteMaterial } from '@/actions/material'
+import { useState, useTransition } from 'react'
+import { deleteMaterial, seedBasicMaterials } from '@/actions/material'
 
-// Typ odpovídající struktuře z databáze
 type Material = {
   id: string
   name: string
@@ -18,11 +17,13 @@ type Material = {
 }
 
 export default function AdminMaterialsTable({ initialMaterials }: { initialMaterials: Material[] }) {
-  const router = useRouter() // <-- Zde jsme inicializovali router
+  const router = useRouter()
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
+  const [isSeeding, startSeeding] = useTransition()
 
   const handleDelete = async (id: string, name: string) => {
-    if (!window.confirm(`Opravdu chcete smazat materiál "${name}"? Tato akce je nevratná.`)) {
+    // Upravený text potvrzení pro Soft Delete
+    if (!window.confirm(`Opravdu chcete přesunout materiál "${name}" do archivu? Historické výpočty zůstanou zachovány.`)) {
       return
     }
 
@@ -30,14 +31,22 @@ export default function AdminMaterialsTable({ initialMaterials }: { initialMater
     const result = await deleteMaterial(id)
     
     if (!result.success) {
-      alert(result.error || 'Nepodařilo se smazat materiál.')
+      alert(result.error || 'Nepodařilo se archivovat materiál.')
     }
     setIsDeleting(null)
   }
 
   const handleEdit = (id: string) => {
-    // Přesměrování na naši novou dynamickou editační podstránku
     router.push(`/admin/materials/${id}/edit`)
+  }
+
+  const handleSeed = () => {
+    startSeeding(async () => {
+      const result = await seedBasicMaterials()
+      if (!result.success) {
+        alert(result.error)
+      }
+    })
   }
 
   return (
@@ -55,8 +64,18 @@ export default function AdminMaterialsTable({ initialMaterials }: { initialMater
         <tbody className="divide-y divide-gray-100">
           {initialMaterials.length === 0 ? (
             <tr>
-              <td colSpan={5} className="p-6 text-center text-gray-500">
-                Zatím nebyly přidány žádné materiály.
+              <td colSpan={5} className="p-12 text-center">
+                <div className="max-w-md mx-auto space-y-4">
+                  <p className="text-gray-500">Zatím nebyly přidány žádné materiály (nebo byly všechny archivovány).</p>
+                  
+                  <button
+                    onClick={handleSeed}
+                    disabled={isSeeding}
+                    className="px-5 py-2.5 bg-[#3B82F6] hover:bg-blue-600 text-white font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50"
+                  >
+                    {isSeeding ? 'Nahrávám data...' : 'Automaticky nahrát základní pěny Ekoprodur'}
+                  </button>
+                </div>
               </td>
             </tr>
           ) : (
@@ -64,7 +83,6 @@ export default function AdminMaterialsTable({ initialMaterials }: { initialMater
               <tr key={material.id} className="hover:bg-gray-50 transition-colors">
                 <td className="p-4">
                   <span className="font-medium text-gray-900">{material.name}</span>
-                  {/* Zobrazení na mobilu pro skryté sloupce */}
                   <div className="text-xs text-gray-500 md:hidden mt-1">
                     {material.type === 'OPEN_CELL' ? 'Měkká' : 'Tvrdá'} | {material.density} kg/m³
                   </div>
@@ -90,7 +108,7 @@ export default function AdminMaterialsTable({ initialMaterials }: { initialMater
                     disabled={isDeleting === material.id}
                     className="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 font-medium text-sm rounded-md transition-colors disabled:opacity-50"
                   >
-                    {isDeleting === material.id ? 'Mažu...' : 'Smazat'}
+                    {isDeleting === material.id ? 'Archivuji...' : 'Smazat'}
                   </button>
                 </td>
               </tr>

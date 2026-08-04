@@ -1,7 +1,7 @@
 // src/app/admin/page.tsx
 
 import Link from 'next/link'
-import { FileText, Boxes, ShieldCheck, TrendingUp } from 'lucide-react'
+import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator } from 'lucide-react'
 
 export default function AdminDashboard() {
   return (
@@ -21,6 +21,14 @@ export default function AdminDashboard() {
           subtitle="s automatickým ARES"
           href="/admin/inquiries/new"
           icon={<FileText size={24} className="text-[#3B82F6]" />}
+        />
+
+        <DashboardCard
+          title="Kalkulátor"
+          value="Spočítat"
+          subtitle="Spotřeba a cena"
+          href="/admin/calculator"
+          icon={<Calculator size={24} className="text-[#3B82F6]" />}
         />
         
         <DashboardCard
