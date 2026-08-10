@@ -3,10 +3,10 @@
 import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import bcrypt from 'bcryptjs'
+import { Role } from '@prisma/client'
 
 export async function getAllUsers() {
   try {
-    // Schválně nevybíráme hesla, abychom je neposílali na klienta
     return await prisma.user.findMany({
       orderBy: { name: 'asc' },
       select: { id: true, name: true, email: true, role: true }
@@ -43,7 +43,7 @@ export async function createUser(data: { name: string, email: string, password?:
         name: data.name,
         email: data.email,
         password: hashedPassword,
-        role: data.role,
+        role: data.role as Role, // <-- ZDE ŘÍKÁME TYPESCRIPTU, ŽE JE TO SPRÁVNÁ ROLE
       }
     })
     revalidatePath('/admin/users')
@@ -56,10 +56,16 @@ export async function createUser(data: { name: string, email: string, password?:
 
 export async function updateUser(id: string, data: { name: string, email: string, password?: string, role: string }) {
   try {
-    const updateData: any = {
+    // Nahradili jsme 'any' přesným typem, takže TypeScript ví, že 'password' je volitelné (s otazníkem)
+    const updateData: {
+      name: string;
+      email: string;
+      role: Role;
+      password?: string;
+    } = {
       name: data.name,
       email: data.email,
-      role: data.role,
+      role: data.role as Role, 
     }
 
     // Heslo aktualizujeme jen tehdy, pokud ho admin ve formuláři reálně vyplnil
