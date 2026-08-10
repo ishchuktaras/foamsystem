@@ -1,3 +1,5 @@
+// src/app/admin/materials/[id]/edit/page.tsx
+
 import { getMaterialById } from '@/actions/material'
 import MaterialForm from '@/components/MaterialForm'
 
