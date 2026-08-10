@@ -4,7 +4,17 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // url      = env("DATABASE_URL")
+  
+}
+
+// Výčet všech povolených rolí ve firmě
+enum Role {
+  ADMIN
+  JEDNATEL
+  SUPERVIZOR
+  TECHNIK
+  APLIKATOR
+  POMOCNIK
 }
 
 // Číselník materiálů (Zde budou předvyplněny Ekoprodur systémy)
@@ -61,7 +71,7 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?   // Přidáno pro klasické přihlašování jménem a heslem
-  role          String    @default("USER") // Může být "USER" nebo "ADMIN"
+  role          Role      @default(APLIKATOR) // Přepnuto na bezpečný ENUM typ
   accounts      Account[]
   sessions      Session[]
 }

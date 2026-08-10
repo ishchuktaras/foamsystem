@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Boxes, Calculator, FileText, Settings, LogOut, X } from 'lucide-react'
+import { LayoutDashboard, Boxes, Calculator, FileText, Settings, LogOut, X, Users } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 
 interface SidebarProps {
@@ -15,6 +15,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
   const navItems = [
     { name: 'Přehled', href: '/admin', icon: LayoutDashboard },
+    { name: 'Pracovníci', href: '/admin/users', icon: Users },
     { name: 'Správa materiálů', href: '/admin/materials', icon: Boxes },
     { name: 'Kalkulátor spotřeby', href: '/admin/calculator', icon: Calculator },
     { name: 'Nabídky a poptávky', href: '/admin/quotes', icon: FileText },
@@ -58,7 +59,8 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         {/* Hlavní navigace */}
         <nav className="flex-1 px-4 space-y-1.5 mt-4">
           {navItems.map((item) => {
-            const isActive = pathname === item.href
+            // Kontrola, zda jsme na dané stránce, nebo v její podsekci (např. editace)
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
             const Icon = item.icon
             
             return (
