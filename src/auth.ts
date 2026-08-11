@@ -62,13 +62,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
-        token.role = user.role // Zde už TypeScript díky rozšířenému rozhraní User ví, co 'role' je
+        token.role = user.role
         token.name = user.name
       }
       return token
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token) {
         session.user.id = token.id as string
         session.user.role = token.role as string
         session.user.name = token.name as string
