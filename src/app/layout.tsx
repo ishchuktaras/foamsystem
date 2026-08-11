@@ -15,8 +15,16 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Kalkulačka a správa pěn',
-  description: 'Interní systém pro výpočty materiálu',
+  title: 'FoamSystem – digitální administrace',
+  description: 'Interní systém pro správu izolačních materiálů, kalkulátor spotřeby a poptávky. Vyvinul Taras Ishchuk - webnamiru.site.',
+  keywords: ['FoamSystem', 'izolace', 'kalkulátor spotřeby', 'stříkaná izolace', 'Jihlava', 'Vysočina', 'Taras Ishchuk'],
+  authors: [{ name: 'Taras Ishchuk', url: 'https://webnamiru.site' }],
+  other: {
+    'geo.region': 'CZ-VC',
+    'geo.placename': 'Jihlava',
+    'geo.position': '49.3961;15.5912',
+    'ICBM': '49.3961, 15.5912',
+  },
 }
 
 export default function RootLayout({
@@ -25,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="cs" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body 
         className="min-h-full flex flex-col"
         suppressHydrationWarning
