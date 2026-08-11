@@ -1,3 +1,5 @@
+// src/app/admin/users/new/page.tsx
+
 import UserForm from '@/components/UserForm'
 
 export default function NewUserPage() {

@@ -1,3 +1,5 @@
+// src/components/CompanySettingsForm.tsx
+
 'use client'
 
 import { useState } from 'react'
@@ -5,7 +7,21 @@ import { useRouter } from 'next/navigation'
 import { updateCompanyProfile } from '@/actions/settings'
 import { Save, Loader2 } from 'lucide-react'
 
-export default function CompanySettingsForm({ initialData }: { initialData: any }) {
+// Přesně definovaný typ místo zakázaného "any"
+type ProfileData = {
+  companyName?: string | null;
+  ico?: string | null;
+  dic?: string | null;
+  street?: string | null;
+  city?: string | null;
+  zip?: string | null;
+  bankAccount?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
+}
+
+export default function CompanySettingsForm({ initialData }: { initialData: ProfileData | null }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
@@ -43,6 +59,9 @@ export default function CompanySettingsForm({ initialData }: { initialData: any 
     setIsLoading(false)
   }
 
+  // Společné třídy pro všechny inputy, aby byly krásně čitelné
+  const inputClassName = "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] placeholder:text-gray-400 bg-white"
+
   return (
     <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-100 space-y-6">
       
@@ -50,15 +69,15 @@ export default function CompanySettingsForm({ initialData }: { initialData: any 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2 space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">Název subjektu / Firmy</label>
-          <input name="companyName" value={formData.companyName} onChange={handleChange} placeholder="např. Taras Ishchuk" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none" />
+          <input name="companyName" value={formData.companyName} onChange={handleChange} placeholder="např. Taras Ishchuk" className={inputClassName} />
         </div>
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">IČO</label>
-          <input name="ico" value={formData.ico} onChange={handleChange} placeholder="např. 23874694" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none" />
+          <input name="ico" value={formData.ico} onChange={handleChange} placeholder="např. 23874694" className={inputClassName} />
         </div>
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">DIČ</label>
-          <input name="dic" value={formData.dic} onChange={handleChange} placeholder="např. CZ12345678" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none" />
+          <input name="dic" value={formData.dic} onChange={handleChange} placeholder="např. CZ12345678" className={inputClassName} />
         </div>
       </div>
 
@@ -68,15 +87,15 @@ export default function CompanySettingsForm({ initialData }: { initialData: any 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2 space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">Ulice a číslo popisné</label>
-          <input name="street" value={formData.street} onChange={handleChange} placeholder="např. Rantířovská 123/36" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none" />
+          <input name="street" value={formData.street} onChange={handleChange} placeholder="např. Rantířovská 123/36" className={inputClassName} />
         </div>
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">Město</label>
-          <input name="city" value={formData.city} onChange={handleChange} placeholder="např. Jihlava" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none" />
+          <input name="city" value={formData.city} onChange={handleChange} placeholder="např. Jihlava" className={inputClassName} />
         </div>
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">PSČ</label>
-          <input name="zip" value={formData.zip} onChange={handleChange} placeholder="např. 586 01" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none" />
+          <input name="zip" value={formData.zip} onChange={handleChange} placeholder="např. 586 01" className={inputClassName} />
         </div>
       </div>
 
@@ -86,19 +105,19 @@ export default function CompanySettingsForm({ initialData }: { initialData: any 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">E-mail</label>
-          <input name="email" value={formData.email} onChange={handleChange} placeholder="např. ishchuktaras@gmail.com" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none" />
+          <input name="email" value={formData.email} onChange={handleChange} placeholder="např. ishchuktaras@gmail.com" className={inputClassName} />
         </div>
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">Telefon</label>
-          <input name="phone" value={formData.phone} onChange={handleChange} placeholder="např. 777 596 216" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none" />
+          <input name="phone" value={formData.phone} onChange={handleChange} placeholder="např. 777 596 216" className={inputClassName} />
         </div>
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">Webové stránky</label>
-          <input name="website" value={formData.website} onChange={handleChange} placeholder="např. webnamiru.site" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none" />
+          <input name="website" value={formData.website} onChange={handleChange} placeholder="např. webnamiru.site" className={inputClassName} />
         </div>
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">Bankovní účet (IBAN / Číslo)</label>
-          <input name="bankAccount" value={formData.bankAccount} onChange={handleChange} placeholder="např. 123456789/0100" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none" />
+          <input name="bankAccount" value={formData.bankAccount} onChange={handleChange} placeholder="např. 123456789/0100" className={inputClassName} />
         </div>
       </div>
 

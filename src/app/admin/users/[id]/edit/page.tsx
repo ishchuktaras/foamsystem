@@ -1,3 +1,5 @@
+// src/app/admin/users/%5Bid%5D/edit/page.tsx
+
 import { getUserById } from '@/actions/user'
 import UserForm from '@/components/UserForm'
 

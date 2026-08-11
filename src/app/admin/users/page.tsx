@@ -1,3 +1,5 @@
+//src/app/admin/users/page.tsx
+
 import Link from 'next/link'
 import { getAllUsers } from '@/actions/user'
 import AdminUsersTable from '@/components/AdminUsersTable'
