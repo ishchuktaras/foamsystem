@@ -12,7 +12,6 @@ interface SidebarProps {
   setIsOpen?: (open: boolean) => void
 }
 
-// Překlad rolí do přehledné češtiny
 const ROLE_LABELS: Record<string, string> = {
   JEDNATEL: 'Jednatel',
   SUPERVIZOR: 'Supervizor',
@@ -24,7 +23,10 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const pathname = usePathname()
-  const { data: session } = useSession()
+  
+  // Bezpečné volání hooku, které nespadne, když je kontext undefined
+  const sessionHook = useSession()
+  const session = sessionHook?.data
 
   const navItems = [
     { name: 'Přehled', href: '/admin', icon: LayoutDashboard },
@@ -35,14 +37,12 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     { name: 'Nastavení', href: '/admin/settings', icon: Settings },
   ]
 
-  // Bezpečné vytáhnutí uživatele a role ze session bez použití "any"
   const currentUser = session?.user as { name?: string | null; role?: string | null } | undefined
-  const userName = currentUser?.name || 'Načítám...'
-  const userRole = currentUser?.role ? ROLE_LABELS[currentUser.role] || currentUser.role : 'Pracovník'
+  const userName = currentUser?.name || 'Taras Ishchuk'
+  const userRole = currentUser?.role ? ROLE_LABELS[currentUser.role] || currentUser.role : 'Admin'
 
   return (
     <>
-      {/* Zatemnění pozadí na mobilu při otevřeném menu */}
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
@@ -56,7 +56,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         
-        {/* Hlavička / Logo */}
         <div className="p-6 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-extrabold flex items-center gap-2">
@@ -65,7 +64,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
             </h2>
             <p className="text-xs text-gray-400 mt-2 font-medium">Interní systém pro izolace</p>
           </div>
-          {/* Zavírací křížek pro mobil */}
           <button 
             onClick={() => setIsOpen?.(false)}
             className="md:hidden text-gray-400 hover:text-white p-1"
@@ -74,7 +72,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           </button>
         </div>
 
-        {/* Hlavní navigace */}
         <nav className="flex-1 px-4 space-y-1.5 mt-4">
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -98,7 +95,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           })}
         </nav>
 
-        {/* Uživatelský profil & Odhlášení (Dynamické z NextAuth) */}
         <div className="p-4 border-t border-white/10">
           <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl">
             <div className="overflow-hidden pr-2">
