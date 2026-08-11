@@ -1,17 +1,30 @@
+// src/components/Sidebar.tsx
+
 'use client'
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Boxes, Calculator, FileText, Settings, LogOut, X, Users } from 'lucide-react'
-import { signOut } from 'next-auth/react'
+import { signOut, useSession } from 'next-auth/react'
 
 interface SidebarProps {
   isOpen?: boolean
   setIsOpen?: (open: boolean) => void
 }
 
+// Překlad rolí do přehledné češtiny
+const ROLE_LABELS: Record<string, string> = {
+  JEDNATEL: 'Jednatel',
+  SUPERVIZOR: 'Supervizor',
+  TECHNIK: 'Technik',
+  APLIKATOR: 'Aplikátor',
+  POMOCNIK: 'Pomocník',
+  ADMIN: 'Admin',
+}
+
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const pathname = usePathname()
+  const { data: session } = useSession()
 
   const navItems = [
     { name: 'Přehled', href: '/admin', icon: LayoutDashboard },
@@ -21,6 +34,11 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     { name: 'Nabídky a poptávky', href: '/admin/quotes', icon: FileText },
     { name: 'Nastavení', href: '/admin/settings', icon: Settings },
   ]
+
+  // Bezpečné vytáhnutí uživatele a role ze session bez použití "any"
+  const currentUser = session?.user as { name?: string | null; role?: string | null } | undefined
+  const userName = currentUser?.name || 'Načítám...'
+  const userRole = currentUser?.role ? ROLE_LABELS[currentUser.role] || currentUser.role : 'Pracovník'
 
   return (
     <>
@@ -59,7 +77,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         {/* Hlavní navigace */}
         <nav className="flex-1 px-4 space-y-1.5 mt-4">
           {navItems.map((item) => {
-            // Kontrola, zda jsme na dané stránce, nebo v její podsekci (např. editace)
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
             const Icon = item.icon
             
@@ -81,17 +98,17 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           })}
         </nav>
 
-        {/* Uživatelský profil & Odhlášení */}
+        {/* Uživatelský profil & Odhlášení (Dynamické z NextAuth) */}
         <div className="p-4 border-t border-white/10">
           <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl">
-            <div>
-              <p className="text-sm font-bold text-white">Taras Ishchuk</p>
-              <p className="text-xs text-gray-400 font-medium">Admin</p>
+            <div className="overflow-hidden pr-2">
+              <p className="text-sm font-bold text-white truncate">{userName}</p>
+              <p className="text-xs text-gray-400 font-medium">{userRole}</p>
             </div>
             <button 
               onClick={() => signOut({ callbackUrl: '/login' })}
               title="Odhlásit se"
-              className="text-gray-400 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-lg cursor-pointer"
+              className="text-gray-400 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-lg cursor-pointer shrink-0"
             >
               <LogOut size={18} />
             </button>
