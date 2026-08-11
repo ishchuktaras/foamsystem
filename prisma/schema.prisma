@@ -110,3 +110,21 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+// Nastavení firmy (Fakturační údaje pro generování nabídek)
+model CompanyProfile {
+  id          String   @id @default("default")
+  companyName String?
+  ico         String?
+  dic         String?
+  street      String?
+  city        String?
+  zip         String?
+  bankAccount String?
+  phone       String?
+  email       String?
+  website     String?
+
+  updatedAt   DateTime @updatedAt
+}
+

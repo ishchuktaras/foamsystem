@@ -1,5 +1,3 @@
-// src/components/InquiryForm.tsx
-
 'use client'
 
 import { useState, useTransition } from 'react'
@@ -57,7 +55,7 @@ export default function InquiryForm() {
 
       {/* IČO + ARES Tlačítko */}
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-[#0D1B3E]">IČO</label>
+        <label className="block text-sm font-semibold text-[#0D1B3E]">IČO (nepovinné pro fyzické osoby)</label>
         <div className="flex gap-3">
           <input
             type="text"
