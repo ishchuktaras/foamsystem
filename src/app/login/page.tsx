@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Předvyplněná zpráva pro WhatsApp
+  // Předvyplněná zpráva pro WhatsApp (technická podpora)
   const whatsappMessage = encodeURIComponent("Dobrý den, nemám přístupové údaje do systému FoamSystem, nebo mám jiný problém s přístupem. Prosím o technickou podporu.");
   const whatsappUrl = `https://wa.me/420777596216?text=${whatsappMessage}`;
 
@@ -26,20 +26,18 @@ export default function LoginPage() {
     const email = formData.get("email");
     const password = formData.get("password");
 
-    // Voláme Auth.js signIn funkci pro poskytovatele "credentials"
     const res = await signIn("credentials", {
       email,
       password,
-      redirect: false, // Chceme zachytit chybu a vypsat ji, ne automaticky přesměrovat
+      redirect: false,
     });
 
     if (res?.error) {
       setError("Neplatný e-mail nebo heslo.");
       setLoading(false);
     } else {
-      // Úspěch - pošleme tě do chráněné zóny
       router.push("/admin/materials");
-      router.refresh(); // Vynutíme přehodnocení na straně serveru (aby proxy.ts zaregistroval sezení)
+      router.refresh();
     }
   };
 
@@ -124,9 +122,20 @@ export default function LoginPage() {
             <MessageCircle size={20} />
             Neváhejte se obrátit na technickou podporu
           </a>
-          <p className="text-xs text-gray-400 mt-5">
-            Taras Ishchuk - OSVČ, <a href="https://webnamiru.site" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600 underline">webnamiru.site</a>
-          </p>
+
+          {/* Patička s podpisem a WhatsApp ikonou */}
+          <div className="mt-5 flex items-center justify-center gap-2 text-xs text-gray-500">
+            <span>Taras Ishchuk - OSVČ</span>
+            <a 
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-emerald-600 hover:text-emerald-700 inline-flex items-center"
+              title="Kontaktovat podporu na WhatsApp"
+            >
+              <MessageCircle size={16} />
+            </a>
+          </div>
         </div>
       </div>
     </div>
