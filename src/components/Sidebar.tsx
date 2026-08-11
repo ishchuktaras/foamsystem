@@ -37,12 +37,11 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     { name: 'Nastavení', href: '/admin/settings', icon: Settings },
   ]
 
-  // Rozšíříme typ, abychom mohli vytáhnout i email jako pojistku
   const currentUser = session?.user as { name?: string | null; email?: string | null; role?: string | null } | undefined
   
-  // Pokud není jméno, zkusí se e-mail, jinak fallback
+  // Pokud uživatel nemá jméno v session, použije se jeho e-mail jako jméno
   const userName = currentUser?.name || currentUser?.email || 'Nepojmenovaný uživatel'
-  const userRole = currentUser?.role ? ROLE_LABELS[currentUser.role] || currentUser.role : 'Neznámá role'
+  const userRole = currentUser?.role ? ROLE_LABELS[currentUser.role] || currentUser.role : 'Supervizor'
 
   return (
     <>
