@@ -1,11 +1,11 @@
 // src/auth.ts
-import NextAuth, { type DefaultSession, type Session } from "next-auth"
+import NextAuth, { type DefaultSession } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import prisma from "@/lib/prisma" 
 import bcrypt from "bcrypt"
-import type { JWT } from "next-auth/jwt"
 import authConfig from "./auth.config" 
+
 // --- TYPESCRIPT DEFINICE ---
 declare module "next-auth" {
   interface Session {
@@ -20,14 +20,14 @@ declare module "next-auth" {
 }
 declare module "next-auth/jwt" {
   interface JWT {
-    id: string
-    role: string
+    id?: string
+    role?: string
   }
 }
 // ---------------------------
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  ...authConfig, // Vložíme pages a callbacks z auth.config.ts
+  ...authConfig, 
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" }, 
   providers: [
@@ -49,8 +49,40 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const isPasswordValid = await bcrypt.compare(credentials.password as string, user.password)
         if (!isPasswordValid) return null
         
-        return { id: user.id, email: user.email, name: user.name, role: user.role }
+        return { 
+          id: user.id, 
+          email: user.email, 
+          name: user.name, 
+          role: user.role 
+        }
       }
     })
-  ]
+  ],
+  callbacks: {
+    async jwt({ token, user, trigger, session }) {
+      // Při přihlášení naplníme token daty z databázového uživatele
+      if (user) {
+        token.id = user.id
+        token.role = user.role
+        if (user.name) {
+          token.name = user.name
+        }
+      }
+      
+      // Pokud dojde k aktualizaci session (např. update profilu)
+      if (trigger === "update" && session?.name) {
+        token.name = session.name
+      }
+
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user && token) {
+        if (token.id) session.user.id = token.id as string
+        if (token.role) session.user.role = token.role as string
+        if (token.name) session.user.name = token.name as string
+      }
+      return session
+    }
+  }
 })

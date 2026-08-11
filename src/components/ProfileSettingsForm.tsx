@@ -29,11 +29,11 @@ export default function ProfileSettingsForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
             <label className="text-sm font-semibold text-[#0D1B3E]">Jméno a příjmení</label>
-            <input type="text" name="name" placeholder="Např. Taras Ishchuk" className={inputClassName} />
+            <input type="text" name="name" placeholder="Např. Pavel Novák" className={inputClassName} />
           </div>
           <div className="space-y-1">
             <label className="text-sm font-semibold text-[#0D1B3E]">Přihlašovací E-mail</label>
-            <input type="email" name="email" placeholder="Např. taras@webnamiru.site" className={inputClassName} />
+            <input type="email" name="email" placeholder="Např. pavel.novak@example.com" className={inputClassName} />
           </div>
         </div>
       </div>

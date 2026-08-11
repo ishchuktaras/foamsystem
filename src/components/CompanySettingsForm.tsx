@@ -69,7 +69,7 @@ export default function CompanySettingsForm({ initialData }: { initialData: Prof
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2 space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">Název subjektu / Firmy</label>
-          <input name="companyName" value={formData.companyName} onChange={handleChange} placeholder="např. Taras Ishchuk" className={inputClassName} />
+          <input name="companyName" value={formData.companyName} onChange={handleChange} placeholder="např. Technická firma s.r.o." className={inputClassName} />
         </div>
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">IČO</label>
@@ -105,7 +105,7 @@ export default function CompanySettingsForm({ initialData }: { initialData: Prof
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">E-mail</label>
-          <input name="email" value={formData.email} onChange={handleChange} placeholder="např. ishchuktaras@gmail.com" className={inputClassName} />
+          <input name="email" value={formData.email} onChange={handleChange} placeholder="např. info@firma.cz" className={inputClassName} />
         </div>
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">Telefon</label>

@@ -38,8 +38,8 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   ]
 
   const currentUser = session?.user as { name?: string | null; role?: string | null } | undefined
-  const userName = currentUser?.name || 'Taras Ishchuk'
-  const userRole = currentUser?.role ? ROLE_LABELS[currentUser.role] || currentUser.role : 'Admin'
+  const userName = currentUser?.name ? currentUser.name : 'Nepojmenovaný uživatel'
+  const userRole = currentUser?.role ? ROLE_LABELS[currentUser.role] : 'Neznámá role'
 
   return (
     <>
