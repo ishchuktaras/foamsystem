@@ -1,13 +1,21 @@
+// src/app/login/page.tsx
+
 "use client";
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff, MessageCircle } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Předvyplněná zpráva pro WhatsApp
+  const whatsappMessage = encodeURIComponent("Dobrý den, nemám přístupové údaje do systému FoamSystem, nebo mám jiný problém s přístupem. Prosím o technickou podporu.");
+  const whatsappUrl = `https://wa.me/420777596216?text=${whatsappMessage}`;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -71,13 +79,23 @@ export default function LoginPage() {
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Heslo
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 focus:outline-none focus:ring-[#3B82F6] focus:border-[#3B82F6] sm:text-sm transition-colors"
-              />
+              <div className="relative mt-1">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 focus:outline-none focus:ring-[#3B82F6] focus:border-[#3B82F6] sm:text-sm transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-[#3B82F6] transition-colors"
+                  title={showPassword ? "Skrýt heslo" : "Zobrazit heslo"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -91,6 +109,25 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
+
+        {/* Sekce technické podpory a WhatsApp */}
+        <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+          <p className="text-sm text-gray-500 mb-4 px-2">
+            Nemáte přístupové údaje uživatele nebo máte jiný problém s přístupem?
+          </p>
+          <a 
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 font-medium rounded-md transition-colors border border-emerald-100"
+          >
+            <MessageCircle size={20} />
+            Neváhejte se obrátit na technickou podporu
+          </a>
+          <p className="text-xs text-gray-400 mt-5">
+            Taras Ishchuk - OSVČ, <a href="https://webnamiru.site" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600 underline">webnamiru.site</a>
+          </p>
+        </div>
       </div>
     </div>
   );
