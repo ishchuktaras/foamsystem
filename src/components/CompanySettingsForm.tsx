@@ -113,7 +113,7 @@ export default function CompanySettingsForm({ initialData }: { initialData: Prof
         </div>
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">Webové stránky</label>
-          <input name="website" value={formData.website} onChange={handleChange} placeholder="např. webnamiru.site" className={inputClassName} />
+          <input name="website" value={formData.website} onChange={handleChange} placeholder="např. www.firma.cz" className={inputClassName} />
         </div>
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">Bankovní účet (IBAN / Číslo)</label>
