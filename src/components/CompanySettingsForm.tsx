@@ -87,15 +87,15 @@ export default function CompanySettingsForm({ initialData }: { initialData: Prof
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2 space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">Ulice a číslo popisné</label>
-          <input name="street" value={formData.street} onChange={handleChange} placeholder="např. Rantířovská 123/36" className={inputClassName} />
+          <input name="street" value={formData.street} onChange={handleChange} placeholder="např. Městská 123" className={inputClassName} />
         </div>
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">Město</label>
-          <input name="city" value={formData.city} onChange={handleChange} placeholder="např. Jihlava" className={inputClassName} />
+          <input name="city" value={formData.city} onChange={handleChange} placeholder="např. Praha" className={inputClassName} />
         </div>
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">PSČ</label>
-          <input name="zip" value={formData.zip} onChange={handleChange} placeholder="např. 586 01" className={inputClassName} />
+          <input name="zip" value={formData.zip} onChange={handleChange} placeholder="např. 123 45" className={inputClassName} />
         </div>
       </div>
 
@@ -109,7 +109,7 @@ export default function CompanySettingsForm({ initialData }: { initialData: Prof
         </div>
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">Telefon</label>
-          <input name="phone" value={formData.phone} onChange={handleChange} placeholder="např. 777 596 216" className={inputClassName} />
+          <input name="phone" value={formData.phone} onChange={handleChange} placeholder="např. +420 123 456 789" className={inputClassName} />
         </div>
         <div className="space-y-1">
           <label className="text-sm font-semibold text-[#0D1B3E]">Webové stránky</label>
