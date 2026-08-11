@@ -14,7 +14,7 @@ type Material = {
   buyPricePerSet: number | null;
 }
 
-// NOVÉ: Přesná definice typu pro výsledek místo zakázaného "any"
+// Přesná definice typu pro výsledek
 type CalculatorResult = {
   materialName: string;
   wastePercent: string;
@@ -26,6 +26,9 @@ type CalculatorResult = {
   areaSqm: number;
   wastePerSqmM3: string;
   wastePerSqmLiters: string;
+  wasteKgTotal: string;
+  wasteKgPerSqm: string;
+  wasteKgPerM3: string;
 }
 
 export default function CalculatorForm({ materials }: { materials: Material[] }) {
@@ -33,7 +36,6 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
   const [area, setArea] = useState<number | ''>('')
   const [thickness, setThickness] = useState<number | ''>('')
   
-  // OPRAVENO: Místo <any> používáme <CalculatorResult | null>
   const [result, setResult] = useState<CalculatorResult | null>(null)
 
   const handleCalculate = (e: React.FormEvent) => {
@@ -57,9 +59,14 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
     // 4. Výpočet celkových nákladů
     const totalCost = material.buyPricePerSet ? requiredSets * material.buyPricePerSet : 0
 
-    // 5. Výpočet ztráty na 1 m2
+    // 5. Výpočet objemové ztráty
     const wasteVolumeM3 = totalVolumeM3 - pureVolumeM3
     const wastePerSqmM3 = Number(area) > 0 ? (wasteVolumeM3 / Number(area)) : 0
+
+    // 6. NOVÉ: Výpočet hmotnostní ztráty v kg (hustota je kg/m³)
+    const wasteKgTotal = wasteVolumeM3 * material.density
+    const wasteKgPerSqm = Number(area) > 0 ? (wasteKgTotal / Number(area)) : 0
+    const wasteKgPerM3 = pureVolumeM3 > 0 ? (wasteKgTotal / pureVolumeM3) : 0
 
     setResult({
       materialName: material.name,
@@ -71,7 +78,10 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       totalCost,
       areaSqm: Number(area),
       wastePerSqmM3: wastePerSqmM3.toFixed(3),
-      wastePerSqmLiters: (wastePerSqmM3 * 1000).toFixed(1)
+      wastePerSqmLiters: (wastePerSqmM3 * 1000).toFixed(1),
+      wasteKgTotal: wasteKgTotal.toFixed(2),
+      wasteKgPerSqm: wasteKgPerSqm.toFixed(2),
+      wasteKgPerM3: wasteKgPerM3.toFixed(2)
     })
   }
 
@@ -162,7 +172,7 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
                 <p className="text-xl font-bold text-[#0D1B3E]">{result.totalVolumeM3} m³</p>
               </div>
 
-              {/* 2. Řádek - Plocha a ztráta (NOVÉ) */}
+              {/* 2. Řádek - Plocha a ztráta na m2 */}
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <p className="text-sm text-gray-500 mb-1">Zadaná plocha</p>
                 <p className="text-xl font-bold text-[#0D1B3E]">{result.areaSqm} m²</p>
@@ -170,12 +180,26 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <p className="text-sm text-gray-500 mb-1">Ztráta materiálu na 1 m²</p>
                 <p className="text-xl font-bold text-[#0D1B3E]">
-                  {result.wastePerSqmM3} m³ <span className="text-sm text-gray-400 font-medium ml-1">({result.wastePerSqmLiters} l)</span>
+                  {result.wastePerSqmM3} m³ <span className="text-sm text-gray-400 font-medium ml-1">({result.wasteKgPerSqm} kg)</span>
+                </p>
+              </div>
+
+              {/* 3. Řádek - Ztráta na m3 a celková hmotnostní ztráta (NOVÉ) */}
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <p className="text-sm text-gray-500 mb-1">Ztráta materiálu na 1 m³ (čistého objemu)</p>
+                <p className="text-xl font-bold text-[#0D1B3E]">
+                  {result.wasteKgPerM3} kg
+                </p>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <p className="text-sm text-gray-500 mb-1">Celková ztráta v kg</p>
+                <p className="text-xl font-bold text-[#0D1B3E]">
+                  {result.wasteKgTotal} kg
                 </p>
               </div>
             </div>
 
-            {/* 3. Řádek - Peníze a sady */}
+            {/* 4. Řádek - Peníze a sady */}
             <div className="flex flex-col md:flex-row justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100">
               <div>
                 <p className="text-sm text-gray-500 mb-1">Potřebný počet sad materiálu</p>
