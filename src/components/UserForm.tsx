@@ -1,10 +1,19 @@
+// src/components/UserForm.tsx
+
 'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createUser, updateUser } from '@/actions/user'
 
-export default function UserForm({ userId, initialData }: { userId?: string, initialData?: any }) {
+// Definujeme přesný typ pro vstupní data místo zakázaného "any"
+type InitialUserData = {
+  name?: string | null;
+  email?: string | null;
+  role?: string;
+}
+
+export default function UserForm({ userId, initialData }: { userId?: string, initialData?: InitialUserData }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
