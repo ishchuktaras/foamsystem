@@ -59,16 +59,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id
-        token.role = user.role
-        token.name = user.name
+    async jwt({ token, user, trigger }) {
+      // Pokud se uživatel přihlašuje (user existuje) NEBO pokud je token starý, načteme čerstvá data z DB
+      if (user?.email || trigger === "update") {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user?.email ?? token.email ?? "" }
+        })
+        if (dbUser) {
+          token.id = dbUser.id
+          token.role = dbUser.role
+          token.name = dbUser.name
+        }
       }
       return token
     },
     async session({ session, token }) {
-      if (session.user && token) {
+      if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
         session.user.name = token.name as string
