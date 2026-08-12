@@ -27,6 +27,12 @@ model Material {
   wasteFactor       Float    
   buyPricePerSet    Float?   
   
+  // Nové technické parametry z certifikátu / TDS (např. pro ICYIZOL)
+  lambda            String?  // Součinitel tepelné vodivosti (např. "0,038 W/mK")
+  diffusionFactor   String?  // Faktor difúzního odporu (např. "3,3")
+  fireReaction      String?  // Reakce na oheň (např. "E")
+  svtCode           String?  // SVT kód pro NZÚ (např. "9716")
+
   // Nové pole pro bezpečné mazání (Soft Delete)
   isArchived        Boolean  @default(false)
   archivedAt        DateTime?
