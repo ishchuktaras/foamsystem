@@ -1,7 +1,9 @@
+// src/components/CalculatorForm.tsx
+
 'use client'
 
 import { useState } from 'react'
-import { Calculator } from 'lucide-react'
+import { Calculator, FileDown, FileText, ClipboardSignature } from 'lucide-react'
 
 // Definice typu pro materiál
 type Material = {
@@ -63,7 +65,7 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
     const wasteVolumeM3 = totalVolumeM3 - pureVolumeM3
     const wastePerSqmM3 = Number(area) > 0 ? (wasteVolumeM3 / Number(area)) : 0
 
-    // 6. NOVÉ: Výpočet hmotnostní ztráty v kg (hustota je kg/m³)
+    // 6. Výpočet hmotnostní ztráty v kg (hustota je kg/m³)
     const wasteKgTotal = wasteVolumeM3 * material.density
     const wasteKgPerSqm = Number(area) > 0 ? (wasteKgTotal / Number(area)) : 0
     const wasteKgPerM3 = pureVolumeM3 > 0 ? (wasteKgTotal / pureVolumeM3) : 0
@@ -83,6 +85,19 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       wasteKgPerSqm: wasteKgPerSqm.toFixed(2),
       wasteKgPerM3: wasteKgPerM3.toFixed(2)
     })
+  }
+
+  // --- FUNKCE PRO EXPORT A DALŠÍ ZPRACOVÁNÍ ---
+  const handleExportPDF = () => {
+    alert("Zde bude logika pro vygenerování PDF dokumentu (např. přes jsPDF).")
+  }
+
+  const handleExportDOC = () => {
+    alert("Zde bude logika pro export do upravitelného Word dokumentu.")
+  }
+
+  const handleAttachToInquiry = () => {
+    alert("Zde se data přenesou do rozepsané komerční nabídky nebo poptávkového formuláře.")
   }
 
   return (
@@ -151,7 +166,7 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
 
       {/* Výsledky kalkulace */}
       {result && (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden mt-8">
           <div className="bg-[#3B82F6] px-6 py-4">
             <h3 className="text-white font-bold text-lg text-center">
               Výsledek kalkulace pro {result.materialName}
@@ -184,7 +199,7 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
                 </p>
               </div>
 
-              {/* 3. Řádek - Ztráta na m3 a celková hmotnostní ztráta (NOVÉ) */}
+              {/* 3. Řádek - Ztráta na m3 a celková hmotnostní ztráta */}
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <p className="text-sm text-gray-500 mb-1">Ztráta materiálu na 1 m³ (čistého objemu)</p>
                 <p className="text-xl font-bold text-[#0D1B3E]">
@@ -200,7 +215,7 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
             </div>
 
             {/* 4. Řádek - Peníze a sady */}
-            <div className="flex flex-col md:flex-row justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100">
+            <div className="flex flex-col md:flex-row justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100 mb-8">
               <div>
                 <p className="text-sm text-gray-500 mb-1">Potřebný počet sad materiálu</p>
                 <p className="text-2xl font-bold text-[#0D1B3E]">
@@ -212,6 +227,56 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
                 <p className="text-2xl font-bold text-[#3B82F6]">
                   {result.totalCost.toLocaleString('cs-CZ')} Kč
                 </p>
+              </div>
+            </div>
+
+            {/* NOVÁ SEKCE: Akce s kalkulací */}
+            <div className="border-t border-gray-100 pt-6 mt-4">
+              <h4 className="text-[#0D1B3E] font-bold mb-4 text-lg">Další kroky a obchodní zpracování</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                {/* Tlačítko PDF */}
+                <div className="flex flex-col border border-gray-200 rounded-xl p-4 hover:border-[#3B82F6] hover:shadow-md transition-all">
+                  <button 
+                    onClick={handleExportPDF}
+                    className="flex items-center gap-2 font-bold text-[#0D1B3E] hover:text-[#3B82F6] transition-colors mb-2"
+                  >
+                    <FileDown size={20} className="text-[#3B82F6]" />
+                    Uložit do PDF
+                  </button>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Vygeneruje nepřepisovatelný dokument s kompletním přehledem spotřeby a nákladů, připravený k odeslání klientovi.
+                  </p>
+                </div>
+
+                {/* Tlačítko DOC */}
+                <div className="flex flex-col border border-gray-200 rounded-xl p-4 hover:border-[#3B82F6] hover:shadow-md transition-all">
+                  <button 
+                    onClick={handleExportDOC}
+                    className="flex items-center gap-2 font-bold text-[#0D1B3E] hover:text-[#3B82F6] transition-colors mb-2"
+                  >
+                    <FileText size={20} className="text-[#3B82F6]" />
+                    Uložit do DOC
+                  </button>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Vytvoří upravitelný soubor Word pro doplnění specifických podmínek zakázky nebo přípravu smluvní dokumentace.
+                  </p>
+                </div>
+
+                {/* Tlačítko Nabídka */}
+                <div className="flex flex-col border border-[#3B82F6]/30 bg-blue-50/50 rounded-xl p-4 hover:border-[#3B82F6] hover:shadow-md transition-all">
+                  <button 
+                    onClick={handleAttachToInquiry}
+                    className="flex items-center gap-2 font-bold text-[#0D1B3E] hover:text-[#3B82F6] transition-colors mb-2"
+                  >
+                    <ClipboardSignature size={20} className="text-[#3B82F6]" />
+                    Vložit do nabídky
+                  </button>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Automaticky propíše spočítané objemy a náklady jako závaznou položku do připravované komerční nabídky ke smlouvě.
+                  </p>
+                </div>
+
               </div>
             </div>
           </div>
