@@ -3,7 +3,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Calculator, FileDown, FileText, ClipboardSignature, Ruler, Maximize } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Calculator, FileDown, FileText, ClipboardSignature, Ruler, Maximize, Loader2 } from 'lucide-react'
+import jsPDF from 'jspdf'
 
 // Definice typu pro materiál
 type Material = {
@@ -33,11 +35,17 @@ type CalculatorResult = {
 }
 
 export default function CalculatorForm({ materials }: { materials: Material[] }) {
+  const router = useRouter()
+  
   const [selectedMaterialId, setSelectedMaterialId] = useState(materials[0]?.id || '')
   const [area, setArea] = useState<number | ''>('')
   const [thickness, setThickness] = useState<number | ''>('')
-  
   const [result, setResult] = useState<CalculatorResult | null>(null)
+
+  // UX stavy pro tlačítka
+  const [isExportingPDF, setIsExportingPDF] = useState(false)
+  const [isExportingDOC, setIsExportingDOC] = useState(false)
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   const handleCalculate = (e: React.FormEvent) => {
     e.preventDefault()
@@ -73,9 +81,121 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
     })
   }
 
-  const handleExportPDF = () => alert("Zde bude logika pro vygenerování PDF dokumentu (např. přes jsPDF).")
-  const handleExportDOC = () => alert("Zde bude logika pro export do upravitelného Word dokumentu.")
-  const handleAttachToInquiry = () => alert("Zde se data přenesou do rozepsané komerční nabídky nebo poptávkového formuláře.")
+  // 1. Logika pro PDF (čistý a profesionální export)
+  const handleExportPDF = async () => {
+    if (!result) return
+    setIsExportingPDF(true)
+    
+    try {
+      const doc = new jsPDF()
+      const date = new Date().toLocaleDateString('cs-CZ')
+      
+      // Hlavička
+      doc.setFontSize(22)
+      doc.setTextColor(13, 27, 62) // #0D1B3E
+      doc.text('Kalkulace spotreby materialu', 20, 20)
+      
+      doc.setFontSize(10)
+      doc.setTextColor(100, 100, 100)
+      doc.text(`Vygenerovano systemem FoamSystem dne: ${date}`, 20, 28)
+
+      // Oddělovací čára
+      doc.setDrawColor(200, 200, 200)
+      doc.line(20, 32, 190, 32)
+
+      // Hlavní data
+      doc.setFontSize(12)
+      doc.setTextColor(20, 20, 20)
+      
+      doc.text(`Material: ${result.materialName}`, 20, 45)
+      doc.text(`Zadana plocha: ${result.areaSqm} m2`, 20, 53)
+      doc.text(`Pozadovana tloustka: ${thickness} cm`, 20, 61)
+      
+      doc.text(`Cisty objem: ${result.pureVolumeM3} m3`, 20, 75)
+      doc.text(`Objem vc. ztrat (${result.wastePercent}%): ${result.totalVolumeM3} m3`, 20, 83)
+      doc.text(`Celkova hmotnostni ztrata: ${result.wasteKgTotal} kg`, 20, 91)
+
+      // Finanční box
+      doc.setFillColor(240, 248, 255) // Jemně modré pozadí
+      doc.rect(20, 105, 170, 30, 'F')
+      
+      doc.setFontSize(14)
+      doc.setTextColor(13, 27, 62)
+      doc.setFont("helvetica", "bold")
+      doc.text(`Potrebny pocet sad: ${result.requiredSets} ks`, 25, 115)
+      doc.text(`Celkovy naklad na material: ${result.totalCost.toLocaleString('cs-CZ')} Kc`, 25, 125)
+
+      // Uložení
+      doc.save(`kalkulace-${result.materialName.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.pdf`)
+    } catch (error) {
+      console.error("Chyba při generování PDF:", error)
+      alert("Něco se pokazilo při generování PDF.")
+    } finally {
+      setIsExportingPDF(false)
+    }
+  }
+
+  // 2. Logika pro DOC (HTML Blob převod pro Word)
+  const handleExportDOC = () => {
+    if (!result) return
+    setIsExportingDOC(true)
+
+    setTimeout(() => {
+      // Vytvoříme HTML strukturu, kterou MS Word umí přečíst
+      const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Kalkulace spotřeby</title></head><body>"
+      const footer = "</body></html>"
+      const content = `
+        <h1 style="color: #0D1B3E; font-family: sans-serif;">Kalkulace spotřeby materiálu</h1>
+        <p style="color: #666; font-family: sans-serif;">Vygenerováno systémem FoamSystem</p>
+        <hr />
+        <table style="width: 100%; font-family: sans-serif; text-align: left; border-collapse: collapse;">
+          <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Materiál:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${result.materialName}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Plocha:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${result.areaSqm} m²</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Tloušťka:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${thickness} cm</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Čistý objem:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${result.pureVolumeM3} m³</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Objem vč. ztrát:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${result.totalVolumeM3} m³</td></tr>
+          <tr><td style="padding: 8px;"><strong>Hmotnostní ztráta:</strong></td><td style="padding: 8px;">${result.wasteKgTotal} kg</td></tr>
+        </table>
+        <br/>
+        <div style="background-color: #f0f8ff; padding: 20px; border-radius: 8px; font-family: sans-serif;">
+          <h2 style="color: #0D1B3E; margin-top: 0;">Výsledek</h2>
+          <p><strong>Potřebný počet sad:</strong> ${result.requiredSets} ks</p>
+          <p><strong>Náklad na materiál:</strong> ${result.totalCost.toLocaleString('cs-CZ')} Kč</p>
+        </div>
+      `
+      
+      const sourceHTML = header + content + footer
+      const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML)
+      
+      const fileDownload = document.createElement("a")
+      document.body.appendChild(fileDownload)
+      fileDownload.href = source
+      fileDownload.download = `kalkulace-${Date.now()}.doc`
+      fileDownload.click()
+      document.body.removeChild(fileDownload)
+      
+      setIsExportingDOC(false)
+    }, 500) // Drobná pauza pro UX efekt
+  }
+
+  // 3. Logika pro Vložení do nabídky (Přenos dat přes URL parametry)
+  const handleAttachToInquiry = () => {
+    if (!result) return
+    setIsRedirecting(true)
+    
+    // Připravíme data do query stringu
+    const params = new URLSearchParams({
+      materialId: selectedMaterialId,
+      materialName: result.materialName,
+      area: result.areaSqm.toString(),
+      thickness: thickness.toString(),
+      cost: result.totalCost.toString(),
+      sets: result.requiredSets.toString()
+    })
+
+    // Zde nastav cílovou URL podle toho, jak se jmenuje tvoje stránka pro tvorbu nabídek
+    router.push(`/admin/quotes/new?${params.toString()}`)
+  }
 
   return (
     <div className="space-y-6">
@@ -214,35 +334,50 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
               <h4 className="text-[#0D1B3E] font-extrabold mb-5 text-lg">Další kroky a obchodní zpracování</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 
-                <div className="flex flex-col border border-gray-200 rounded-xl p-5 hover:border-[#3B82F6] hover:shadow-md transition-all group cursor-pointer" onClick={handleExportPDF}>
-                  <button className="flex items-center gap-2 font-bold text-[#0D1B3E] group-hover:text-[#3B82F6] transition-colors mb-2">
-                    <FileDown size={22} className="text-[#3B82F6]" />
-                    Uložit do PDF
-                  </button>
+                {/* Tlačítko PDF */}
+                <button 
+                  onClick={handleExportPDF}
+                  disabled={isExportingPDF}
+                  className="flex flex-col border border-gray-200 rounded-xl p-5 hover:border-[#3B82F6] hover:shadow-md transition-all group text-left disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  <div className="flex items-center gap-2 font-bold text-[#0D1B3E] group-hover:text-[#3B82F6] transition-colors mb-2">
+                    {isExportingPDF ? <Loader2 size={22} className="animate-spin text-[#3B82F6]" /> : <FileDown size={22} className="text-[#3B82F6]" />}
+                    {isExportingPDF ? 'Generuji PDF...' : 'Uložit do PDF'}
+                  </div>
                   <p className="text-xs text-gray-500 leading-relaxed">
                     Nepřepisovatelný dokument s přehledem spotřeby, připravený k okamžitému odeslání.
                   </p>
-                </div>
+                </button>
 
-                <div className="flex flex-col border border-gray-200 rounded-xl p-5 hover:border-[#3B82F6] hover:shadow-md transition-all group cursor-pointer" onClick={handleExportDOC}>
-                  <button className="flex items-center gap-2 font-bold text-[#0D1B3E] group-hover:text-[#3B82F6] transition-colors mb-2">
-                    <FileText size={22} className="text-[#3B82F6]" />
-                    Uložit do DOC
-                  </button>
+                {/* Tlačítko DOC */}
+                <button 
+                  onClick={handleExportDOC}
+                  disabled={isExportingDOC}
+                  className="flex flex-col border border-gray-200 rounded-xl p-5 hover:border-[#3B82F6] hover:shadow-md transition-all group text-left disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  <div className="flex items-center gap-2 font-bold text-[#0D1B3E] group-hover:text-[#3B82F6] transition-colors mb-2">
+                    {isExportingDOC ? <Loader2 size={22} className="animate-spin text-[#3B82F6]" /> : <FileText size={22} className="text-[#3B82F6]" />}
+                    {isExportingDOC ? 'Připravuji soubor...' : 'Uložit do DOC'}
+                  </div>
                   <p className="text-xs text-gray-500 leading-relaxed">
                     Upravitelný soubor Word pro rychlé doplnění specifických podmínek do smlouvy.
                   </p>
-                </div>
+                </button>
 
-                <div className="flex flex-col border border-[#3B82F6]/30 bg-blue-50/50 rounded-xl p-5 hover:border-[#3B82F6] hover:shadow-md transition-all group cursor-pointer" onClick={handleAttachToInquiry}>
-                  <button className="flex items-center gap-2 font-bold text-[#0D1B3E] group-hover:text-[#3B82F6] transition-colors mb-2">
-                    <ClipboardSignature size={22} className="text-[#3B82F6]" />
-                    Vložit do nabídky
-                  </button>
+                {/* Tlačítko Přenos do Nabídky */}
+                <button 
+                  onClick={handleAttachToInquiry}
+                  disabled={isRedirecting}
+                  className="flex flex-col border border-[#3B82F6]/30 bg-blue-50/50 rounded-xl p-5 hover:border-[#3B82F6] hover:shadow-md transition-all group text-left disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  <div className="flex items-center gap-2 font-bold text-[#0D1B3E] group-hover:text-[#3B82F6] transition-colors mb-2">
+                    {isRedirecting ? <Loader2 size={22} className="animate-spin text-[#3B82F6]" /> : <ClipboardSignature size={22} className="text-[#3B82F6]" />}
+                    {isRedirecting ? 'Přesměrovávám...' : 'Vložit do nabídky'}
+                  </div>
                   <p className="text-xs text-gray-500 leading-relaxed">
                     Automaticky propíše objemy a náklady jako závaznou položku do nabídky.
                   </p>
-                </div>
+                </button>
 
               </div>
             </div>
