@@ -3,7 +3,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Calculator, FileDown, FileText, ClipboardSignature } from 'lucide-react'
+import { Calculator, FileDown, FileText, ClipboardSignature, Ruler, Maximize } from 'lucide-react'
 
 // Definice typu pro materiál
 type Material = {
@@ -16,7 +16,6 @@ type Material = {
   buyPricePerSet: number | null;
 }
 
-// Přesná definice typu pro výsledek
 type CalculatorResult = {
   materialName: string;
   wastePercent: string;
@@ -42,30 +41,17 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
 
   const handleCalculate = (e: React.FormEvent) => {
     e.preventDefault()
-    
     if (!area || !thickness || !selectedMaterialId) return
-
     const material = materials.find(m => m.id === selectedMaterialId)
     if (!material) return
 
-    // 1. Výpočet čistého objemu
     const pureVolumeM3 = Number(area) * (Number(thickness) / 100)
-    
-    // 2. Výpočet celkového objemu včetně ztráty
     const totalVolumeM3 = pureVolumeM3 * material.wasteFactor
-    
-    // 3. Výpočet potřebných sad (zaokrouhleno nahoru pro reálný nákup)
     const exactSets = totalVolumeM3 / material.yieldPerSetM3
     const requiredSets = Math.ceil(exactSets)
-    
-    // 4. Výpočet celkových nákladů
     const totalCost = material.buyPricePerSet ? requiredSets * material.buyPricePerSet : 0
-
-    // 5. Výpočet objemové ztráty
     const wasteVolumeM3 = totalVolumeM3 - pureVolumeM3
     const wastePerSqmM3 = Number(area) > 0 ? (wasteVolumeM3 / Number(area)) : 0
-
-    // 6. Výpočet hmotnostní ztráty v kg (hustota je kg/m³)
     const wasteKgTotal = wasteVolumeM3 * material.density
     const wasteKgPerSqm = Number(area) > 0 ? (wasteKgTotal / Number(area)) : 0
     const wasteKgPerM3 = pureVolumeM3 > 0 ? (wasteKgTotal / pureVolumeM3) : 0
@@ -87,33 +73,24 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
     })
   }
 
-  // --- FUNKCE PRO EXPORT A DALŠÍ ZPRACOVÁNÍ ---
-  const handleExportPDF = () => {
-    alert("Zde bude logika pro vygenerování PDF dokumentu (např. přes jsPDF).")
-  }
-
-  const handleExportDOC = () => {
-    alert("Zde bude logika pro export do upravitelného Word dokumentu.")
-  }
-
-  const handleAttachToInquiry = () => {
-    alert("Zde se data přenesou do rozepsané komerční nabídky nebo poptávkového formuláře.")
-  }
+  const handleExportPDF = () => alert("Zde bude logika pro vygenerování PDF dokumentu (např. přes jsPDF).")
+  const handleExportDOC = () => alert("Zde bude logika pro export do upravitelného Word dokumentu.")
+  const handleAttachToInquiry = () => alert("Zde se data přenesou do rozepsané komerční nabídky nebo poptávkového formuláře.")
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleCalculate} className="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-100 space-y-6">
-        
+      {/* Vstupní formulář */}
+      <form onSubmit={handleCalculate} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-[#0D1B3E]">Izolační materiál</label>
+          <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">Izolační materiál</label>
           <select 
             value={selectedMaterialId}
             onChange={(e) => setSelectedMaterialId(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] bg-white"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none text-[#0D1B3E] bg-gray-50/50 hover:bg-white transition-colors cursor-pointer font-medium"
           >
             {materials.map((mat) => (
               <option key={mat.id} value={mat.id}>
-                {mat.name} ({mat.type}, {mat.density} kg/m³)
+                {mat.name} (Typ: {mat.type}, Hustota: {mat.density} kg/m³)
               </option>
             ))}
           </select>
@@ -121,159 +98,149 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="block text-sm font-semibold text-[#0D1B3E]">Plocha k izolaci</label>
+            <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">Plocha k izolaci</label>
             <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                <Maximize size={18} />
+              </div>
               <input 
                 type="number" 
                 min="0.1" 
                 step="0.1"
                 value={area}
                 onChange={(e) => setArea(e.target.value ? Number(e.target.value) : '')}
-                placeholder="150" 
-                className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E]"
+                placeholder="Např. 150" 
+                className="w-full pl-11 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none text-[#0D1B3E] bg-gray-50/50 hover:bg-white transition-colors font-semibold"
                 required 
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">m²</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">m²</span>
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-semibold text-[#0D1B3E]">Požadovaná tloušťka</label>
+            <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">Požadovaná tloušťka</label>
             <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                <Ruler size={18} />
+              </div>
               <input 
                 type="number" 
                 min="1" 
                 step="1"
                 value={thickness}
                 onChange={(e) => setThickness(e.target.value ? Number(e.target.value) : '')}
-                placeholder="20" 
-                className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E]"
+                placeholder="Např. 20" 
+                className="w-full pl-11 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none text-[#0D1B3E] bg-gray-50/50 hover:bg-white transition-colors font-semibold"
                 required 
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">cm</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">cm</span>
             </div>
           </div>
         </div>
 
         <button 
           type="submit" 
-          className="w-full py-4 bg-[#0D1B3E] hover:bg-blue-950 text-white font-bold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2"
+          className="w-full py-4 bg-[#0D1B3E] hover:bg-blue-950 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.01]"
         >
-          <Calculator size={18} />
-          Spočítat spotřebu
+          <Calculator size={20} />
+          Zpracovat kalkulaci spotřeby
         </button>
       </form>
 
       {/* Výsledky kalkulace */}
       {result && (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden mt-8">
-          <div className="bg-[#3B82F6] px-6 py-4">
-            <h3 className="text-white font-bold text-lg text-center">
-              Výsledek kalkulace pro {result.materialName}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-8 animate-in fade-in zoom-in-95 duration-300">
+          <div className="bg-gradient-to-r from-[#3B82F6] to-blue-500 px-6 py-5">
+            <h3 className="text-white font-bold text-xl flex items-center gap-2">
+              Výsledek pro: {result.materialName}
             </h3>
+            <p className="text-blue-100 text-sm mt-1">Data jsou připravena pro fakturaci a obchodní nabídku.</p>
           </div>
           
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              {/* 1. Řádek - Objemy */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <p className="text-sm text-gray-500 mb-1">Čistý objem</p>
-                <p className="text-xl font-bold text-[#0D1B3E]">{result.pureVolumeM3} m³</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              
+              <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
+                <p className="text-sm font-semibold text-gray-500 mb-1">Čistý objem</p>
+                <p className="text-2xl font-black text-[#0D1B3E]">{result.pureVolumeM3} m³</p>
+                <p className="text-xs text-gray-400 mt-2 leading-relaxed">Matematický výpočet objemu k vyplnění zadaného prostoru (bez technologického odpadu).</p>
               </div>
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <p className="text-sm text-gray-500 mb-1">
+
+              <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
+                <p className="text-sm font-semibold text-gray-500 mb-1">
                   Objem vč. ztráty ({result.wastePercent} %)
                 </p>
-                <p className="text-xl font-bold text-[#0D1B3E]">{result.totalVolumeM3} m³</p>
+                <p className="text-2xl font-black text-[#0D1B3E]">{result.totalVolumeM3} m³</p>
+                <p className="text-xs text-gray-400 mt-2 leading-relaxed">Celkový potřebný objem suroviny zohledňující ořez a technologickou ztrátu pěny.</p>
               </div>
 
-              {/* 2. Řádek - Plocha a ztráta na m2 */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <p className="text-sm text-gray-500 mb-1">Zadaná plocha</p>
-                <p className="text-xl font-bold text-[#0D1B3E]">{result.areaSqm} m²</p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <p className="text-sm text-gray-500 mb-1">Ztráta materiálu na 1 m²</p>
-                <p className="text-xl font-bold text-[#0D1B3E]">
-                  {result.wastePerSqmM3} m³ <span className="text-sm text-gray-400 font-medium ml-1">({result.wasteKgPerSqm} kg)</span>
+              <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
+                <p className="text-sm font-semibold text-gray-500 mb-1">Ztráta materiálu na 1 m²</p>
+                <p className="text-2xl font-black text-[#0D1B3E]">
+                  {result.wastePerSqmM3} m³ <span className="text-sm text-gray-400 font-bold ml-1">({result.wasteKgPerSqm} kg)</span>
                 </p>
+                <p className="text-xs text-gray-400 mt-2 leading-relaxed">Kvantifikace ztraceného materiálu připadající přesně na jeden metr čtvereční.</p>
               </div>
 
-              {/* 3. Řádek - Ztráta na m3 a celková hmotnostní ztráta */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <p className="text-sm text-gray-500 mb-1">Ztráta materiálu na 1 m³ (čistého objemu)</p>
-                <p className="text-xl font-bold text-[#0D1B3E]">
-                  {result.wasteKgPerM3} kg
-                </p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <p className="text-sm text-gray-500 mb-1">Celková ztráta v kg</p>
-                <p className="text-xl font-bold text-[#0D1B3E]">
+              <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
+                <p className="text-sm font-semibold text-gray-500 mb-1">Celková hmotnostní ztráta</p>
+                <p className="text-2xl font-black text-[#0D1B3E]">
                   {result.wasteKgTotal} kg
                 </p>
+                <p className="text-xs text-gray-400 mt-2 leading-relaxed">Fyzická váha materiálu (v kilogramech), která bude představovat celkový technologický odpad.</p>
               </div>
             </div>
 
-            {/* 4. Řádek - Peníze a sady */}
-            <div className="flex flex-col md:flex-row justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100 mb-8">
+            {/* Zvýrazněná finanční sekce */}
+            <div className="flex flex-col md:flex-row justify-between items-center bg-blue-50/50 p-6 rounded-xl border border-blue-100 mb-8 shadow-inner">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Potřebný počet sad materiálu</p>
-                <p className="text-2xl font-bold text-[#0D1B3E]">
-                  {result.requiredSets} ks <span className="text-sm text-gray-400 font-medium">(přesně: {result.exactSets} sad)</span>
+                <p className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-1">Potřebný počet sad</p>
+                <p className="text-3xl font-black text-[#0D1B3E]">
+                  {result.requiredSets} ks 
                 </p>
+                <p className="text-sm text-gray-500 mt-1 font-medium">Přesný výpočet: {result.exactSets} sad</p>
               </div>
-              <div className="mt-4 md:mt-0 text-left md:text-right">
-                <p className="text-sm text-gray-500 mb-1">Náklad na materiál</p>
-                <p className="text-2xl font-bold text-[#3B82F6]">
+              <div className="mt-6 md:mt-0 md:text-right">
+                <p className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-1">Náklad na materiál</p>
+                <p className="text-3xl font-black text-[#3B82F6]">
                   {result.totalCost.toLocaleString('cs-CZ')} Kč
                 </p>
+                <p className="text-sm text-gray-500 mt-1 font-medium">Cena za zaokrouhlený počet sad.</p>
               </div>
             </div>
 
-            {/* NOVÁ SEKCE: Akce s kalkulací */}
-            <div className="border-t border-gray-100 pt-6 mt-4">
-              <h4 className="text-[#0D1B3E] font-bold mb-4 text-lg">Další kroky a obchodní zpracování</h4>
+            {/* Akční tlačítka */}
+            <div className="border-t border-gray-100 pt-8">
+              <h4 className="text-[#0D1B3E] font-extrabold mb-5 text-lg">Další kroky a obchodní zpracování</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 
-                {/* Tlačítko PDF */}
-                <div className="flex flex-col border border-gray-200 rounded-xl p-4 hover:border-[#3B82F6] hover:shadow-md transition-all">
-                  <button 
-                    onClick={handleExportPDF}
-                    className="flex items-center gap-2 font-bold text-[#0D1B3E] hover:text-[#3B82F6] transition-colors mb-2"
-                  >
-                    <FileDown size={20} className="text-[#3B82F6]" />
+                <div className="flex flex-col border border-gray-200 rounded-xl p-5 hover:border-[#3B82F6] hover:shadow-md transition-all group cursor-pointer" onClick={handleExportPDF}>
+                  <button className="flex items-center gap-2 font-bold text-[#0D1B3E] group-hover:text-[#3B82F6] transition-colors mb-2">
+                    <FileDown size={22} className="text-[#3B82F6]" />
                     Uložit do PDF
                   </button>
                   <p className="text-xs text-gray-500 leading-relaxed">
-                    Vygeneruje nepřepisovatelný dokument s kompletním přehledem spotřeby a nákladů, připravený k odeslání klientovi.
+                    Nepřepisovatelný dokument s přehledem spotřeby, připravený k okamžitému odeslání.
                   </p>
                 </div>
 
-                {/* Tlačítko DOC */}
-                <div className="flex flex-col border border-gray-200 rounded-xl p-4 hover:border-[#3B82F6] hover:shadow-md transition-all">
-                  <button 
-                    onClick={handleExportDOC}
-                    className="flex items-center gap-2 font-bold text-[#0D1B3E] hover:text-[#3B82F6] transition-colors mb-2"
-                  >
-                    <FileText size={20} className="text-[#3B82F6]" />
+                <div className="flex flex-col border border-gray-200 rounded-xl p-5 hover:border-[#3B82F6] hover:shadow-md transition-all group cursor-pointer" onClick={handleExportDOC}>
+                  <button className="flex items-center gap-2 font-bold text-[#0D1B3E] group-hover:text-[#3B82F6] transition-colors mb-2">
+                    <FileText size={22} className="text-[#3B82F6]" />
                     Uložit do DOC
                   </button>
                   <p className="text-xs text-gray-500 leading-relaxed">
-                    Vytvoří upravitelný soubor Word pro doplnění specifických podmínek zakázky nebo přípravu smluvní dokumentace.
+                    Upravitelný soubor Word pro rychlé doplnění specifických podmínek do smlouvy.
                   </p>
                 </div>
 
-                {/* Tlačítko Nabídka */}
-                <div className="flex flex-col border border-[#3B82F6]/30 bg-blue-50/50 rounded-xl p-4 hover:border-[#3B82F6] hover:shadow-md transition-all">
-                  <button 
-                    onClick={handleAttachToInquiry}
-                    className="flex items-center gap-2 font-bold text-[#0D1B3E] hover:text-[#3B82F6] transition-colors mb-2"
-                  >
-                    <ClipboardSignature size={20} className="text-[#3B82F6]" />
+                <div className="flex flex-col border border-[#3B82F6]/30 bg-blue-50/50 rounded-xl p-5 hover:border-[#3B82F6] hover:shadow-md transition-all group cursor-pointer" onClick={handleAttachToInquiry}>
+                  <button className="flex items-center gap-2 font-bold text-[#0D1B3E] group-hover:text-[#3B82F6] transition-colors mb-2">
+                    <ClipboardSignature size={22} className="text-[#3B82F6]" />
                     Vložit do nabídky
                   </button>
                   <p className="text-xs text-gray-500 leading-relaxed">
-                    Automaticky propíše spočítané objemy a náklady jako závaznou položku do připravované komerční nabídky ke smlouvě.
+                    Automaticky propíše objemy a náklady jako závaznou položku do nabídky.
                   </p>
                 </div>
 
