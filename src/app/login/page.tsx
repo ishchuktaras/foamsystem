@@ -36,7 +36,7 @@ export default function LoginPage() {
       setError("Neplatný e-mail nebo heslo.");
       setLoading(false);
     } else {
-      router.push("/admin/materials");
+      router.push("/admin");
       router.refresh();
     }
   };
