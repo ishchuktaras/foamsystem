@@ -1,9 +1,23 @@
 // src/app/admin/page.tsx
 
 import Link from 'next/link'
-import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, ArrowRight, CheckCircle2, Clock } from 'lucide-react'
+import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, ArrowRight, CheckCircle2, Users, Database } from 'lucide-react'
+import { db } from '@/lib/db'
 
-export default function AdminDashboard() {
+export const dynamic = 'force-dynamic'
+
+export default async function AdminDashboard() {
+  // Načtení reálných dat přímo z databáze přes Prisma
+  let materialsCount = 0
+  let usersCount = 0
+
+  try {
+    materialsCount = await db.material.count()
+    usersCount = await db.user.count()
+  } catch (error) {
+    console.error("Chyba při načítání statistik z databáze:", error)
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
@@ -26,37 +40,39 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* 2. Rychlé KPI statistiky (Zástupná data připravená na napojení z DB) */}
+      {/* 2. Reálné KPI statistiky z databáze */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
           <div className="p-4 bg-blue-50 text-[#3B82F6] rounded-xl">
-            <TrendingUp size={24} />
+            <Boxes size={24} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Měsíční nabídky</p>
-            <h3 className="text-2xl font-bold text-[#0D1B3E]">12</h3>
+            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Evidované materiály</p>
+            <h3 className="text-2xl font-bold text-[#0D1B3E]">{materialsCount}</h3>
           </div>
         </div>
         
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
           <div className="p-4 bg-emerald-50 text-emerald-600 rounded-xl">
-            <CheckCircle2 size={24} />
+            <Users size={24} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Aktivní materiály</p>
-            <h3 className="text-2xl font-bold text-[#0D1B3E]">3</h3>
+            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Aktivní pracovníci</p>
+            <h3 className="text-2xl font-bold text-[#0D1B3E]">{usersCount}</h3>
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-          <div className="p-4 bg-amber-50 text-amber-600 rounded-xl">
-            <Clock size={24} />
+          <div className="p-4 bg-purple-50 text-purple-600 rounded-xl">
+            <Database size={24} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Čekající poptávky</p>
-            <h3 className="text-2xl font-bold text-[#0D1B3E]">5</h3>
+            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Stav databáze</p>
+            <h3 className="text-2xl font-bold text-emerald-600 text-lg mt-1">Připojeno</h3>
           </div>
         </div>
+
       </div>
 
       {/* 3. Hlavní rozcestník - Rychlé akce */}
@@ -68,7 +84,7 @@ export default function AdminDashboard() {
             title="Nová poptávka"
             value="Vytvořit"
             subtitle="s automatickým ARES"
-            href="/admin/inquiries/new"
+            href="/admin/quotes/new"
             icon={<FileText size={28} className="text-blue-600" />}
             colorClass="bg-blue-50"
             hoverClass="group-hover:border-blue-500"
@@ -120,7 +136,7 @@ export default function AdminDashboard() {
   )
 }
 
-// Vylepšená komponenta pro čistší kód interaktivních karet
+// Pomocná komponenta pro interaktivní karty
 function DashboardCard({ 
   title, 
   value, 
@@ -162,7 +178,6 @@ function DashboardCard({
           <ArrowRight size={20} />
         </div>
       </div>
-      {/* Jemný hover efekt v rohu karty */}
       <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-gradient-to-bl from-gray-50 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
     </Link>
   )
