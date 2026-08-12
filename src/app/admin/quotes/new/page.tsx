@@ -1,6 +1,7 @@
 // src/app/admin/quotes/new/page.tsx
 
 import { FileSignature, Stamp, CheckCircle2, Info } from 'lucide-react'
+import QuoteForm from '@/components/QuoteForm' // Důležitý nový import!
 
 export default async function NewQuotePage({
   searchParams,
@@ -18,6 +19,14 @@ export default async function NewQuotePage({
 
   // Kontrola, zda jsme přišli z kalkulačky (máme data)
   const hasCalculatedData = Boolean(materialName && area)
+
+  // Připravíme objekt s daty pro náš formulář
+  const calculatedData = hasCalculatedData ? {
+    materialName,
+    area,
+    thickness,
+    cost
+  } : undefined
 
   return (
     <div className="space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -74,15 +83,8 @@ export default async function NewQuotePage({
           </div>
         )}
 
-        {/* Zástupný blok pro budoucí formulář */}
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-          <h2 className="text-xl font-bold text-[#0D1B3E] mb-6">Příprava formuláře zakázky...</h2>
-          <div className="space-y-4">
-            <div className="h-12 bg-gray-50 rounded-xl border border-dashed border-gray-200 animate-pulse"></div>
-            <div className="h-32 bg-gray-50 rounded-xl border border-dashed border-gray-200 animate-pulse"></div>
-            <div className="h-12 bg-gray-50 rounded-xl border border-dashed border-gray-200 animate-pulse w-1/3"></div>
-          </div>
-        </div>
+        {/* Náš nový formulář s ARESem */}
+        <QuoteForm calculatedData={calculatedData} />
 
       </div>
     </div>
