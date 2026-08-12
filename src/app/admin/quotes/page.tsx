@@ -1,13 +1,13 @@
 // src/app/admin/quotes/page.tsx
 
 import Link from 'next/link'
-import { FileText, TrendingUp, PlusCircle } from 'lucide-react'
+import { FileText, TrendingUp, PlusCircle, Trash2 } from 'lucide-react'
 import { db } from '@/lib/db'
+import { deleteQuote } from '@/actions/quote'
 
 export const dynamic = 'force-dynamic'
 
 export default async function QuotesPage() {
-  // Bezpečné načtení dat s automatickou inferencí typu z Prisemy
   const quotes = await db.quote.findMany({
     orderBy: { createdAt: 'desc' }
   }).catch((error) => {
@@ -69,6 +69,7 @@ export default async function QuotesPage() {
                   <th className="py-4 px-6 font-semibold">Plocha / Tloušťka</th>
                   <th className="py-4 px-6 font-semibold">Celková cena</th>
                   <th className="py-4 px-6 font-semibold">Vytvořeno</th>
+                  <th className="py-4 px-6 font-semibold text-right">Akce</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-sm">
@@ -93,6 +94,20 @@ export default async function QuotesPage() {
                     </td>
                     <td className="py-4 px-6 text-gray-500 text-xs">
                       {new Date(quote.createdAt).toLocaleDateString('cs-CZ')}
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <form action={async () => {
+                        'use server'
+                        await deleteQuote(quote.id)
+                      }}>
+                        <button 
+                          type="submit"
+                          className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 size={14} />
+                          Smazat
+                        </button>
+                      </form>
                     </td>
                   </tr>
                 ))}

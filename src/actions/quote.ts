@@ -37,3 +37,17 @@ export async function createQuote(data: {
     return { success: false, error: "Nepodařilo se uložit nabídku do databáze." }
   }
 }
+
+// Nová funkce pro smazání nabídky
+export async function deleteQuote(id: string) {
+  try {
+    await db.quote.delete({
+      where: { id }
+    })
+    revalidatePath('/admin/quotes')
+    return { success: true }
+  } catch (error) {
+    console.error("Chyba při mazání nabídky:", error)
+    return { success: false, error: "Nepodařilo se smazat nabídku." }
+  }
+}
