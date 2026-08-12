@@ -25,8 +25,10 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const pathname = usePathname()
   
   // 1. Bezpečné načtení session
-  const { data: session, status } = useSession()
-
+ // 1. Skutečně bezpečné načtení session (aby nepadal build na Vercelu)
+  const sessionHook = useSession()
+  const session = sessionHook?.data
+  const status = sessionHook?.status || "loading"
   // 2. Debugging do konzole - pokud uvidíš "Nepojmenovaný uživatel", koukni do F12 (Console), co je zde!
   if (process.env.NODE_ENV === 'development') {
     console.log("🛠️ SIDEBAR DEBUG -> Session:", session)
