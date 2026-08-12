@@ -128,3 +128,19 @@ model CompanyProfile {
   updatedAt   DateTime @updatedAt
 }
 
+
+
+model Quote {
+  id           String   @id @default(cuid())
+  customerName String
+  ico          String?
+  street       String?
+  city         String
+  zip          String?
+  materialName String
+  area         String
+  thickness    String
+  totalCost    String
+  status       String   @default("DRAFT")
+  createdAt    DateTime @default(now())
+}

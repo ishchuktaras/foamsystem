@@ -5,6 +5,7 @@
 import { useState } from 'react'
 import { Building2, MapPin, Search, Save, Loader2, AlertCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { createQuote } from '@/actions/quote'
 
 interface QuoteFormProps {
   calculatedData?: {
@@ -25,8 +26,9 @@ export default function QuoteForm({ calculatedData }: QuoteFormProps) {
   const [city, setCity] = useState('')
   const [zip, setZip] = useState('')
   
-  // Stavy pro načítání z ARESu
+  // Stavy pro načítání a odesílání
   const [isFetchingAres, setIsFetchingAres] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [aresError, setAresError] = useState('')
 
   // Funkce pro stažení dat z veřejného rejstříku ARES
@@ -40,7 +42,6 @@ export default function QuoteForm({ calculatedData }: QuoteFormProps) {
     setAresError('')
 
     try {
-      // Volání nového REST API ARES Ministerstva financí ČR
       const response = await fetch(`https://ares.gov.cz/ekonomicke-subjekty-v-be/rest/ekonomicke-subjekty/${ico}`)
       
       if (!response.ok) {
@@ -49,7 +50,6 @@ export default function QuoteForm({ calculatedData }: QuoteFormProps) {
 
       const data = await response.json()
       
-      // Vyplnění dat do formuláře
       setCustomerName(data.obchodniJmeno || '')
       
       if (data.sidlo) {
@@ -73,10 +73,32 @@ export default function QuoteForm({ calculatedData }: QuoteFormProps) {
     }
   }
 
+  // Odeslání formuláře a uložení do databáze přes Server Action
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Zde později přidáme Server Action pro uložení do databáze (Prisma)
-    alert('Zatím jen vizuální ukázka! Data jsou připravena k uložení do databáze.')
+    setIsSubmitting(true)
+
+    const formData = {
+      customerName,
+      ico,
+      street,
+      city,
+      zip,
+      materialName: calculatedData?.materialName || 'Nespecifikovaný materiál',
+      area: calculatedData?.area || '0',
+      thickness: calculatedData?.thickness || '0',
+      totalCost: calculatedData?.cost || '0'
+    }
+
+    const result = await createQuote(formData)
+
+    if (result.success) {
+      router.push('/admin/quotes')
+      router.refresh()
+    } else {
+      alert(result.error || 'Něco se pokazilo při ukládání.')
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -100,7 +122,7 @@ export default function QuoteForm({ calculatedData }: QuoteFormProps) {
               type="button"
               onClick={fetchAresData}
               disabled={isFetchingAres}
-              className="px-6 py-3 bg-[#0D1B3E] hover:bg-blue-950 text-white font-bold rounded-xl transition-colors disabled:opacity-70 flex items-center gap-2 shrink-0"
+              className="px-6 py-3 bg-[#0D1B3E] hover:bg-blue-950 text-white font-bold rounded-xl transition-colors disabled:opacity-70 flex items-center gap-2 shrink-0 cursor-pointer"
             >
               {isFetchingAres ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
               Načíst z ARES
@@ -173,16 +195,17 @@ export default function QuoteForm({ calculatedData }: QuoteFormProps) {
         <button 
           type="button" 
           onClick={() => router.back()}
-          className="px-6 py-3 text-gray-600 font-bold hover:bg-gray-100 rounded-xl transition-colors"
+          className="px-6 py-3 text-gray-600 font-bold hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
         >
           Zrušit
         </button>
         <button 
           type="submit" 
-          className="px-8 py-3 bg-[#3B82F6] hover:bg-blue-600 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-2 hover:scale-[1.02]"
+          disabled={isSubmitting}
+          className="px-8 py-3 bg-[#3B82F6] hover:bg-blue-600 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-2 hover:scale-[1.02] disabled:opacity-70 cursor-pointer"
         >
-          <Save size={20} />
-          Uložit nabídku
+          {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+          {isSubmitting ? 'Ukládám...' : 'Uložit nabídku'}
         </button>
       </div>
 
