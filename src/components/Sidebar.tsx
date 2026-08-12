@@ -24,9 +24,24 @@ const ROLE_LABELS: Record<string, string> = {
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const pathname = usePathname()
   
-  // Bezpečné volání hooku, které nespadne, když je kontext undefined
-  const sessionHook = useSession()
-  const session = sessionHook?.data
+  // 1. Bezpečné načtení session
+  const { data: session, status } = useSession()
+
+  // 2. Debugging do konzole - pokud uvidíš "Nepojmenovaný uživatel", koukni do F12 (Console), co je zde!
+  if (process.env.NODE_ENV === 'development') {
+    console.log("🛠️ SIDEBAR DEBUG -> Session:", session)
+    console.log("🛠️ SIDEBAR DEBUG -> Status:", status)
+  }
+
+  // 3. Ošetření uživatelských dat
+  const currentUser = session?.user as { name?: string | null; email?: string | null; role?: string | null } | undefined
+  
+  // 4. Fallback logika: Jméno -> Email -> Záložní text
+  const userName = currentUser?.name || currentUser?.email || 'Nepojmenovaný uživatel'
+  
+  // 5. Fallback logika pro roli (pokud chybí, ukážeme "Pracovník", nikoliv "Supervizor")
+  const roleKey = currentUser?.role ? String(currentUser.role).toUpperCase() : ''
+  const userRole = roleKey && ROLE_LABELS[roleKey] ? ROLE_LABELS[roleKey] : 'Pracovník'
 
   const navItems = [
     { name: 'Přehled', href: '/admin', icon: LayoutDashboard },
@@ -36,12 +51,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     { name: 'Nabídky a poptávky', href: '/admin/quotes', icon: FileText },
     { name: 'Nastavení', href: '/admin/settings', icon: Settings },
   ]
-
-  const currentUser = session?.user as { name?: string | null; email?: string | null; role?: string | null } | undefined
-  
-  // Pokud uživatel nemá jméno v session, použije se jeho e-mail jako jméno
-  const userName = currentUser?.name || currentUser?.email || 'Nepojmenovaný uživatel'
-  const userRole = currentUser?.role ? ROLE_LABELS[currentUser.role] || currentUser.role : 'Supervizor'
 
   return (
     <>
@@ -100,8 +109,12 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         <div className="p-4 border-t border-white/10">
           <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl">
             <div className="overflow-hidden pr-2">
-              <p className="text-sm font-bold text-white truncate">{userName}</p>
-              <p className="text-xs text-gray-400 font-medium">{userRole}</p>
+              <p className="text-sm font-bold text-white truncate" title={userName}>
+                {status === "loading" ? "Načítání..." : userName}
+              </p>
+              <p className="text-xs text-gray-400 font-medium">
+                {status === "loading" ? "Ověřování" : userRole}
+              </p>
             </div>
             <button 
               onClick={() => signOut({ callbackUrl: '/login' })}

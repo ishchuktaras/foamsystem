@@ -1,3 +1,4 @@
+// src/prisma/seed.ts
 
 import 'dotenv/config'
 import { Pool } from 'pg'
