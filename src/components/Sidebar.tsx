@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Boxes, Calculator, FileText, Settings, LogOut, X, Users } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
+import CompanyBadge from './CompanyBadge'
 
 interface SidebarProps {
   isOpen?: boolean
@@ -24,24 +25,17 @@ const ROLE_LABELS: Record<string, string> = {
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const pathname = usePathname()
   
-  // 1. Bezpečné načtení session
- // 1. Skutečně bezpečné načtení session (aby nepadal build na Vercelu)
   const sessionHook = useSession()
   const session = sessionHook?.data
   const status = sessionHook?.status || "loading"
-  // 2. Debugging do konzole - pokud uvidíš "Nepojmenovaný uživatel", koukni do F12 (Console), co je zde!
+  
   if (process.env.NODE_ENV === 'development') {
     console.log("🛠️ SIDEBAR DEBUG -> Session:", session)
     console.log("🛠️ SIDEBAR DEBUG -> Status:", status)
   }
 
-  // 3. Ošetření uživatelských dat
   const currentUser = session?.user as { name?: string | null; email?: string | null; role?: string | null } | undefined
-  
-  // 4. Fallback logika: Jméno -> Email -> Záložní text
   const userName = currentUser?.name || currentUser?.email || 'Nepojmenovaný uživatel'
-  
-  // 5. Fallback logika pro roli (pokud chybí, ukážeme "Pracovník", nikoliv "Supervizor")
   const roleKey = currentUser?.role ? String(currentUser.role).toUpperCase() : ''
   const userRole = roleKey && ROLE_LABELS[roleKey] ? ROLE_LABELS[roleKey] : 'Pracovník'
 
@@ -85,7 +79,10 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           </button>
         </div>
 
-        <nav className="flex-1 px-4 space-y-1.5 mt-4">
+        {/* ZDE JE PŘIDANÝ ŠTÍTEK FIRMY */}
+        <CompanyBadge />
+
+        <nav className="flex-1 px-4 space-y-1.5 mt-2">
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
             const Icon = item.icon
