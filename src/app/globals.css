@@ -1,21 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Hlavní světlé pozadí (lomená bílá) a černý text */
+  --background: #FEFEFA;
+  --foreground: #000000;
+  
+  /* Vaše hlavní brandová barva (ostrá oranžová) */
+  --brand: #FF4F00;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  /* Registrujeme brandovou barvu do Tailwindu pro třídy jako bg-brand nebo text-brand */
+  --color-brand: var(--brand);
+  
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+/* Plná podpora tmavého režimu s využitím vašich brandových barev */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* V tmavém režimu se to prohodí: čistá černá jako pozadí, lomená bílá jako text */
+    --background: #000000;
+    --foreground: #FEFEFA;
   }
 }
 
