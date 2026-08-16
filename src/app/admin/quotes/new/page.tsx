@@ -1,32 +1,57 @@
 // src/app/admin/quotes/new/page.tsx
 
 import { FileSignature, Stamp, CheckCircle2, Info } from 'lucide-react'
-import QuoteForm from '@/components/QuoteForm' // Důležitý nový import!
+import QuoteForm from '@/components/QuoteForm'
+import { db } from '@/lib/db'
+import { getCompanyProfile } from '@/actions/settings'
+import { calculateFoamProject, parseLambda } from '@/lib/calculations' // Přidán import matematiky
 
 export default async function NewQuotePage({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  // Rozbalení parametrů z URL, které nám poslala kalkulačka
+  // 1. Načtení základních URL parametrů z Kalkulačky
   const resolvedParams = await searchParams
-  
-  const materialName = resolvedParams.materialName as string || ''
+  const materialId = resolvedParams.materialId as string || ''
   const area = resolvedParams.area as string || ''
   const thickness = resolvedParams.thickness as string || ''
-  const cost = resolvedParams.cost as string || ''
-  const sets = resolvedParams.sets as string || ''
 
-  // Kontrola, zda jsme přišli z kalkulačky (máme data)
-  const hasCalculatedData = Boolean(materialName && area)
+  const hasCalculatedData = Boolean(materialId && area && thickness)
 
-  // Připravíme objekt s daty pro náš formulář
-  const calculatedData = hasCalculatedData ? {
-    materialName,
-    area,
-    thickness,
-    cost
-  } : undefined
+  // 2. Načtení materiálů z DB
+  const materials = await db.material.findMany({
+    where: { isArchived: false },
+    orderBy: { name: 'asc' }
+  })
+
+  // 3. Načtení tvého firemního profilu pro hlavičku PDF
+  const companyProfile = await getCompanyProfile()
+
+  // 4. Přepočítání přesných detailních nákladů pro banner!
+  let materialName = ''
+  let displayTotalCost = 0
+  let displayCostPerM2 = 0
+  let displayCostPerM3 = 0
+
+  if (hasCalculatedData) {
+    const selected = materials.find(m => m.id === materialId)
+    if (selected) {
+      materialName = selected.name
+      const calcResults = calculateFoamProject({
+        areaM2: Number(area),
+        thicknessCm: Number(thickness),
+        density: selected.density,
+        wasteFactor: selected.wasteFactor,
+        yieldPerSetM3: selected.yieldPerSetM3,
+        buyPricePerSet: selected.buyPricePerSet || 0,
+        lambda: parseLambda(selected.lambda)
+      })
+      displayTotalCost = calcResults.totalCost
+      displayCostPerM2 = calcResults.costPerM2
+      displayCostPerM3 = calcResults.costPerM3
+    }
+  }
 
   return (
     <div className="space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -38,10 +63,9 @@ export default async function NewQuotePage({
             Nová poptávka / nabídka
           </h1>
           <p className="text-blue-100/80 text-lg leading-relaxed">
-            Vytvořte novou zakázku pro klienta. {hasCalculatedData ? 'Data z kalkulačky byla úspěšně přenesena.' : 'Vyplňte údaje o klientovi a nacenění.'}
+            Vytvořte novou zakázku pro klienta. Nastavte obchodní marži a vygenerujte profesionální PDF nabídku.
           </p>
         </div>
-        {/* Dekorace pozadí */}
         <div className="absolute right-0 top-0 -translate-y-12 translate-x-1/4 opacity-10 pointer-events-none">
           <FileSignature size={300} />
         </div>
@@ -51,14 +75,18 @@ export default async function NewQuotePage({
       </div>
 
       <div className="max-w-5xl mx-auto mt-8">
-        {/* Informační blok o načtených datech z URL */}
+        
+        {/* INFORMAČNÍ BANNER S DETAILNÍMI NÁKLADY */}
         {hasCalculatedData ? (
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 mb-8 shadow-sm flex gap-4 items-start">
             <CheckCircle2 className="text-emerald-600 shrink-0 mt-0.5" size={24} />
             <div>
-              <h3 className="font-bold text-emerald-900 mb-1">Úspěšně napojeno na kalkulátor</h3>
-              <p className="text-emerald-700 text-sm mb-3">Tato zakázka bude automaticky předvyplněna následujícími technickými parametry:</p>
-              <div className="flex flex-wrap gap-3">
+              <h3 className="font-bold text-emerald-900 mb-1">Data z kalkulátoru úspěšně přenesena</h3>
+              <p className="text-emerald-700 text-sm mb-3">
+                Zkontrolujte údaje o zákazníkovi a nastavte marži (v bloku vpravo dole). Zde jsou reálné <b>nákupní náklady</b> této zakázky:
+              </p>
+              
+              <div className="flex flex-wrap gap-3 mt-2">
                 <span className="bg-white px-3 py-1 rounded-lg text-emerald-800 text-sm font-semibold border border-emerald-100 shadow-sm">
                   {materialName}
                 </span>
@@ -68,8 +96,16 @@ export default async function NewQuotePage({
                 <span className="bg-white px-3 py-1 rounded-lg text-emerald-800 text-sm font-semibold border border-emerald-100 shadow-sm">
                   Tloušťka: {thickness} cm
                 </span>
-                <span className="bg-white px-3 py-1 rounded-lg text-[#3B82F6] font-black text-sm border border-emerald-100 shadow-sm">
-                  Náklad: {Number(cost).toLocaleString('cs-CZ')} Kč
+                
+                {/* Rozpad nákladů na m2 a m3 */}
+                <span className="bg-white px-3 py-1 rounded-lg text-[#3B82F6] font-black text-sm border border-emerald-200 shadow-sm">
+                  Celkem: {displayTotalCost.toLocaleString('cs-CZ')} Kč
+                </span>
+                <span className="bg-white px-3 py-1 rounded-lg text-gray-700 font-bold text-sm border border-emerald-200 shadow-sm">
+                  {displayCostPerM2.toLocaleString('cs-CZ')} Kč / m²
+                </span>
+                <span className="bg-white px-3 py-1 rounded-lg text-gray-700 font-bold text-sm border border-emerald-200 shadow-sm">
+                  {displayCostPerM3.toLocaleString('cs-CZ')} Kč / m³
                 </span>
               </div>
             </div>
@@ -78,13 +114,17 @@ export default async function NewQuotePage({
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-8 shadow-sm flex gap-4 items-center">
             <Info className="text-[#3B82F6] shrink-0" size={24} />
             <p className="text-blue-800 text-sm font-medium">
-              Vytváříte čistou nabídku. Pokud potřebujete spočítat spotřebu materiálu, doporučujeme začít v Kalkulátoru.
+              Vytváříte čistou nabídku. Můžete vybrat materiál a zadat parametry přímo zde.
             </p>
           </div>
         )}
 
-        {/* Náš nový formulář s ARESem */}
-        <QuoteForm calculatedData={calculatedData} />
+        {/* Náš chytrý formulář */}
+        <QuoteForm 
+          materials={materials} 
+          companyProfile={companyProfile}
+          initialData={{ materialId, area, thickness }} 
+        />
 
       </div>
     </div>
