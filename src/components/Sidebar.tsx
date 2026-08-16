@@ -28,11 +28,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const sessionHook = useSession()
   const session = sessionHook?.data
   const status = sessionHook?.status || "loading"
-  
-  if (process.env.NODE_ENV === 'development') {
-    console.log("🛠️ SIDEBAR DEBUG -> Session:", session)
-    console.log("🛠️ SIDEBAR DEBUG -> Status:", status)
-  }
 
   const currentUser = session?.user as { name?: string | null; email?: string | null; role?: string | null } | undefined
   const userName = currentUser?.name || currentUser?.email || 'Nepojmenovaný uživatel'
@@ -57,29 +52,29 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         />
       )}
 
+      {/* ABSOLUTNÍ ČERNÁ POZADÍ SIDEBARU */}
       <aside className={`
-        w-64 bg-[#0D1B3E] text-white flex flex-col min-h-screen fixed left-0 top-0 bottom-0 z-50 
-        transition-transform duration-300 ease-in-out
+        w-64 bg-[#000000] text-[#FEFEFA] flex flex-col min-h-screen fixed left-0 top-0 bottom-0 z-50 
+        transition-transform duration-300 ease-in-out border-r border-zinc-900
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         
         <div className="p-6 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-extrabold flex items-center gap-2">
-              <span className="bg-white/10 p-1.5 rounded-lg text-sm">N</span>
-              <span>Foam<span className="text-[#3B82F6]">System</span></span>
+              <span className="bg-[#FF4F00] p-1.5 rounded-lg text-sm text-white">N</span>
+              <span>Foam<span className="text-[#FF4F00]">System</span></span>
             </h2>
-            <p className="text-xs text-gray-400 mt-2 font-medium">Interní systém pro izolace</p>
+            <p className="text-xs text-zinc-500 mt-2 font-medium tracking-wide">INTERNÍ SYSTÉM</p>
           </div>
           <button 
             onClick={() => setIsOpen?.(false)}
-            className="md:hidden text-gray-400 hover:text-white p-1"
+            className="md:hidden text-zinc-500 hover:text-[#FF4F00] p-1"
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* ZDE JE PŘIDANÝ ŠTÍTEK FIRMY */}
         <CompanyBadge />
 
         <nav className="flex-1 px-4 space-y-1.5 mt-2">
@@ -94,31 +89,31 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                 onClick={() => setIsOpen?.(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                   isActive 
-                    ? 'bg-[#3B82F6] text-white font-semibold shadow-md shadow-blue-900/20' 
-                    : 'text-gray-400 hover:text-white hover:bg-white/5 font-medium'
+                    ? 'bg-[#FF4F00] text-[#FEFEFA] font-bold shadow-lg shadow-[#FF4F00]/20' 
+                    : 'text-zinc-400 hover:text-[#FEFEFA] hover:bg-white/5 font-medium'
                 }`}
               >
-                <Icon size={20} className={isActive ? 'text-white' : 'text-gray-400'} />
+                <Icon size={20} className={isActive ? 'text-[#FEFEFA]' : 'text-zinc-500'} />
                 {item.name}
               </Link>
             )
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/10">
-          <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl">
+        <div className="p-4 border-t border-zinc-900">
+          <div className="flex items-center justify-between bg-[#111111] border border-zinc-800 p-3 rounded-xl">
             <div className="overflow-hidden pr-2">
-              <p className="text-sm font-bold text-white truncate" title={userName}>
+              <p className="text-sm font-bold text-[#FEFEFA] truncate" title={userName}>
                 {status === "loading" ? "Načítání..." : userName}
               </p>
-              <p className="text-xs text-gray-400 font-medium">
+              <p className="text-xs text-[#FF4F00] font-bold">
                 {status === "loading" ? "Ověřování" : userRole}
               </p>
             </div>
             <button 
               onClick={() => signOut({ callbackUrl: '/login' })}
               title="Odhlásit se"
-              className="text-gray-400 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-lg cursor-pointer shrink-0"
+              className="text-zinc-500 hover:text-[#FF4F00] transition-colors p-1.5 hover:bg-black rounded-lg cursor-pointer shrink-0"
             >
               <LogOut size={18} />
             </button>
