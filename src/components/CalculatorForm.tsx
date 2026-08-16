@@ -361,7 +361,7 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
 
             </div>
 
-            {/* Akční tlačítka - zůstávají beze změny */}
+            {/* Akční tlačítka */}
             <div className="border-t border-gray-100 pt-8">
               <h4 className="text-[#0D1B3E] font-extrabold mb-5 text-lg">Další kroky a obchodní zpracování</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
