@@ -9,7 +9,6 @@ import { createQuote } from '@/actions/quote'
 import { calculateFoamProject, parseLambda } from '@/lib/calculations'
 import jsPDF from 'jspdf'
 
-// --- PŘESNÉ TYPESCRIPT DEFINICE ---
 interface Material {
   id: string;
   name: string;
@@ -37,33 +36,27 @@ interface QuoteFormProps {
     thickness: string;
   };
 }
-// -----------------------------------
 
 export default function QuoteForm({ materials, companyProfile, initialData }: QuoteFormProps) {
   const router = useRouter()
   
-  // Zákazník
   const [ico, setIco] = useState('')
   const [customerName, setCustomerName] = useState('')
   const [street, setStreet] = useState('')
   const [city, setCity] = useState('')
   const [zip, setZip] = useState('')
   
-  // Parametry zakázky
   const [selectedMaterialId, setSelectedMaterialId] = useState(initialData.materialId || (materials[0]?.id || ''))
   const [area, setArea] = useState<number | ''>(initialData.area ? Number(initialData.area) : '')
   const [thickness, setThickness] = useState<number | ''>(initialData.thickness ? Number(initialData.thickness) : '')
   
-  // Obchodní marže
   const [marginPercent, setMarginPercent] = useState<number>(100)
 
-  // UI stavy
   const [isFetchingAres, setIsFetchingAres] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   const [aresError, setAresError] = useState('')
 
-  // Výpočet reálných čísel na pozadí
   const selectedMaterial = materials.find(m => m.id === selectedMaterialId)
   
   let calcResults = null
@@ -80,11 +73,9 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       lambda: parseLambda(selectedMaterial.lambda)
     })
     
-    // OPRAVA LOGIKY: Prodejní cena se nyní počítá z PŘESNĚ VYSTŘÍKANÉHO MATERIÁLU, nikoliv z celých sudů!
     clientFinalPrice = calcResults.exactMaterialCost * (1 + (marginPercent / 100))
   }
 
-  // ARES načítání
   const fetchAresData = async () => {
     if (!ico || ico.length < 6) {
       setAresError('Zadejte platné IČO.')
@@ -116,7 +107,6 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     }
   }
 
-  // Generování obchodního PDF pro klienta
   const handleGenerateClientPDF = () => {
     if (!calcResults || !selectedMaterial || !customerName) {
       alert("Vyplňte jméno zákazníka a parametry izolace.")
@@ -128,9 +118,9 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       const doc = new jsPDF()
       const date = new Date().toLocaleDateString('cs-CZ')
       
-      // HLAVIČKA
+      // HLAVIČKA PDF - Černá barva
       doc.setFontSize(22)
-      doc.setTextColor(13, 27, 62) 
+      doc.setTextColor(0, 0, 0) 
       doc.text('CENOVA NABIDKA', 20, 25)
       
       doc.setFontSize(10)
@@ -138,7 +128,6 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       doc.text(`Datum vystaveni: ${date}`, 20, 32)
       doc.text(`Platnost nabidky: 14 dni`, 20, 37)
 
-      // TVOJE FIRMA
       const companyName = companyProfile?.companyName || 'Dodavatel izolačních služeb'
       doc.setFont("helvetica", "bold")
       doc.text('Dodavatel:', 120, 25)
@@ -148,13 +137,13 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       if (companyProfile?.email) doc.text(companyProfile.email, 120, 42)
       if (companyProfile?.phone) doc.text(companyProfile.phone, 120, 47)
 
-      doc.setDrawColor(59, 130, 246) 
+      // Oranžová linka (RGB pro FF4F00)
+      doc.setDrawColor(255, 79, 0) 
       doc.setLineWidth(0.5)
       doc.line(20, 52, 190, 52)
 
-      // ZÁKAZNÍK
       doc.setFontSize(11)
-      doc.setTextColor(20, 20, 20)
+      doc.setTextColor(0, 0, 0)
       doc.setFont("helvetica", "bold")
       doc.text('Odberatel:', 20, 65)
       
@@ -164,7 +153,6 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       doc.text(`${street || ''}`, 20, ico ? 82 : 77)
       doc.text(`${city || ''} ${zip || ''}`, 20, ico ? 87 : 82)
 
-      // SPECIFIKACE ZAKÁZKY
       doc.setFont("helvetica", "bold")
       doc.text('Specifikace izolačního systemu:', 20, 105)
       doc.setFont("helvetica", "normal")
@@ -173,17 +161,16 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       doc.text(`Celkova plocha k izolaci: ${area} m2`, 20, 122)
       doc.text(`Pozadovana tloustka vrstvy: ${thickness} cm`, 20, 129)
 
-      // TEPELNÝ ODPOR
       if (calcResults.thermalResistance) {
-        doc.setTextColor(59, 130, 246)
+        doc.setTextColor(255, 79, 0) // Oranžová
         doc.setFont("helvetica", "bold")
         doc.text(`Garantovany tepelny odpor (R): ${calcResults.thermalResistance} m2K/W`, 20, 140)
         doc.setFont("helvetica", "normal")
-        doc.setTextColor(20, 20, 20)
+        doc.setTextColor(0, 0, 0)
       }
 
-      // CENOVÝ BOX
-      doc.setFillColor(13, 27, 62) 
+      // Černý box pro cenu
+      doc.setFillColor(0, 0, 0) 
       doc.rect(20, 150, 170, 45, 'F')
       
       doc.setTextColor(255, 255, 255)
@@ -194,8 +181,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       doc.setFont("helvetica", "bold")
       doc.text(`${clientFinalPrice.toLocaleString('cs-CZ')} Kc`, 25, 183)
 
-      // UPOZORNĚNÍ PRO ZÁKAZNÍKA (Vícepráce a doprava)
-      doc.setTextColor(220, 38, 38) // Červená barva
+      doc.setTextColor(220, 38, 38)
       doc.setFontSize(11)
       doc.setFont("helvetica", "bold")
       doc.text('Upozorneni k cene:', 20, 210)
@@ -206,12 +192,10 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       doc.text('Vyse uvedena castka zahrnuje pouze vypocitanou spotrebu materialu a samotnou aplikaci.', 20, 217)
       doc.text('Po ukonceni praci a podepsani predavaciho protokolu bude k cene douctovano:', 20, 223)
       
-      // Odrážky s vícepracemi
       doc.text('- Doprava materialu a strojnich zarizeni', 25, 230)
       doc.text('- Priprava mistnosti (zakryvani, paskovani)', 25, 236)
       doc.text('- Priplatky za praci ve ztizenem prostredi a ve vyskach', 25, 242)
 
-      // BANKOVNÍ SPOJENÍ
       if (companyProfile?.bankAccount) {
         doc.setTextColor(100, 100, 100)
         doc.setFontSize(9)
@@ -219,12 +203,10 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
         doc.text(`Bankovni spojeni pro uhrazeni zalohy/faktury: ${companyProfile.bankAccount}`, 20, 265)
       }
 
-      // PATIČKA
       doc.setFontSize(9)
       doc.setTextColor(150, 150, 150)
       doc.text('Tato nabidka je informativni a nepredstavuje zavaznou smlouvu do jejiho podpisu.', 20, 275)
 
-      // Ukládání PDF (Název je bez diakritiky z jsPDF, aby to prohlížeč zvládl)
       doc.save(`Nabidka-${customerName.replace(/\s+/g, '-').toLowerCase() || 'klient'}.pdf`)
     } catch (error) {
       console.error(error)
@@ -234,7 +216,6 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     }
   }
 
-  // Uložení nabídky do DB
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -266,27 +247,27 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
       
       {/* LEVÝ SLOUPEC: Formulář */}
-      <form onSubmit={handleSubmit} className="lg:col-span-2 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 space-y-8">
+      <form onSubmit={handleSubmit} className="lg:col-span-2 bg-[#FEFEFA] p-6 md:p-8 rounded-2xl shadow-sm border border-zinc-200 space-y-8">
         
         {/* ARES a Zákazník */}
         <div className="space-y-6">
-          <h3 className="text-lg font-bold text-[#0D1B3E] border-b border-gray-100 pb-2">Údaje o zákazníkovi</h3>
+          <h3 className="text-lg font-bold text-[#000000] border-b border-zinc-200 pb-2">Údaje o zákazníkovi</h3>
           
           <div className="space-y-2">
-            <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">IČO (pro firmy)</label>
+            <label className="block text-sm font-bold text-zinc-700 uppercase tracking-wide">IČO (pro firmy)</label>
             <div className="flex gap-3">
               <input 
                 type="text" 
                 value={ico}
                 onChange={(e) => setIco(e.target.value.replace(/\D/g, ''))}
                 placeholder="Např. 00006947" 
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] bg-gray-50/50"
+                className="w-full px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] bg-zinc-50"
               />
               <button 
                 type="button"
                 onClick={fetchAresData}
                 disabled={isFetchingAres}
-                className="px-6 py-3 bg-[#0D1B3E] hover:bg-blue-950 text-white font-bold rounded-xl transition-colors disabled:opacity-70 flex items-center gap-2 cursor-pointer"
+                className="px-6 py-3 bg-[#000000] hover:bg-zinc-800 text-[#FEFEFA] font-bold rounded-xl transition-colors disabled:opacity-70 flex items-center gap-2 cursor-pointer shrink-0"
               >
                 {isFetchingAres ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
                 Načíst
@@ -296,57 +277,57 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">Název firmy / Jméno a příjmení *</label>
+            <label className="block text-sm font-bold text-zinc-700 uppercase tracking-wide">Název firmy / Jméno a příjmení *</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><Building2 size={18} /></div>
-              <input type="text" required value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] font-medium"/>
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400"><Building2 size={18} /></div>
+              <input type="text" required value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full pl-11 pr-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium bg-zinc-50/50"/>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div className="md:col-span-3 space-y-2">
-              <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">Ulice a č.p.</label>
+              <label className="block text-sm font-bold text-zinc-700 uppercase tracking-wide">Ulice a č.p.</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400"><MapPin size={18} /></div>
-                <input type="text" value={street} onChange={(e) => setStreet(e.target.value)} className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] font-medium"/>
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400"><MapPin size={18} /></div>
+                <input type="text" value={street} onChange={(e) => setStreet(e.target.value)} className="w-full pl-11 pr-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium bg-zinc-50/50"/>
               </div>
             </div>
             <div className="md:col-span-2 space-y-2">
-              <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">Město *</label>
-              <input type="text" required value={city} onChange={(e) => setCity(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] font-medium"/>
+              <label className="block text-sm font-bold text-zinc-700 uppercase tracking-wide">Město *</label>
+              <input type="text" required value={city} onChange={(e) => setCity(e.target.value)} className="w-full px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium bg-zinc-50/50"/>
             </div>
             <div className="md:col-span-1 space-y-2">
-              <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">PSČ</label>
-              <input type="text" value={zip} onChange={(e) => setZip(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] font-medium"/>
+              <label className="block text-sm font-bold text-zinc-700 uppercase tracking-wide">PSČ</label>
+              <input type="text" value={zip} onChange={(e) => setZip(e.target.value)} className="w-full px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium bg-zinc-50/50"/>
             </div>
           </div>
         </div>
 
         {/* Technické parametry */}
-        <div className="space-y-6 pt-6 border-t border-gray-100">
-          <h3 className="text-lg font-bold text-[#0D1B3E] border-b border-gray-100 pb-2">Technická specifikace</h3>
+        <div className="space-y-6 pt-6 border-t border-zinc-200">
+          <h3 className="text-lg font-bold text-[#000000] border-b border-zinc-200 pb-2">Technická specifikace</h3>
           
           <div className="space-y-2">
-            <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">Materiál *</label>
-            <select value={selectedMaterialId} onChange={(e) => setSelectedMaterialId(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] font-medium bg-gray-50/50">
+            <label className="block text-sm font-bold text-zinc-700 uppercase tracking-wide">Materiál *</label>
+            <select value={selectedMaterialId} onChange={(e) => setSelectedMaterialId(e.target.value)} className="w-full px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium bg-zinc-50/50">
               {materials.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
             </select>
           </div>
 
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">Plocha (m²) *</label>
-              <input type="number" required value={area} onChange={(e) => setArea(Number(e.target.value))} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] font-bold"/>
+              <label className="block text-sm font-bold text-zinc-700 uppercase tracking-wide">Plocha (m²) *</label>
+              <input type="number" required value={area} onChange={(e) => setArea(Number(e.target.value))} className="w-full px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-bold bg-zinc-50/50"/>
             </div>
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">Tloušťka (cm) *</label>
-              <input type="number" required value={thickness} onChange={(e) => setThickness(Number(e.target.value))} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] font-bold"/>
+              <label className="block text-sm font-bold text-zinc-700 uppercase tracking-wide">Tloušťka (cm) *</label>
+              <input type="number" required value={thickness} onChange={(e) => setThickness(Number(e.target.value))} className="w-full px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-bold bg-zinc-50/50"/>
             </div>
           </div>
         </div>
 
         <div className="pt-4 flex justify-end gap-3">
-          <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-[#3B82F6] hover:bg-blue-600 text-white font-bold rounded-xl shadow-md transition-all flex justify-center items-center gap-2 hover:scale-[1.01] cursor-pointer">
+          <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-[#FF4F00] hover:bg-[#E64700] text-[#FEFEFA] font-bold rounded-xl shadow-md transition-all flex justify-center items-center gap-2 hover:scale-[1.01] cursor-pointer">
             {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
             Uložit do evidence
           </button>
@@ -356,44 +337,43 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       {/* PRAVÝ SLOUPEC: Obchodní cenotvorba a PDF */}
       <div className="lg:col-span-1 space-y-6">
         
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+        <div className="bg-[#FEFEFA] p-6 rounded-2xl shadow-sm border border-zinc-200">
           <div className="flex items-center gap-2 mb-4">
-            <Percent className="text-emerald-500" size={20} />
-            <h3 className="font-bold text-[#0D1B3E]">Obchodní marže</h3>
+            <Percent className="text-[#FF4F00]" size={20} />
+            <h3 className="font-bold text-[#000000]">Obchodní marže</h3>
           </div>
-          <p className="text-sm text-gray-500 mb-4">Nastavte procentuální přirážku k nákupní ceně materiálu (zahrnuje práci, režii a zisk).</p>
+          <p className="text-sm text-zinc-500 mb-4">Nastavte procentuální přirážku k nákupní ceně materiálu.</p>
           
           <input 
             type="range" 
             min="0" max="300" step="5"
             value={marginPercent}
             onChange={(e) => setMarginPercent(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#3B82F6]"
+            className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-[#FF4F00]"
           />
-          <div className="text-center mt-3 font-black text-2xl text-[#3B82F6]">{marginPercent} %</div>
+          <div className="text-center mt-3 font-black text-2xl text-[#FF4F00]">{marginPercent} %</div>
         </div>
 
         {calcResults && (
-          <div className="bg-gradient-to-br from-[#0D1B3E] to-[#1a2c5b] p-6 rounded-2xl shadow-lg text-white">
-            <p className="text-blue-200 text-sm font-semibold uppercase tracking-wider mb-1">Cena pro klienta</p>
+          <div className="bg-gradient-to-br from-[#000000] to-[#1a1a1a] p-6 rounded-2xl shadow-lg text-[#FEFEFA] border border-zinc-800">
+            <p className="text-zinc-400 text-sm font-semibold uppercase tracking-wider mb-1">Cena pro klienta</p>
             <div className="text-4xl font-black mb-4">{clientFinalPrice.toLocaleString('cs-CZ')} <span className="text-xl">Kč</span></div>
             
-            <div className="space-y-2 text-sm text-blue-100/80 pt-4 border-t border-white/10">
+            <div className="space-y-2 text-sm text-zinc-300 pt-4 border-t border-zinc-800">
               <div className="flex justify-between">
                 <span>Čistý náklad na materiál:</span>
-                <span className="font-medium text-white">{calcResults.exactMaterialCost.toLocaleString('cs-CZ')} Kč</span>
+                <span className="font-medium text-[#FEFEFA]">{calcResults.exactMaterialCost.toLocaleString('cs-CZ')} Kč</span>
               </div>
               <div className="flex justify-between">
                 <span>Hrubý zisk (Marže):</span>
-                <span className="font-medium text-emerald-400">{(clientFinalPrice - calcResults.exactMaterialCost).toLocaleString('cs-CZ')} Kč</span>
+                <span className="font-medium text-[#FF4F00]">{(clientFinalPrice - calcResults.exactMaterialCost).toLocaleString('cs-CZ')} Kč</span>
               </div>
             </div>
 
-            {/* Upozornění pro uživatele aplikace před tiskem PDF */}
-            <div className="mt-4 bg-blue-900/50 p-3 rounded-lg border border-blue-800">
+            <div className="mt-4 bg-zinc-900 p-3 rounded-lg border border-zinc-800">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="text-blue-300 shrink-0 mt-0.5" size={16} />
-                <p className="text-xs text-blue-200 leading-tight">
+                <AlertTriangle className="text-[#FF4F00] shrink-0 mt-0.5" size={16} />
+                <p className="text-xs text-zinc-400 leading-tight">
                   K této ceně bude po dokončení prací automaticky doúčtována doprava, zakrytí oken a práce ve výškách.
                 </p>
               </div>
@@ -403,12 +383,12 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
               type="button"
               onClick={handleGenerateClientPDF}
               disabled={isGeneratingPDF || !customerName}
-              className="mt-6 w-full py-3 bg-white text-[#0D1B3E] hover:bg-gray-50 font-bold rounded-xl transition-colors flex justify-center items-center gap-2 disabled:opacity-50 cursor-pointer"
+              className="mt-6 w-full py-3 bg-[#FEFEFA] text-[#000000] hover:bg-zinc-200 font-bold rounded-xl transition-colors flex justify-center items-center gap-2 disabled:opacity-50 cursor-pointer"
             >
-              {isGeneratingPDF ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />}
+              {isGeneratingPDF ? <Loader2 size={18} className="animate-spin text-[#FF4F00]" /> : <FileDown size={18} className="text-[#FF4F00]" />}
               Vytvořit PDF pro klienta
             </button>
-            {!customerName && <p className="text-xs text-blue-200/50 text-center mt-2">Nejprve vyplňte jméno zákazníka</p>}
+            {!customerName && <p className="text-xs text-zinc-500 text-center mt-2">Nejprve vyplňte jméno zákazníka</p>}
           </div>
         )}
       </div>
