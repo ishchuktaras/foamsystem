@@ -6,8 +6,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Calculator, FileDown, FileText, ClipboardSignature, Ruler, Maximize, Loader2 } from 'lucide-react'
 import jsPDF from 'jspdf'
+import { calculateFoamProject, parseLambda } from '@/lib/calculations'
 
-// Definice typu pro materiál
+// 1. Rozšířená definice typu materiálu o parametr lambda
 type Material = {
   id: string;
   name: string;
@@ -16,22 +17,27 @@ type Material = {
   yieldPerSetM3: number;
   wasteFactor: number;
   buyPricePerSet: number | null;
+  lambda?: string | null; 
 }
 
+// 2. Definice typu pro výsledek (odpovídá výstupu z calculateFoamProject)
 type CalculatorResult = {
   materialName: string;
-  wastePercent: string;
-  pureVolumeM3: string;
-  totalVolumeM3: string;
-  exactSets: string;
-  requiredSets: number;
-  totalCost: number;
   areaSqm: number;
-  wastePerSqmM3: string;
-  wastePerSqmLiters: string;
-  wasteKgTotal: string;
-  wasteKgPerSqm: string;
-  wasteKgPerM3: string;
+  thicknessCm: number;
+  coveragePerM3: number;
+  pureVolumeM3: number;
+  totalVolumeM3: number;
+  totalVolumeLiters: number;
+  totalMassKg: number;
+  kgPerM2: number;
+  exactSets: number;
+  totalSets: number;
+  totalCost: number;
+  costPerM2: number;
+  costPerM3: number;
+  exactMaterialCost: number;
+  thermalResistance: number | null;
 }
 
 export default function CalculatorForm({ materials }: { materials: Material[] }) {
@@ -40,6 +46,8 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
   const [selectedMaterialId, setSelectedMaterialId] = useState(materials[0]?.id || '')
   const [area, setArea] = useState<number | ''>('')
   const [thickness, setThickness] = useState<number | ''>('')
+  
+  // Stav pro výsledky výpočtu
   const [result, setResult] = useState<CalculatorResult | null>(null)
 
   // UX stavy pro tlačítka
@@ -47,41 +55,34 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
   const [isExportingDOC, setIsExportingDOC] = useState(false)
   const [isRedirecting, setIsRedirecting] = useState(false)
 
+  // Hlavní výpočetní funkce odesílající data do našeho nového modulu
   const handleCalculate = (e: React.FormEvent) => {
     e.preventDefault()
     if (!area || !thickness || !selectedMaterialId) return
     const material = materials.find(m => m.id === selectedMaterialId)
     if (!material) return
 
-    const pureVolumeM3 = Number(area) * (Number(thickness) / 100)
-    const totalVolumeM3 = pureVolumeM3 * material.wasteFactor
-    const exactSets = totalVolumeM3 / material.yieldPerSetM3
-    const requiredSets = Math.ceil(exactSets)
-    const totalCost = material.buyPricePerSet ? requiredSets * material.buyPricePerSet : 0
-    const wasteVolumeM3 = totalVolumeM3 - pureVolumeM3
-    const wastePerSqmM3 = Number(area) > 0 ? (wasteVolumeM3 / Number(area)) : 0
-    const wasteKgTotal = wasteVolumeM3 * material.density
-    const wasteKgPerSqm = Number(area) > 0 ? (wasteKgTotal / Number(area)) : 0
-    const wasteKgPerM3 = pureVolumeM3 > 0 ? (wasteKgTotal / pureVolumeM3) : 0
+    // Využití našeho nového, dokonalého matematického modulu
+    const calcResults = calculateFoamProject({
+      areaM2: Number(area),
+      thicknessCm: Number(thickness),
+      density: material.density,
+      wasteFactor: material.wasteFactor,
+      yieldPerSetM3: material.yieldPerSetM3,
+      buyPricePerSet: material.buyPricePerSet || 0,
+      lambda: parseLambda(material.lambda)
+    })
 
+    // Uložení obohaceného objektu do stavu
     setResult({
       materialName: material.name,
-      wastePercent: ((material.wasteFactor - 1) * 100).toFixed(0),
-      pureVolumeM3: pureVolumeM3.toFixed(2),
-      totalVolumeM3: totalVolumeM3.toFixed(2),
-      exactSets: exactSets.toFixed(2),
-      requiredSets,
-      totalCost,
       areaSqm: Number(area),
-      wastePerSqmM3: wastePerSqmM3.toFixed(3),
-      wastePerSqmLiters: (wastePerSqmM3 * 1000).toFixed(1),
-      wasteKgTotal: wasteKgTotal.toFixed(2),
-      wasteKgPerSqm: wasteKgPerSqm.toFixed(2),
-      wasteKgPerM3: wasteKgPerM3.toFixed(2)
+      thicknessCm: Number(thickness),
+      ...calcResults
     })
   }
 
-  // 1. Logika pro PDF (čistý a profesionální export)
+  // 1. Logika pro PDF 
   const handleExportPDF = async () => {
     if (!result) return
     setIsExportingPDF(true)
@@ -92,7 +93,7 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       
       // Hlavička
       doc.setFontSize(22)
-      doc.setTextColor(13, 27, 62) // #0D1B3E
+      doc.setTextColor(13, 27, 62) 
       doc.text('Kalkulace spotreby materialu', 20, 20)
       
       doc.setFontSize(10)
@@ -109,23 +110,26 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       
       doc.text(`Material: ${result.materialName}`, 20, 45)
       doc.text(`Zadana plocha: ${result.areaSqm} m2`, 20, 53)
-      doc.text(`Pozadovana tloustka: ${thickness} cm`, 20, 61)
+      doc.text(`Pozadovana tloustka: ${result.thicknessCm} cm`, 20, 61)
       
       doc.text(`Cisty objem: ${result.pureVolumeM3} m3`, 20, 75)
-      doc.text(`Objem vc. ztrat (${result.wastePercent}%): ${result.totalVolumeM3} m3`, 20, 83)
-      doc.text(`Celkova hmotnostni ztrata: ${result.wasteKgTotal} kg`, 20, 91)
+      doc.text(`Objem vc. ztrat: ${result.totalVolumeM3} m3 (${result.totalVolumeLiters} litru)`, 20, 83)
+      doc.text(`Celkova hmotnost materialu: ${result.totalMassKg} kg`, 20, 91)
+      
+      if (result.thermalResistance) {
+        doc.text(`Dosazeny tepelny odpor (R): ${result.thermalResistance} m2K/W`, 20, 99)
+      }
 
       // Finanční box
-      doc.setFillColor(240, 248, 255) // Jemně modré pozadí
-      doc.rect(20, 105, 170, 30, 'F')
+      doc.setFillColor(240, 248, 255) 
+      doc.rect(20, 110, 170, 30, 'F')
       
       doc.setFontSize(14)
       doc.setTextColor(13, 27, 62)
       doc.setFont("helvetica", "bold")
-      doc.text(`Potrebny pocet sad: ${result.requiredSets} ks`, 25, 115)
-      doc.text(`Celkovy naklad na material: ${result.totalCost.toLocaleString('cs-CZ')} Kc`, 25, 125)
+      doc.text(`Potrebny pocet sad: ${result.totalSets} ks`, 25, 120)
+      doc.text(`Celkovy naklad na material: ${result.totalCost.toLocaleString('cs-CZ')} Kc`, 25, 130)
 
-      // Uložení
       doc.save(`kalkulace-${result.materialName.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.pdf`)
     } catch (error) {
       console.error("Chyba při generování PDF:", error)
@@ -135,13 +139,12 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
     }
   }
 
-  // 2. Logika pro DOC (HTML Blob převod pro Word)
+  // 2. Logika pro DOC (HTML Blob)
   const handleExportDOC = () => {
     if (!result) return
     setIsExportingDOC(true)
 
     setTimeout(() => {
-      // Vytvoříme HTML strukturu, kterou MS Word umí přečíst
       const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Kalkulace spotřeby</title></head><body>"
       const footer = "</body></html>"
       const content = `
@@ -151,15 +154,16 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
         <table style="width: 100%; font-family: sans-serif; text-align: left; border-collapse: collapse;">
           <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Materiál:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${result.materialName}</td></tr>
           <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Plocha:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${result.areaSqm} m²</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Tloušťka:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${thickness} cm</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Tloušťka:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${result.thicknessCm} cm</td></tr>
           <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Čistý objem:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${result.pureVolumeM3} m³</td></tr>
           <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Objem vč. ztrát:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${result.totalVolumeM3} m³</td></tr>
-          <tr><td style="padding: 8px;"><strong>Hmotnostní ztráta:</strong></td><td style="padding: 8px;">${result.wasteKgTotal} kg</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Hmotnost materiálu:</strong></td><td style="padding: 8px; border-bottom: 1px solid #ddd;">${result.totalMassKg} kg</td></tr>
+          ${result.thermalResistance ? `<tr><td style="padding: 8px;"><strong>Tepelný odpor (R):</strong></td><td style="padding: 8px;">${result.thermalResistance} m²K/W</td></tr>` : ''}
         </table>
         <br/>
         <div style="background-color: #f0f8ff; padding: 20px; border-radius: 8px; font-family: sans-serif;">
           <h2 style="color: #0D1B3E; margin-top: 0;">Výsledek</h2>
-          <p><strong>Potřebný počet sad:</strong> ${result.requiredSets} ks</p>
+          <p><strong>Potřebný počet sad:</strong> ${result.totalSets} ks</p>
           <p><strong>Náklad na materiál:</strong> ${result.totalCost.toLocaleString('cs-CZ')} Kč</p>
         </div>
       `
@@ -175,31 +179,29 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       document.body.removeChild(fileDownload)
       
       setIsExportingDOC(false)
-    }, 500) // Drobná pauza pro UX efekt
+    }, 500)
   }
 
-  // 3. Logika pro Vložení do nabídky (Přenos dat přes URL parametry)
+  // 3. Logika pro Vložení do nabídky
   const handleAttachToInquiry = () => {
     if (!result) return
     setIsRedirecting(true)
     
-    // Připravíme data do query stringu
     const params = new URLSearchParams({
       materialId: selectedMaterialId,
       materialName: result.materialName,
       area: result.areaSqm.toString(),
-      thickness: thickness.toString(),
+      thickness: result.thicknessCm.toString(),
       cost: result.totalCost.toString(),
-      sets: result.requiredSets.toString()
+      sets: result.totalSets.toString()
     })
 
-    // Zde nastav cílovou URL podle toho, jak se jmenuje tvoje stránka pro tvorbu nabídek
     router.push(`/admin/quotes/new?${params.toString()}`)
   }
 
   return (
     <div className="space-y-6">
-      {/* Vstupní formulář */}
+      {/* Vstupní formulář zůstává stejný */}
       <form onSubmit={handleCalculate} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
         <div className="space-y-2">
           <label className="block text-sm font-bold text-gray-700 uppercase tracking-wide">Izolační materiál</label>
@@ -267,78 +269,107 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
         </button>
       </form>
 
-      {/* Výsledky kalkulace */}
+      {/* --- SUPERVISOR DASHBOARD: Výsledky kalkulace --- */}
       {result && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-8 animate-in fade-in zoom-in-95 duration-300">
           <div className="bg-gradient-to-r from-[#3B82F6] to-blue-500 px-6 py-5">
             <h3 className="text-white font-bold text-xl flex items-center gap-2">
               Výsledek pro: {result.materialName}
             </h3>
-            <p className="text-blue-100 text-sm mt-1">Data jsou připravena pro fakturaci a obchodní nabídku.</p>
+            <p className="text-blue-100 text-sm mt-1">
+              Plocha: {result.areaSqm} m² | Tloušťka: {result.thicknessCm} cm
+            </p>
           </div>
           
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <h3 className="text-lg font-extrabold text-[#0D1B3E] border-b border-gray-100 pb-2 mb-6">
+              Detailní analýza zakázky
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               
-              <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
-                <p className="text-sm font-semibold text-gray-500 mb-1">Čistý objem</p>
-                <p className="text-2xl font-black text-[#0D1B3E]">{result.pureVolumeM3} m³</p>
-                <p className="text-xs text-gray-400 mt-2 leading-relaxed">Matematický výpočet objemu k vyplnění zadaného prostoru (bez technologického odpadu).</p>
+              {/* BLOK 1: Fyzika a hmota */}
+              <div className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
+                <div className="bg-blue-50/50 px-5 py-3 border-b border-gray-100">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-blue-700">Fyzický objem & Hmota</h4>
+                </div>
+                <div className="p-5 space-y-4">
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">Celkový objem pěny</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-extrabold text-[#0D1B3E]">{result.totalVolumeM3} <span className="text-sm font-semibold">m³</span></span>
+                      <span className="text-sm text-gray-400 font-medium">({result.totalVolumeLiters.toLocaleString('cs-CZ')} l)</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">Celková hmotnost</p>
+                    <p className="text-xl font-bold text-[#0D1B3E]">{result.totalMassKg.toLocaleString('cs-CZ')} <span className="text-sm">kg</span></p>
+                  </div>
+                  <div className="pt-3 border-t border-gray-100">
+                    <p className="text-sm text-gray-500 font-medium">Spotřeba na 1 m²</p>
+                    <p className="text-lg font-bold text-[#0D1B3E]">{result.kgPerM2} <span className="text-xs text-gray-500">kg / m²</span></p>
+                  </div>
+                </div>
               </div>
 
-              <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
-                <p className="text-sm font-semibold text-gray-500 mb-1">
-                  Objem vč. ztráty ({result.wastePercent} %)
-                </p>
-                <p className="text-2xl font-black text-[#0D1B3E]">{result.totalVolumeM3} m³</p>
-                <p className="text-xs text-gray-400 mt-2 leading-relaxed">Celkový potřebný objem suroviny zohledňující ořez a technologickou ztrátu pěny.</p>
+              {/* BLOK 2: Ekonomika */}
+              <div className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
+                <div className="bg-emerald-50/50 px-5 py-3 border-b border-gray-100">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-700">Jednotkové náklady</h4>
+                </div>
+                <div className="p-5 space-y-4">
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">Náklad na 1 m²</p>
+                    <p className="text-2xl font-extrabold text-[#0D1B3E]">{result.costPerM2.toLocaleString('cs-CZ')} <span className="text-sm font-semibold">Kč</span></p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">Náklad na 1 m³</p>
+                    <p className="text-xl font-bold text-[#0D1B3E]">{result.costPerM3.toLocaleString('cs-CZ')} <span className="text-sm font-semibold">Kč</span></p>
+                  </div>
+                  <div className="pt-3 border-t border-gray-100">
+                    <p className="text-sm text-gray-500 font-medium">Vystříkaný materiál (čistá cena)</p>
+                    <p className="text-lg font-bold text-gray-700">{result.exactMaterialCost.toLocaleString('cs-CZ')} <span className="text-xs">Kč</span></p>
+                  </div>
+                </div>
               </div>
 
-              <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
-                <p className="text-sm font-semibold text-gray-500 mb-1">Ztráta materiálu na 1 m²</p>
-                <p className="text-2xl font-black text-[#0D1B3E]">
-                  {result.wastePerSqmM3} m³ <span className="text-sm text-gray-400 font-bold ml-1">({result.wasteKgPerSqm} kg)</span>
-                </p>
-                <p className="text-xs text-gray-400 mt-2 leading-relaxed">Kvantifikace ztraceného materiálu připadající přesně na jeden metr čtvereční.</p>
+              {/* BLOK 3: Logistika & Sklad */}
+              <div className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
+                <div className="bg-orange-50/50 px-5 py-3 border-b border-gray-100">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-orange-700">Logistika & Sklad</h4>
+                </div>
+                <div className="p-5 space-y-4">
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">Potřebné sady (Nákup)</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-extrabold text-[#0D1B3E]">{result.totalSets} <span className="text-sm font-semibold">sad(y)</span></span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">Přesná spotřeba</p>
+                    <p className="text-xl font-bold text-[#0D1B3E]">{result.exactSets} <span className="text-sm">sady</span></p>
+                  </div>
+                  
+                  {result.thermalResistance && (
+                    <div className="pt-3 border-t border-gray-100">
+                      <p className="text-sm text-gray-500 font-medium">Tepelný odpor (R)</p>
+                      <p className="text-lg font-bold text-[#3B82F6]">{result.thermalResistance} <span className="text-xs text-gray-500">m²·K/W</span></p>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
-                <p className="text-sm font-semibold text-gray-500 mb-1">Celková hmotnostní ztráta</p>
-                <p className="text-2xl font-black text-[#0D1B3E]">
-                  {result.wasteKgTotal} kg
-                </p>
-                <p className="text-xs text-gray-400 mt-2 leading-relaxed">Fyzická váha materiálu (v kilogramech), která bude představovat celkový technologický odpad.</p>
-              </div>
             </div>
 
-            {/* Zvýrazněná finanční sekce */}
-            <div className="flex flex-col md:flex-row justify-between items-center bg-blue-50/50 p-6 rounded-xl border border-blue-100 mb-8 shadow-inner">
-              <div>
-                <p className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-1">Potřebný počet sad</p>
-                <p className="text-3xl font-black text-[#0D1B3E]">
-                  {result.requiredSets} ks 
-                </p>
-                <p className="text-sm text-gray-500 mt-1 font-medium">Přesný výpočet: {result.exactSets} sad</p>
-              </div>
-              <div className="mt-6 md:mt-0 md:text-right">
-                <p className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-1">Náklad na materiál</p>
-                <p className="text-3xl font-black text-[#3B82F6]">
-                  {result.totalCost.toLocaleString('cs-CZ')} Kč
-                </p>
-                <p className="text-sm text-gray-500 mt-1 font-medium">Cena za zaokrouhlený počet sad.</p>
-              </div>
-            </div>
-
-            {/* Akční tlačítka */}
+            {/* Akční tlačítka - zůstávají beze změny */}
             <div className="border-t border-gray-100 pt-8">
               <h4 className="text-[#0D1B3E] font-extrabold mb-5 text-lg">Další kroky a obchodní zpracování</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 
-                {/* Tlačítko PDF */}
                 <button 
                   onClick={handleExportPDF}
                   disabled={isExportingPDF}
-                  className="flex flex-col border border-gray-200 rounded-xl p-5 hover:border-[#3B82F6] hover:shadow-md transition-all group text-left disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="flex flex-col border border-gray-200 rounded-xl p-5 hover:border-[#3B82F6] hover:shadow-md transition-all group text-left disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <div className="flex items-center gap-2 font-bold text-[#0D1B3E] group-hover:text-[#3B82F6] transition-colors mb-2">
                     {isExportingPDF ? <Loader2 size={22} className="animate-spin text-[#3B82F6]" /> : <FileDown size={22} className="text-[#3B82F6]" />}
@@ -349,11 +380,10 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
                   </p>
                 </button>
 
-                {/* Tlačítko DOC */}
                 <button 
                   onClick={handleExportDOC}
                   disabled={isExportingDOC}
-                  className="flex flex-col border border-gray-200 rounded-xl p-5 hover:border-[#3B82F6] hover:shadow-md transition-all group text-left disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="flex flex-col border border-gray-200 rounded-xl p-5 hover:border-[#3B82F6] hover:shadow-md transition-all group text-left disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <div className="flex items-center gap-2 font-bold text-[#0D1B3E] group-hover:text-[#3B82F6] transition-colors mb-2">
                     {isExportingDOC ? <Loader2 size={22} className="animate-spin text-[#3B82F6]" /> : <FileText size={22} className="text-[#3B82F6]" />}
@@ -364,11 +394,10 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
                   </p>
                 </button>
 
-                {/* Tlačítko Přenos do Nabídky */}
                 <button 
                   onClick={handleAttachToInquiry}
                   disabled={isRedirecting}
-                  className="flex flex-col border border-[#3B82F6]/30 bg-blue-50/50 rounded-xl p-5 hover:border-[#3B82F6] hover:shadow-md transition-all group text-left disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="flex flex-col border border-[#3B82F6]/30 bg-blue-50/50 rounded-xl p-5 hover:border-[#3B82F6] hover:shadow-md transition-all group text-left disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <div className="flex items-center gap-2 font-bold text-[#0D1B3E] group-hover:text-[#3B82F6] transition-colors mb-2">
                     {isRedirecting ? <Loader2 size={22} className="animate-spin text-[#3B82F6]" /> : <ClipboardSignature size={22} className="text-[#3B82F6]" />}
