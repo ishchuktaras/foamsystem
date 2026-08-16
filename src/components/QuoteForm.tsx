@@ -3,13 +3,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Building2, MapPin, Search, Save, Loader2, AlertCircle, FileDown, Percent } from 'lucide-react'
+import { Building2, MapPin, Search, Save, Loader2, AlertCircle, FileDown, Percent, AlertTriangle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createQuote } from '@/actions/quote'
 import { calculateFoamProject, parseLambda } from '@/lib/calculations'
 import jsPDF from 'jspdf'
 
-// --- PŘESNÉ TYPESCRIPT DEFINICE (TOTO OPRAVUJE TU CHYBU) ---
+// --- PŘESNÉ TYPESCRIPT DEFINICE ---
 interface Material {
   id: string;
   name: string;
@@ -37,7 +37,7 @@ interface QuoteFormProps {
     thickness: string;
   };
 }
-// -----------------------------------------------------------
+// -----------------------------------
 
 export default function QuoteForm({ materials, companyProfile, initialData }: QuoteFormProps) {
   const router = useRouter()
@@ -54,7 +54,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
   const [area, setArea] = useState<number | ''>(initialData.area ? Number(initialData.area) : '')
   const [thickness, setThickness] = useState<number | ''>(initialData.thickness ? Number(initialData.thickness) : '')
   
-  // Obchodní marže (Výchozí 100% přirážka k nákupní ceně materiálu)
+  // Obchodní marže
   const [marginPercent, setMarginPercent] = useState<number>(100)
 
   // UI stavy
@@ -80,8 +80,8 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       lambda: parseLambda(selectedMaterial.lambda)
     })
     
-    // Prodejní cena = Nákladová cena * (1 + (marže / 100))
-    clientFinalPrice = calcResults.totalCost * (1 + (marginPercent / 100))
+    // OPRAVA LOGIKY: Prodejní cena se nyní počítá z PŘESNĚ VYSTŘÍKANÉHO MATERIÁLU, nikoliv z celých sudů!
+    clientFinalPrice = calcResults.exactMaterialCost * (1 + (marginPercent / 100))
   }
 
   // ARES načítání
@@ -184,22 +184,39 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
 
       // CENOVÝ BOX
       doc.setFillColor(13, 27, 62) 
-      doc.rect(20, 155, 170, 45, 'F')
+      doc.rect(20, 150, 170, 45, 'F')
       
       doc.setTextColor(255, 255, 255)
       doc.setFontSize(14)
-      doc.text('Celkova cena za diko vcetne materialu a prace:', 25, 170)
+      doc.text('Cena za material a aplikaci izolační peny:', 25, 165)
       
       doc.setFontSize(24)
       doc.setFont("helvetica", "bold")
-      doc.text(`${clientFinalPrice.toLocaleString('cs-CZ')} Kc`, 25, 188)
+      doc.text(`${clientFinalPrice.toLocaleString('cs-CZ')} Kc`, 25, 183)
+
+      // UPOZORNĚNÍ PRO ZÁKAZNÍKA (Vícepráce a doprava)
+      doc.setTextColor(220, 38, 38) // Červená barva
+      doc.setFontSize(11)
+      doc.setFont("helvetica", "bold")
+      doc.text('Upozorneni k cene:', 20, 210)
+      
+      doc.setTextColor(50, 50, 50)
+      doc.setFontSize(10)
+      doc.setFont("helvetica", "normal")
+      doc.text('Vyse uvedena castka zahrnuje pouze vypocitanou spotrebu materialu a samotnou aplikaci.', 20, 217)
+      doc.text('Po ukonceni praci a podepsani predavaciho protokolu bude k cene douctovano:', 20, 223)
+      
+      // Odrážky s vícepracemi
+      doc.text('- Doprava materialu a strojnich zarizeni', 25, 230)
+      doc.text('- Priprava mistnosti (zakryvani, paskovani)', 25, 236)
+      doc.text('- Priplatky za praci ve ztizenem prostredi a ve vyskach', 25, 242)
 
       // BANKOVNÍ SPOJENÍ
       if (companyProfile?.bankAccount) {
         doc.setTextColor(100, 100, 100)
-        doc.setFontSize(10)
+        doc.setFontSize(9)
         doc.setFont("helvetica", "normal")
-        doc.text(`Bankovni spojeni pro uhrazeni zalohy/faktury: ${companyProfile.bankAccount}`, 20, 220)
+        doc.text(`Bankovni spojeni pro uhrazeni zalohy/faktury: ${companyProfile.bankAccount}`, 20, 265)
       }
 
       // PATIČKA
@@ -207,6 +224,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       doc.setTextColor(150, 150, 150)
       doc.text('Tato nabidka je informativni a nepredstavuje zavaznou smlouvu do jejiho podpisu.', 20, 275)
 
+      // Ukládání PDF (Název je bez diakritiky z jsPDF, aby to prohlížeč zvládl)
       doc.save(`Nabidka-${customerName.replace(/\s+/g, '-').toLowerCase() || 'klient'}.pdf`)
     } catch (error) {
       console.error(error)
@@ -362,12 +380,22 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
             
             <div className="space-y-2 text-sm text-blue-100/80 pt-4 border-t border-white/10">
               <div className="flex justify-between">
-                <span>Nákup materiálu:</span>
-                <span className="font-medium text-white">{calcResults.totalCost.toLocaleString('cs-CZ')} Kč</span>
+                <span>Čistý náklad na materiál:</span>
+                <span className="font-medium text-white">{calcResults.exactMaterialCost.toLocaleString('cs-CZ')} Kč</span>
               </div>
               <div className="flex justify-between">
                 <span>Hrubý zisk (Marže):</span>
-                <span className="font-medium text-emerald-400">{(clientFinalPrice - calcResults.totalCost).toLocaleString('cs-CZ')} Kč</span>
+                <span className="font-medium text-emerald-400">{(clientFinalPrice - calcResults.exactMaterialCost).toLocaleString('cs-CZ')} Kč</span>
+              </div>
+            </div>
+
+            {/* Upozornění pro uživatele aplikace před tiskem PDF */}
+            <div className="mt-4 bg-blue-900/50 p-3 rounded-lg border border-blue-800">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="text-blue-300 shrink-0 mt-0.5" size={16} />
+                <p className="text-xs text-blue-200 leading-tight">
+                  K této ceně bude po dokončení prací automaticky doúčtována doprava, zakrytí oken a práce ve výškách.
+                </p>
               </div>
             </div>
 
