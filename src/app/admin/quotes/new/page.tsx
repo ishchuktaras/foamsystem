@@ -4,7 +4,7 @@ import { FileSignature, Stamp, CheckCircle2, Info } from 'lucide-react'
 import QuoteForm from '@/components/QuoteForm'
 import { db } from '@/lib/db'
 import { getCompanyProfile } from '@/actions/settings'
-import { calculateFoamProject, parseLambda } from '@/lib/calculations' // Přidán import matematiky
+import { calculateFoamProject, parseLambda } from '@/lib/calculations'
 
 export default async function NewQuotePage({
   searchParams,
@@ -28,11 +28,13 @@ export default async function NewQuotePage({
   // 3. Načtení tvého firemního profilu pro hlavičku PDF
   const companyProfile = await getCompanyProfile()
 
-  // 4. Přepočítání přesných detailních nákladů pro banner!
+  // 4. Přepočítání přesných detailních nákladů pro banner
   let materialName = ''
   let displayTotalCost = 0
   let displayCostPerM2 = 0
   let displayCostPerM3 = 0
+  let displayExactSets = 0         // NOVÉ: Přesný počet sad
+  let displayExactMaterialCost = 0 // NOVÉ: Čistá cena vystříkaného materiálu
 
   if (hasCalculatedData) {
     const selected = materials.find(m => m.id === materialId)
@@ -50,6 +52,8 @@ export default async function NewQuotePage({
       displayTotalCost = calcResults.totalCost
       displayCostPerM2 = calcResults.costPerM2
       displayCostPerM3 = calcResults.costPerM3
+      displayExactSets = calcResults.exactSets                 // Propíšeme přesné sady
+      displayExactMaterialCost = calcResults.exactMaterialCost // Propíšeme čistou cenu materiálu
     }
   }
 
@@ -97,9 +101,12 @@ export default async function NewQuotePage({
                   Tloušťka: {thickness} cm
                 </span>
                 
-                {/* Rozpad nákladů na m2 a m3 */}
+                {/* Rozpad nákladů - Včetně nové čisté ceny vystříkaného materiálu */}
                 <span className="bg-white px-3 py-1 rounded-lg text-[#3B82F6] font-black text-sm border border-emerald-200 shadow-sm">
-                  Celkem: {displayTotalCost.toLocaleString('cs-CZ')} Kč
+                  Celkem nákup: {displayTotalCost.toLocaleString('cs-CZ')} Kč
+                </span>
+                <span className="bg-white px-3 py-1 rounded-lg text-indigo-600 font-bold text-sm border border-emerald-200 shadow-sm">
+                  Vystříkaný materiál ({displayExactSets} sady): {displayExactMaterialCost.toLocaleString('cs-CZ')} Kč
                 </span>
                 <span className="bg-white px-3 py-1 rounded-lg text-gray-700 font-bold text-sm border border-emerald-200 shadow-sm">
                   {displayCostPerM2.toLocaleString('cs-CZ')} Kč / m²
