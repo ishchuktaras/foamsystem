@@ -29,8 +29,8 @@ export default function AresSearchBox() {
 
   return (
     <div className="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-100 max-w-xl">
-      <h2 className="text-xl font-bold text-[#0D1B3E] mb-2 flex items-center gap-2.5">
-        <Building2 className="text-[#3B82F6]" size={24} />
+      <h2 className="text-xl font-bold text-[#000000] mb-2 flex items-center gap-2.5">
+        <Building2 className="text-[#FF4F00]" size={24} />
         Ověření firmy přes ARES
       </h2>
       <p className="text-sm text-gray-500 mb-6">
@@ -44,12 +44,12 @@ export default function AresSearchBox() {
           onChange={(e) => setIco(e.target.value)}
           placeholder="např. 23874694"
           maxLength={8}
-          className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] font-medium bg-white placeholder-gray-400"
+          className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium bg-white placeholder-gray-400"
         />
         <button
           type="submit"
           disabled={isPending || !ico.trim()}
-          className="px-6 py-3 bg-[#3B82F6] hover:bg-blue-600 text-white font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50 flex items-center gap-2 shrink-0"
+          className="px-6 py-3 bg-[#FF4F00] hover:bg-[#E64700] text-white font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50 flex items-center gap-2 shrink-0"
         >
           {isPending ? (
             <>
@@ -73,7 +73,7 @@ export default function AresSearchBox() {
 
       {companyData && (
         <div className="mt-6 p-5 bg-gray-50 border border-gray-200 rounded-xl space-y-2.5 text-sm">
-          <h3 className="font-bold text-[#0D1B3E] border-b border-gray-200 pb-2 text-base">
+          <h3 className="font-bold text-[#000000] border-b border-gray-200 pb-2 text-base">
             Nalezený subjekt:
           </h3>
           <div className="grid grid-cols-1 gap-1.5 pt-1">

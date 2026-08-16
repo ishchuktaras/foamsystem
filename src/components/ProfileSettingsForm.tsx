@@ -80,7 +80,7 @@ function InnerProfileForm({ session, updateSession }: { session: any, updateSess
       
       {/* 1. Základní údaje */}
       <div className="space-y-6">
-        <h2 className="text-lg font-bold text-[#0D1B3E] border-b border-gray-100 pb-2">Základní údaje</h2>
+        <h2 className="text-lg font-bold text-[#000000] border-b border-gray-100 pb-2">Základní údaje</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
@@ -90,7 +90,7 @@ function InnerProfileForm({ session, updateSession }: { session: any, updateSess
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] font-medium"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium"
             />
           </div>
           <div className="space-y-2">
@@ -100,7 +100,7 @@ function InnerProfileForm({ session, updateSession }: { session: any, updateSess
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] font-medium"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium"
             />
           </div>
         </div>
@@ -108,7 +108,7 @@ function InnerProfileForm({ session, updateSession }: { session: any, updateSess
 
       {/* 2. Změna hesla */}
       <div className="space-y-6">
-        <h2 className="text-lg font-bold text-[#0D1B3E] border-b border-gray-100 pb-2">Změna hesla</h2>
+        <h2 className="text-lg font-bold text-[#000000] border-b border-gray-100 pb-2">Změna hesla</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
@@ -118,7 +118,7 @@ function InnerProfileForm({ session, updateSession }: { session: any, updateSess
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••••"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] font-medium"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium"
             />
           </div>
           <div className="space-y-2">
@@ -128,7 +128,7 @@ function InnerProfileForm({ session, updateSession }: { session: any, updateSess
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••••••"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] font-medium"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium"
             />
           </div>
         </div>
@@ -148,7 +148,7 @@ function InnerProfileForm({ session, updateSession }: { session: any, updateSess
         <button 
           type="submit" 
           disabled={isSubmitting}
-          className="px-8 py-3 bg-[#0D1B3E] hover:bg-blue-950 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-2 hover:scale-[1.02] disabled:opacity-70 cursor-pointer"
+          className="px-8 py-3 bg-[#000000] hover:bg-zinc-900 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-2 hover:scale-[1.02] disabled:opacity-70 cursor-pointer"
         >
           {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
           {isSubmitting ? 'Ukládám...' : 'Uložit změny v profilu'}

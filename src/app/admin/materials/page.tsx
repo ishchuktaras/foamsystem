@@ -14,12 +14,12 @@ export default async function MaterialsAdminPage() {
     <div className="space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       {/* Prémiový Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0D1B3E] to-[#1a2c5b] p-8 md:p-10 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] p-8 md:p-10 text-white shadow-xl">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
             Správa materiálů
           </h1>
-          <p className="text-blue-100/80 text-lg leading-relaxed">
+          <p className="text-zinc-300/80 text-lg leading-relaxed">
             Centrální databáze izolačních pěn. Přidávejte nové systémy, upravujte jejich parametry, hustotu a nákupní ceny pro vždy přesné kalkulace.
           </p>
         </div>
@@ -36,7 +36,7 @@ export default async function MaterialsAdminPage() {
       <div className="flex justify-end">
         <Link 
           href="/admin/materials/new"
-          className="bg-[#3B82F6] hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md flex items-center gap-2 hover:scale-[1.02]"
+          className="bg-[#FF4F00] hover:bg-[#E64700] text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md flex items-center gap-2 hover:scale-[1.02]"
         >
           <Plus size={20} />
           Přidat nový materiál

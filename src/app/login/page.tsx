@@ -45,7 +45,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-sm border border-gray-100">
         <div>
-          <h2 className="text-center text-3xl font-extrabold text-[#0D1B3E]">
+          <h2 className="text-center text-3xl font-extrabold text-[#000000]">
             FoamSystem
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
@@ -70,7 +70,7 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 focus:outline-none focus:ring-[#3B82F6] focus:border-[#3B82F6] sm:text-sm transition-colors"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 focus:outline-none focus:ring-[#FF4F00] focus:border-[#FF4F00] sm:text-sm transition-colors"
               />
             </div>
             <div>
@@ -83,12 +83,12 @@ export default function LoginPage() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   required
-                  className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 focus:outline-none focus:ring-[#3B82F6] focus:border-[#3B82F6] sm:text-sm transition-colors"
+                  className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 focus:outline-none focus:ring-[#FF4F00] focus:border-[#FF4F00] sm:text-sm transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-[#3B82F6] transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-[#FF4F00] transition-colors"
                   title={showPassword ? "Skrýt heslo" : "Zobrazit heslo"}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -101,7 +101,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#3B82F6] hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3B82F6] disabled:opacity-50 transition-colors"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#FF4F00] hover:bg-[#E64700] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF4F00] disabled:opacity-50 transition-colors"
             >
               {loading ? "Ověřuji..." : "Přihlásit se"}
             </button>

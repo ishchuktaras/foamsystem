@@ -18,10 +18,10 @@ export default function AdminLayout({
     <div className="flex min-h-screen bg-gray-50">
       
       {/* Mobilní horní lišta (zobrazená jen na malých obrazovkách) */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#0D1B3E] text-white z-30 flex items-center justify-between px-4 shadow-md">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#000000] text-white z-30 flex items-center justify-between px-4 shadow-md">
         <div className="flex items-center gap-2">
           <span className="bg-white/10 p-1 rounded text-xs font-bold">N</span>
-          <span className="font-extrabold text-lg">Foam<span className="text-[#3B82F6]">System</span></span>
+          <span className="font-extrabold text-lg">Foam<span className="text-[#FF4F00]">System</span></span>
         </div>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}

@@ -69,7 +69,7 @@ export default function MaterialForm({ materialId, initialData }: MaterialFormPr
             value={formData.name}
             onChange={handleChange}
             placeholder="např. Ekoprodur S11E-MAX"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] placeholder-gray-400 bg-white font-medium"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] placeholder-gray-400 bg-white font-medium"
           />
         </div>
 
@@ -80,7 +80,7 @@ export default function MaterialForm({ materialId, initialData }: MaterialFormPr
             name="type"
             value={formData.type}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] placeholder-gray-400 bg-white font-medium"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] placeholder-gray-400 bg-white font-medium"
           >
             <option value="OPEN_CELL">Otevřená struktura (Měkká)</option>
             <option value="CLOSED_CELL">Uzavřená struktura (Tvrdá)</option>
@@ -98,7 +98,7 @@ export default function MaterialForm({ materialId, initialData }: MaterialFormPr
             value={formData.density}
             onChange={handleChange}
             placeholder="např. 8"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] placeholder-gray-400 bg-white font-medium"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] placeholder-gray-400 bg-white font-medium"
           />
         </div>
 
@@ -113,7 +113,7 @@ export default function MaterialForm({ materialId, initialData }: MaterialFormPr
             value={formData.yieldPerSetM3}
             onChange={handleChange}
             placeholder="např. 39"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] placeholder-gray-400 bg-white font-medium"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] placeholder-gray-400 bg-white font-medium"
           />
         </div>
 
@@ -128,7 +128,7 @@ export default function MaterialForm({ materialId, initialData }: MaterialFormPr
             value={formData.wasteFactor}
             onChange={handleChange}
             placeholder="např. 1.05"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] placeholder-gray-400 bg-white font-medium"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] placeholder-gray-400 bg-white font-medium"
           />
         </div>
 
@@ -141,7 +141,7 @@ export default function MaterialForm({ materialId, initialData }: MaterialFormPr
             value={formData.buyPricePerSet}
             onChange={handleChange}
             placeholder="např. 45000"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] placeholder-gray-400 bg-white font-medium"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] placeholder-gray-400 bg-white font-medium"
           />
           <span className="text-xs text-gray-500">Volitelný údaj. Slouží pro výpočet marže.</span>
         </div>
@@ -164,7 +164,7 @@ export default function MaterialForm({ materialId, initialData }: MaterialFormPr
         <button
           type="submit"
           disabled={isLoading}
-          className="px-5 py-2.5 bg-[#3B82F6] hover:bg-blue-600 text-white font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-70"
+          className="px-5 py-2.5 bg-[#FF4F00] hover:bg-[#E64700] text-white font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-70"
         >
           {isLoading ? 'Ukládám...' : 'Uložit materiál'}
         </button>

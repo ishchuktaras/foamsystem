@@ -19,19 +19,19 @@ export default async function QuotesPage() {
     <div className="space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       {/* Prémiový Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0D1B3E] to-[#1a2c5b] p-8 md:p-10 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
             Nabídky a poptávky
           </h1>
-          <p className="text-blue-100/80 text-lg leading-relaxed">
+          <p className="text-zinc-400 text-lg leading-relaxed">
             Kompletní evidence klientských zakázek. Tvořte cenové nabídky, sledujte stav rozpracovaných projektů a automaticky stahujte firemní údaje pomocí integrace ARES.
           </p>
         </div>
-        <div className="absolute right-0 top-0 -translate-y-12 translate-x-1/4 opacity-10 pointer-events-none">
+        <div className="absolute right-0 top-0 -translate-y-12 translate-x-1/4 opacity-10 pointer-events-none text-[#FF4F00]">
           <FileText size={300} />
         </div>
-        <div className="absolute right-40 bottom-0 translate-y-1/3 opacity-10 pointer-events-none">
+        <div className="absolute right-40 bottom-0 translate-y-1/3 opacity-10 pointer-events-none text-[#FF4F00]">
           <TrendingUp size={150} />
         </div>
       </div>
@@ -40,7 +40,7 @@ export default async function QuotesPage() {
       <div className="flex justify-end">
         <Link 
           href="/admin/quotes/new" 
-          className="bg-[#3B82F6] hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md flex items-center gap-2 hover:scale-[1.02]"
+          className="bg-[#FF4F00] hover:bg-[#E64700] text-[#FEFEFA] px-6 py-3 rounded-xl font-bold transition-all shadow-md flex items-center gap-2 hover:scale-[1.02]"
         >
           <PlusCircle size={20} />
           Nová poptávka
@@ -49,21 +49,21 @@ export default async function QuotesPage() {
 
       {/* Podmíněný výpis: Seznam vs. Prázdný stav */}
       {quotes.length === 0 ? (
-        <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center space-y-4 mt-8 max-w-4xl mx-auto">
-          <div className="flex justify-center text-gray-300 mb-2">
+        <div className="bg-[#FEFEFA] p-12 rounded-2xl shadow-sm border border-zinc-200 text-center space-y-4 mt-8 max-w-4xl mx-auto">
+          <div className="flex justify-center text-zinc-300 mb-2">
             <FileText size={64} />
           </div>
-          <h3 className="text-xl font-bold text-[#0D1B3E]">Zatím tu nejsou žádné záznamy</h3>
-          <p className="text-gray-500 text-sm max-w-md mx-auto leading-relaxed">
+          <h3 className="text-xl font-bold text-[#000000]">Zatím tu nejsou žádné záznamy</h3>
+          <p className="text-zinc-500 text-sm max-w-md mx-auto leading-relaxed">
             Klikněte na tlačítko &quot;Nová poptávka&quot;, vyzkoušejte si automatické načítání firem z ARES a uložte první zakázku.
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden max-w-6xl mx-auto">
+        <div className="bg-[#FEFEFA] rounded-2xl shadow-sm border border-zinc-200 overflow-hidden max-w-6xl mx-auto">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-[#0D1B3E] text-white text-xs uppercase tracking-wider">
+                <tr className="bg-[#000000] text-[#FEFEFA] text-xs uppercase tracking-wider">
                   <th className="py-4 px-6 font-semibold">Zákazník / Firma</th>
                   <th className="py-4 px-6 font-semibold">Materiál</th>
                   <th className="py-4 px-6 font-semibold">Plocha / Tloušťka</th>
@@ -72,27 +72,27 @@ export default async function QuotesPage() {
                   <th className="py-4 px-6 font-semibold text-right">Akce</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-sm">
+              <tbody className="divide-y divide-zinc-100 text-sm">
                 {quotes.map((quote) => (
-                  <tr key={quote.id} className="hover:bg-blue-50/50 transition-colors">
+                  <tr key={quote.id} className="hover:bg-zinc-50 transition-colors">
                     <td className="py-4 px-6">
-                      <div className="font-bold text-[#0D1B3E]">{quote.customerName}</div>
-                      {quote.ico && <div className="text-xs text-gray-400">IČO: {quote.ico}</div>}
-                      <div className="text-xs text-gray-500">{quote.city}</div>
+                      <div className="font-bold text-[#000000]">{quote.customerName}</div>
+                      {quote.ico && <div className="text-xs text-zinc-500">IČO: {quote.ico}</div>}
+                      <div className="text-xs text-zinc-500">{quote.city}</div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="bg-blue-50 text-[#3B82F6] font-semibold px-2.5 py-1 rounded-lg text-xs border border-blue-100">
+                      <span className="bg-[#FF4F00]/10 text-[#FF4F00] font-semibold px-2.5 py-1 rounded-lg text-xs border border-[#FF4F00]/20">
                         {quote.materialName}
                       </span>
                     </td>
-                    <td className="py-4 px-6 text-gray-600">
+                    <td className="py-4 px-6 text-zinc-600">
                       <div className="font-medium">{quote.area} m²</div>
-                      <div className="text-xs text-gray-400">Tloušťka: {quote.thickness} cm</div>
+                      <div className="text-xs text-zinc-500">Tloušťka: {quote.thickness} cm</div>
                     </td>
-                    <td className="py-4 px-6 font-extrabold text-[#0D1B3E]">
+                    <td className="py-4 px-6 font-extrabold text-[#000000]">
                       {Number(quote.totalCost).toLocaleString('cs-CZ')} Kč
                     </td>
-                    <td className="py-4 px-6 text-gray-500 text-xs">
+                    <td className="py-4 px-6 text-zinc-500 text-xs">
                       {new Date(quote.createdAt).toLocaleDateString('cs-CZ')}
                     </td>
                     <td className="py-4 px-6 text-right">

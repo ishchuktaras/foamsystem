@@ -18,9 +18,9 @@ export default async function EditMaterialPage({ params }: { params: { id: strin
       <div className="max-w-4xl mx-auto space-y-6">
         
         <div>
-          <h1 className="text-3xl font-bold text-[#0D1B3E]">Úprava materiálu</h1>
+          <h1 className="text-3xl font-bold text-[#000000]">Úprava materiálu</h1>
           <p className="text-gray-600 mt-1">
-            Změňte parametry nebo nákupní cenu pro <strong className="text-[#3B82F6]">{material.name}</strong>.
+            Změňte parametry nebo nákupní cenu pro <strong className="text-[#FF4F00]">{material.name}</strong>.
           </p>
         </div>
 

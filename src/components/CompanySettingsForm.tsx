@@ -60,7 +60,7 @@ export default function CompanySettingsForm({ initialData }: { initialData: Prof
   }
 
   // Společné třídy pro všechny inputy, aby byly krásně čitelné
-  const inputClassName = "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] placeholder:text-gray-400 bg-white"
+  const inputClassName = "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] placeholder:text-gray-400 bg-white"
 
   return (
     <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-100 space-y-6">
@@ -68,15 +68,15 @@ export default function CompanySettingsForm({ initialData }: { initialData: Prof
       {/* Základní údaje */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2 space-y-1">
-          <label className="text-sm font-semibold text-[#0D1B3E]">Název subjektu / Firmy</label>
+          <label className="text-sm font-semibold text-[#000000]">Název subjektu / Firmy</label>
           <input name="companyName" value={formData.companyName} onChange={handleChange} placeholder="např. Technická firma s.r.o." className={inputClassName} />
         </div>
         <div className="space-y-1">
-          <label className="text-sm font-semibold text-[#0D1B3E]">IČO</label>
+          <label className="text-sm font-semibold text-[#000000]">IČO</label>
           <input name="ico" value={formData.ico} onChange={handleChange} placeholder="např. 23874694" className={inputClassName} />
         </div>
         <div className="space-y-1">
-          <label className="text-sm font-semibold text-[#0D1B3E]">DIČ</label>
+          <label className="text-sm font-semibold text-[#000000]">DIČ</label>
           <input name="dic" value={formData.dic} onChange={handleChange} placeholder="např. CZ12345678" className={inputClassName} />
         </div>
       </div>
@@ -86,15 +86,15 @@ export default function CompanySettingsForm({ initialData }: { initialData: Prof
       {/* Adresa */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2 space-y-1">
-          <label className="text-sm font-semibold text-[#0D1B3E]">Ulice a číslo popisné</label>
+          <label className="text-sm font-semibold text-[#000000]">Ulice a číslo popisné</label>
           <input name="street" value={formData.street} onChange={handleChange} placeholder="např. Městská 123" className={inputClassName} />
         </div>
         <div className="space-y-1">
-          <label className="text-sm font-semibold text-[#0D1B3E]">Město</label>
+          <label className="text-sm font-semibold text-[#000000]">Město</label>
           <input name="city" value={formData.city} onChange={handleChange} placeholder="např. Praha" className={inputClassName} />
         </div>
         <div className="space-y-1">
-          <label className="text-sm font-semibold text-[#0D1B3E]">PSČ</label>
+          <label className="text-sm font-semibold text-[#000000]">PSČ</label>
           <input name="zip" value={formData.zip} onChange={handleChange} placeholder="např. 123 45" className={inputClassName} />
         </div>
       </div>
@@ -104,19 +104,19 @@ export default function CompanySettingsForm({ initialData }: { initialData: Prof
       {/* Kontakty a Banka */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1">
-          <label className="text-sm font-semibold text-[#0D1B3E]">E-mail</label>
+          <label className="text-sm font-semibold text-[#000000]">E-mail</label>
           <input name="email" value={formData.email} onChange={handleChange} placeholder="např. info@firma.cz" className={inputClassName} />
         </div>
         <div className="space-y-1">
-          <label className="text-sm font-semibold text-[#0D1B3E]">Telefon</label>
+          <label className="text-sm font-semibold text-[#000000]">Telefon</label>
           <input name="phone" value={formData.phone} onChange={handleChange} placeholder="např. +420 123 456 789" className={inputClassName} />
         </div>
         <div className="space-y-1">
-          <label className="text-sm font-semibold text-[#0D1B3E]">Webové stránky</label>
+          <label className="text-sm font-semibold text-[#000000]">Webové stránky</label>
           <input name="website" value={formData.website} onChange={handleChange} placeholder="např. www.firma.cz" className={inputClassName} />
         </div>
         <div className="space-y-1">
-          <label className="text-sm font-semibold text-[#0D1B3E]">Bankovní účet (IBAN / Číslo)</label>
+          <label className="text-sm font-semibold text-[#000000]">Bankovní účet (IBAN / Číslo)</label>
           <input name="bankAccount" value={formData.bankAccount} onChange={handleChange} placeholder="např. 123456789/0100" className={inputClassName} />
         </div>
       </div>
@@ -128,7 +128,7 @@ export default function CompanySettingsForm({ initialData }: { initialData: Prof
       )}
 
       <div className="flex justify-end pt-4">
-        <button type="submit" disabled={isLoading} className="px-6 py-3 bg-[#0D1B3E] hover:bg-blue-950 text-white font-bold rounded-xl shadow-md transition-colors flex items-center gap-2 disabled:opacity-70">
+        <button type="submit" disabled={isLoading} className="px-6 py-3 bg-[#000000] hover:bg-zinc-900 text-white font-bold rounded-xl shadow-md transition-colors flex items-center gap-2 disabled:opacity-70">
           {isLoading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
           Uložit firemní údaje
         </button>

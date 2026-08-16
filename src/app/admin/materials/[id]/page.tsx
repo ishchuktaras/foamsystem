@@ -24,7 +24,7 @@ export default async function EditMaterialPage({ params }: EditMaterialPageProps
       <div className="max-w-2xl mx-auto space-y-6">
         
         <div>
-          <h1 className="text-3xl font-bold text-[#0D1B3E]">Úprava materiálu</h1>
+          <h1 className="text-3xl font-bold text-[#000000]">Úprava materiálu</h1>
           <p className="text-gray-600 mt-1">
             Upravujete parametry pro izolační pěnu:{' '}
             <span className="font-semibold text-gray-900">{material.name}</span>

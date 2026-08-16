@@ -55,7 +55,7 @@ export default function UserForm({ userId, initialData }: { userId?: string, ini
             required
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E]"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000]"
           />
         </div>
 
@@ -67,7 +67,7 @@ export default function UserForm({ userId, initialData }: { userId?: string, ini
             required
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E]"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000]"
           />
         </div>
 
@@ -77,7 +77,7 @@ export default function UserForm({ userId, initialData }: { userId?: string, ini
             name="role"
             value={formData.role}
             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E] font-medium"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium"
           >
             <option value="JEDNATEL">Jednatel</option>
             <option value="SUPERVIZOR">Supervizor</option>
@@ -98,7 +98,7 @@ export default function UserForm({ userId, initialData }: { userId?: string, ini
             required={!userId}
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3B82F6] outline-none text-[#0D1B3E]"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000]"
           />
         </div>
       </div>
@@ -109,7 +109,7 @@ export default function UserForm({ userId, initialData }: { userId?: string, ini
         <button type="button" onClick={() => router.push('/admin/users')} className="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">
           Zrušit
         </button>
-        <button type="submit" disabled={isLoading} className="px-5 py-2.5 bg-[#3B82F6] hover:bg-blue-600 text-white font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-70">
+        <button type="submit" disabled={isLoading} className="px-5 py-2.5 bg-[#FF4F00] hover:bg-[#E64700] text-white font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-70">
           {isLoading ? 'Ukládám...' : 'Uložit pracovníka'}
         </button>
       </div>
