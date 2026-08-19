@@ -12,6 +12,7 @@ import jsPDF from 'jspdf'
 interface Material {
   id: string;
   name: string;
+  type: string; // Přidáno pro zobrazení typu pěny
   density: number;
   yieldPerSetM3: number;
   wasteFactor: number;
@@ -31,7 +32,7 @@ interface QuoteFormProps {
   materials: Material[];
   companyProfile: CompanyProfile | null;
   initialData: {
-    id?: string; // Tady byla chybějící definice ID!
+    id?: string;
     materialId: string;
     area: string;
     thickness: string;
@@ -84,8 +85,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     if (initialData.id && initialData.totalCost && clientFinalPrice === 0) {
        const storedCost = Number(initialData.totalCost)
        const calculatedMargin = Math.round(((storedCost / calcResults.exactMaterialCost) - 1) * 100)
-       // Pokud se marže od posledního renderu liší a my to teprve načítáme, nastavíme původní marži.
-       // Toto je jen zjednodušený příklad, ideální by bylo useEffect, ale pro náš účel to stačí:
+       
        if(marginPercent === 100 && calculatedMargin !== 100) {
            setMarginPercent(calculatedMargin > 0 ? calculatedMargin : 0)
        }
@@ -155,7 +155,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       if (companyProfile?.email) doc.text(companyProfile.email, 120, 42)
       if (companyProfile?.phone) doc.text(companyProfile.phone, 120, 47)
 
-      // Oranžová linka (RGB pro FF4F00)
+      // Oranžová linka
       doc.setDrawColor(255, 79, 0) 
       doc.setLineWidth(0.5)
       doc.line(20, 52, 190, 52)
@@ -180,7 +180,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       doc.text(`Pozadovana tloustka vrstvy: ${thickness} cm`, 20, 129)
 
       if (calcResults.thermalResistance) {
-        doc.setTextColor(255, 79, 0) // Oranžová
+        doc.setTextColor(255, 79, 0) 
         doc.setFont("helvetica", "bold")
         doc.text(`Garantovany tepelny odpor (R): ${calcResults.thermalResistance} m2K/W`, 20, 140)
         doc.setFont("helvetica", "normal")
@@ -326,14 +326,18 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
           </div>
         </div>
 
-        {/* Technické parametry */}
+        {/* Technické parametry s upraveným výpisem materiálů */}
         <div className="space-y-6 pt-6 border-t border-zinc-200">
           <h3 className="text-lg font-bold text-[#000000] border-b border-zinc-200 pb-2">Technická specifikace</h3>
           
           <div className="space-y-2">
             <label className="block text-sm font-bold text-zinc-700 uppercase tracking-wide">Materiál *</label>
             <select value={selectedMaterialId} onChange={(e) => setSelectedMaterialId(e.target.value)} className="w-full px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium bg-zinc-50/50">
-              {materials.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+              {materials.map(m => (
+                <option key={m.id} value={m.id}>
+                  {m.name} (Typ: {m.type}, Hustota: {m.density} kg/m³)
+                </option>
+              ))}
             </select>
           </div>
 
