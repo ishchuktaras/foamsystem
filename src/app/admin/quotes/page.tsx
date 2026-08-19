@@ -18,7 +18,7 @@ export default async function QuotesPage() {
   return (
     <div className="space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-full overflow-hidden">
       
-      {/* Prémiový Banner - Na mobilu p-6, na desktopu p-10 */}
+      {/* Prémiový Banner */}
       <div className="relative rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-6 md:p-10 text-[#FEFEFA] shadow-xl overflow-hidden">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3">
@@ -93,8 +93,14 @@ export default async function QuotesPage() {
                   </div>
                 </div>
 
-                {/* Tlačítka karty */}
-                <div className="pt-3 border-t border-zinc-100 flex justify-end">
+                {/* Tlačítka karty s přidáním "Upravit" */}
+                <div className="pt-3 border-t border-zinc-100 flex justify-end gap-2">
+                  <Link 
+                    href={`/admin/quotes/${quote.id}/edit`}
+                    className="w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 text-[#000000] font-bold rounded-xl text-sm transition-colors flex items-center justify-center cursor-pointer"
+                  >
+                    Upravit
+                  </Link>
                   <form action={async () => {
                     'use server'
                     await deleteQuote(quote.id)
@@ -104,7 +110,7 @@ export default async function QuotesPage() {
                       className="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer border border-red-100"
                     >
                       <Trash2 size={16} />
-                      Smazat nabídku
+                      Smazat
                     </button>
                   </form>
                 </div>
@@ -150,11 +156,17 @@ export default async function QuotesPage() {
                       <td className="py-4 px-6 text-zinc-500 text-xs">
                         {new Date(quote.createdAt).toLocaleDateString('cs-CZ')}
                       </td>
-                      <td className="py-4 px-6 text-right">
+                      <td className="py-4 px-6 text-right whitespace-nowrap">
+                        <Link 
+                          href={`/admin/quotes/${quote.id}/edit`}
+                          className="px-3 py-1.5 bg-zinc-100 text-[#000000] hover:bg-zinc-200 font-medium text-sm rounded-md transition-colors inline-block mr-2"
+                        >
+                          Upravit
+                        </Link>
                         <form action={async () => {
                           'use server'
                           await deleteQuote(quote.id)
-                        }}>
+                        }} className="inline-block">
                           <button 
                             type="submit"
                             className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1 cursor-pointer"
