@@ -38,7 +38,6 @@ export async function createQuote(data: {
   }
 }
 
-// Nová funkce pro smazání nabídky
 export async function deleteQuote(id: string) {
   try {
     await db.quote.delete({
@@ -49,5 +48,41 @@ export async function deleteQuote(id: string) {
   } catch (error) {
     console.error("Chyba při mazání nabídky:", error)
     return { success: false, error: "Nepodařilo se smazat nabídku." }
+  }
+}
+
+// FUNKCE Slouží pro úpravu (editaci) existující nabídky
+export async function updateQuote(id: string, data: {
+  customerName: string
+  ico?: string
+  street?: string
+  city: string
+  zip?: string
+  materialName: string
+  area: string
+  thickness: string
+  totalCost: string
+}) {
+  try {
+    await db.quote.update({
+      where: { id },
+      data: {
+        customerName: data.customerName,
+        ico: data.ico,
+        street: data.street,
+        city: data.city,
+        zip: data.zip,
+        materialName: data.materialName,
+        area: data.area,
+        thickness: data.thickness,
+        totalCost: data.totalCost,
+      }
+    })
+    
+    revalidatePath('/admin/quotes')
+    return { success: true }
+  } catch (error) {
+    console.error("Chyba při aktualizaci nabídky:", error)
+    return { success: false, error: "Nepodařilo se aktualizovat nabídku v databázi." }
   }
 }
