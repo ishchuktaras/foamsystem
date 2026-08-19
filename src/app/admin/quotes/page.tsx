@@ -75,7 +75,8 @@ export default async function QuotesPage() {
                   </div>
                   <div className="text-right shrink-0">
                     <div className="font-extrabold text-[#000000] text-lg">{Number(quote.totalCost).toLocaleString('cs-CZ')} Kč</div>
-                    <div className="text-xs text-zinc-400 mt-1">{new Date(quote.createdAt).toLocaleDateString('cs-CZ')}</div>
+                    <div className="text-xs text-zinc-400 mt-1">Vytvořeno: {new Date(quote.createdAt).toLocaleDateString('cs-CZ')}</div>
+                    <div className="text-xs text-zinc-400 mt-0.5">Změněno: {new Date(quote.updatedAt).toLocaleString('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
                   </div>
                 </div>
                 
@@ -93,7 +94,7 @@ export default async function QuotesPage() {
                   </div>
                 </div>
 
-                {/* Tlačítka karty s přidáním "Upravit" */}
+                {/* Tlačítka karty */}
                 <div className="pt-3 border-t border-zinc-100 flex justify-end gap-2">
                   <Link 
                     href={`/admin/quotes/${quote.id}/edit`}
@@ -130,6 +131,7 @@ export default async function QuotesPage() {
                     <th className="py-4 px-6 font-semibold">Plocha / Tloušťka</th>
                     <th className="py-4 px-6 font-semibold">Celková cena</th>
                     <th className="py-4 px-6 font-semibold">Vytvořeno</th>
+                    <th className="py-4 px-6 font-semibold">Změněno</th>
                     <th className="py-4 px-6 font-semibold text-right">Akce</th>
                   </tr>
                 </thead>
@@ -155,6 +157,15 @@ export default async function QuotesPage() {
                       </td>
                       <td className="py-4 px-6 text-zinc-500 text-xs">
                         {new Date(quote.createdAt).toLocaleDateString('cs-CZ')}
+                      </td>
+                      <td className="py-4 px-6 text-zinc-500 text-xs">
+                        {new Date(quote.updatedAt).toLocaleString('cs-CZ', { 
+                          day: 'numeric', 
+                          month: 'numeric', 
+                          year: 'numeric', 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
                       </td>
                       <td className="py-4 px-6 text-right whitespace-nowrap">
                         <Link 
