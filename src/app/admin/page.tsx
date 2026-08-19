@@ -1,19 +1,29 @@
 // src/app/admin/page.tsx
 
 import Link from 'next/link'
-import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, ArrowRight, CheckCircle2, Users, Database } from 'lucide-react'
+import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, ArrowRight, CheckCircle2, Users, Database, ClipboardList, PenTool } from 'lucide-react'
 import { db } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminDashboard() {
-  // Načtení reálných dat přímo z databáze přes Prisma
+  // Načtení reálných dat přímo z databáze přes Prisma (paralelně pro maximální rychlost)
   let materialsCount = 0
   let usersCount = 0
+  let inquiriesCount = 0
+  let ordersCount = 0
+  let contractsCount = 0
+  let completedCount = 0
 
   try {
-    materialsCount = await db.material.count()
-    usersCount = await db.user.count()
+    [materialsCount, usersCount, inquiriesCount, ordersCount, contractsCount, completedCount] = await Promise.all([
+      db.material.count(),
+      db.user.count(),
+      db.quote.count({ where: { status: 'INQUIRY' } }),
+      db.quote.count({ where: { status: 'ORDER' } }),
+      db.quote.count({ where: { status: 'CONTRACT' } }),
+      db.quote.count({ where: { status: 'COMPLETED' } }),
+    ])
   } catch (error) {
     console.error("Chyba při načítání statistik z databáze:", error)
   }
@@ -40,42 +50,93 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* 2. Reálné KPI statistiky z databáze */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        
-        <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-[#FF4F00] transition-colors">
-          <div className="p-4 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl">
-            <Boxes size={24} />
+      {/* 2. Stav zakázek (Business KPI) */}
+      <div>
+        <h2 className="text-xl font-bold text-[#000000] mb-4">Stav zakázek a procesů</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-blue-500 transition-colors">
+            <div className="p-4 bg-blue-50 text-blue-600 rounded-xl">
+              <FileText size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Poptávky</p>
+              <h3 className="text-2xl font-bold text-[#000000]">{inquiriesCount}</h3>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Evidované materiály</p>
-            <h3 className="text-2xl font-bold text-[#000000]">{materialsCount}</h3>
-          </div>
-        </div>
-        
-        <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-emerald-500 transition-colors">
-          <div className="p-4 bg-emerald-50 text-emerald-600 rounded-xl">
-            <Users size={24} />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Aktivní pracovníci</p>
-            <h3 className="text-2xl font-bold text-[#000000]">{usersCount}</h3>
-          </div>
-        </div>
 
-        <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-emerald-500 transition-colors">
-          <div className="p-4 bg-purple-50 text-purple-600 rounded-xl">
-            <Database size={24} />
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-amber-500 transition-colors">
+            <div className="p-4 bg-amber-50 text-amber-600 rounded-xl">
+              <ClipboardList size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Objednávky</p>
+              <h3 className="text-2xl font-bold text-[#000000]">{ordersCount}</h3>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Stav databáze</p>
-            <h3 className="text-2xl font-bold text-emerald-600 text-lg mt-1">Připojeno</h3>
-          </div>
-        </div>
 
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-purple-500 transition-colors">
+            <div className="p-4 bg-purple-50 text-purple-600 rounded-xl">
+              <PenTool size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Smlouvy</p>
+              <h3 className="text-2xl font-bold text-[#000000]">{contractsCount}</h3>
+            </div>
+          </div>
+
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-emerald-500 transition-colors">
+            <div className="p-4 bg-emerald-50 text-emerald-600 rounded-xl">
+              <CheckCircle2 size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Dokončeno</p>
+              <h3 className="text-2xl font-bold text-[#000000]">{completedCount}</h3>
+            </div>
+          </div>
+
+        </div>
       </div>
 
-      {/* 3. Hlavní rozcestník - Rychlé akce */}
+      {/* 3. Systémové metriky */}
+      <div>
+        <h2 className="text-xl font-bold text-[#000000] mb-4">Systémové metriky</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-[#FF4F00] transition-colors">
+            <div className="p-4 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl">
+              <Boxes size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Evidované materiály</p>
+              <h3 className="text-2xl font-bold text-[#000000]">{materialsCount}</h3>
+            </div>
+          </div>
+          
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-emerald-500 transition-colors">
+            <div className="p-4 bg-emerald-50 text-emerald-600 rounded-xl">
+              <Users size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Aktivní pracovníci</p>
+              <h3 className="text-2xl font-bold text-[#000000]">{usersCount}</h3>
+            </div>
+          </div>
+
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-purple-500 transition-colors">
+            <div className="p-4 bg-purple-50 text-purple-600 rounded-xl">
+              <Database size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Stav databáze</p>
+              <h3 className="text-2xl font-bold text-emerald-600 text-lg mt-1">Připojeno</h3>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* 4. Hlavní rozcestník - Rychlé akce */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-6">Rychlé akce</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -136,9 +197,6 @@ export default async function AdminDashboard() {
   )
 }
 
-// --------------------------------------------------------
-// Přidána přesná definice (interface) pro vyřešení chyby "any"
-// --------------------------------------------------------
 interface DashboardCardProps {
   title: string;
   value: string;
@@ -149,7 +207,6 @@ interface DashboardCardProps {
   hoverClass: string;
 }
 
-// Pomocná komponenta pro interaktivní karty (s přiděleným typem)
 function DashboardCard({ 
   title, 
   value, 

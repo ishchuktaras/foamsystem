@@ -147,8 +147,42 @@ model Quote {
   area         String
   thickness    String
   totalCost    String
-  status       String   @default("DRAFT")
-
+  status         QuoteStatus @default(INQUIRY)
+  evidence       JobEvidence?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt @default(now())
+}
+
+enum QuoteStatus {
+  INQUIRY    // Poptávka
+  ORDER      // Objednávka
+  CONTRACT   // Podepsaná smlouva
+  COMPLETED  // Dokončená stavba
+}
+
+model JobEvidence {
+  id               String   @id @default(cuid())
+  quoteId          String   @unique
+  quote            Quote    @relation(fields: [quoteId], references: [id])
+  
+  // Teploty
+  ambientTemp      Float
+  internalTemp     Float
+  surfaceTemp      Float
+  surfaceType      String // plech, drevo, folie, atd.
+  
+  // Reaktory
+  reactorStart     Int
+  reactorEnd       Int
+  
+  // Balení
+  foilRolls        Int
+  packingHours     Float
+  
+  // Ostatní
+  difficultEnv     String? // Popis ztíženého prostředí
+  workingAtHeights Boolean @default(false)
+  ventilationUsed  Boolean @default(false)
+  
+  createdAt        DateTime @default(now())
 }
