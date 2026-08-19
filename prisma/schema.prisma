@@ -148,6 +148,7 @@ model Quote {
   thickness    String
   totalCost    String
   status       String   @default("DRAFT")
-  createdAt    DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt @default(now())
 }
