@@ -5,7 +5,7 @@
 import { useState } from 'react'
 import { Building2, MapPin, Search, Save, Loader2, AlertCircle, FileDown, Percent, AlertTriangle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { createQuote } from '@/actions/quote'
+import { createQuote, updateQuote } from '@/actions/quote'
 import { calculateFoamProject, parseLambda } from '@/lib/calculations'
 import jsPDF from 'jspdf'
 
@@ -31,20 +31,27 @@ interface QuoteFormProps {
   materials: Material[];
   companyProfile: CompanyProfile | null;
   initialData: {
+    id?: string; // Tady byla chybějící definice ID!
     materialId: string;
     area: string;
     thickness: string;
+    customerName?: string;
+    ico?: string;
+    street?: string;
+    city?: string;
+    zip?: string;
+    totalCost?: string;
   };
 }
 
 export default function QuoteForm({ materials, companyProfile, initialData }: QuoteFormProps) {
   const router = useRouter()
   
-  const [ico, setIco] = useState('')
-  const [customerName, setCustomerName] = useState('')
-  const [street, setStreet] = useState('')
-  const [city, setCity] = useState('')
-  const [zip, setZip] = useState('')
+  const [ico, setIco] = useState(initialData.ico || '')
+  const [customerName, setCustomerName] = useState(initialData.customerName || '')
+  const [street, setStreet] = useState(initialData.street || '')
+  const [city, setCity] = useState(initialData.city || '')
+  const [zip, setZip] = useState(initialData.zip || '')
   
   const [selectedMaterialId, setSelectedMaterialId] = useState(initialData.materialId || (materials[0]?.id || ''))
   const [area, setArea] = useState<number | ''>(initialData.area ? Number(initialData.area) : '')
@@ -73,6 +80,17 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       lambda: parseLambda(selectedMaterial.lambda)
     })
     
+    // Zpětný výpočet procentuální marže z uložené ceny (pokud editujeme existující nabídku)
+    if (initialData.id && initialData.totalCost && clientFinalPrice === 0) {
+       const storedCost = Number(initialData.totalCost)
+       const calculatedMargin = Math.round(((storedCost / calcResults.exactMaterialCost) - 1) * 100)
+       // Pokud se marže od posledního renderu liší a my to teprve načítáme, nastavíme původní marži.
+       // Toto je jen zjednodušený příklad, ideální by bylo useEffect, ale pro náš účel to stačí:
+       if(marginPercent === 100 && calculatedMargin !== 100) {
+           setMarginPercent(calculatedMargin > 0 ? calculatedMargin : 0)
+       }
+    }
+
     clientFinalPrice = calcResults.exactMaterialCost * (1 + (marginPercent / 100))
   }
 
@@ -232,7 +250,12 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       totalCost: String(clientFinalPrice) 
     }
 
-    const result = await createQuote(formData)
+    let result;
+    if (initialData.id) {
+      result = await updateQuote(initialData.id, formData)
+    } else {
+      result = await createQuote(formData)
+    }
 
     if (result.success) {
       router.push('/admin/quotes')
@@ -329,7 +352,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
         <div className="pt-4 flex justify-end gap-3">
           <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-[#FF4F00] hover:bg-[#E64700] text-[#FEFEFA] font-bold rounded-xl shadow-md transition-all flex justify-center items-center gap-2 hover:scale-[1.01] cursor-pointer">
             {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-            Uložit do evidence
+            {initialData.id ? 'Uložit změny v nabídce' : 'Uložit do evidence'}
           </button>
         </div>
       </form>
