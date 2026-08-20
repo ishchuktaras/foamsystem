@@ -4,7 +4,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Boxes, Calculator, FileText, Settings, LogOut, X, Users } from 'lucide-react'
+import { LayoutDashboard, Boxes, Calculator, FileText, Settings, LogOut, X, Users, ClipboardCheck } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import CompanyBadge from './CompanyBadge'
 
@@ -40,6 +40,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     { name: 'Správa materiálů', href: '/admin/materials', icon: Boxes },
     { name: 'Kalkulátor spotřeby', href: '/admin/calculator', icon: Calculator },
     { name: 'Nabídky a poptávky', href: '/admin/quotes', icon: FileText },
+    { name: 'Evidence práce', href: '/admin/evidence', icon: ClipboardCheck }, // Přidána nová položka evidence
     { name: 'Nastavení', href: '/admin/settings', icon: Settings },
   ]
 
