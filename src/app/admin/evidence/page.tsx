@@ -5,7 +5,6 @@ import { ClipboardCheck, Thermometer, Cog, Package } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 
 export default async function EvidenceListPage() {
-  // Načteme jen dokončené zakázky včetně jejich technické evidence
   const completedQuotes = await db.quote.findMany({
     where: { status: 'COMPLETED' },
     include: { evidence: true },
@@ -15,8 +14,7 @@ export default async function EvidenceListPage() {
   return (
     <div className="space-y-6 p-4 md:p-8 animate-in fade-in duration-500 max-w-full overflow-hidden">
       
-      {/* Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-[#000000] border border-zinc-800 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
             Evidence práce
@@ -41,7 +39,6 @@ export default async function EvidenceListPage() {
           {completedQuotes.map((quote) => (
             <div key={quote.id} className="bg-[#FEFEFA] rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col md:flex-row">
               
-              {/* Levá část: Info o zakázce */}
               <div className="p-6 md:w-1/3 bg-zinc-50 border-b md:border-b-0 md:border-r border-zinc-200">
                 <div className="text-sm font-bold text-[#FF4F00] uppercase tracking-wider mb-1">Zákazník</div>
                 <h3 className="text-xl font-black text-[#000000] mb-2">{quote.customerName}</h3>
@@ -56,19 +53,12 @@ export default async function EvidenceListPage() {
                     <span className="text-zinc-500">Rozsah:</span>
                     <span className="font-bold">{quote.area} m² / {quote.thickness} cm</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">Realizováno:</span>
-                    <span className="font-bold">{new Date(quote.updatedAt).toLocaleDateString('cs-CZ')}</span>
-                  </div>
                 </div>
               </div>
 
-              {/* Pravá část: Technická evidence */}
               <div className="p-6 md:w-2/3 grid grid-cols-1 sm:grid-cols-3 gap-6">
-                
                 {quote.evidence ? (
                   <>
-                    {/* Teploty */}
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 text-[#000000] font-bold border-b border-zinc-100 pb-2">
                         <Thermometer size={16} className="text-[#FF4F00]" /> Teploty
@@ -81,7 +71,6 @@ export default async function EvidenceListPage() {
                       </div>
                     </div>
 
-                    {/* Reaktory */}
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 text-[#000000] font-bold border-b border-zinc-100 pb-2">
                         <Cog size={16} className="text-[#FF4F00]" /> Reaktory
@@ -93,7 +82,6 @@ export default async function EvidenceListPage() {
                       </div>
                     </div>
 
-                    {/* Balení a provoz */}
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 text-[#000000] font-bold border-b border-zinc-100 pb-2">
                         <Package size={16} className="text-[#FF4F00]" /> Provoz
@@ -113,11 +101,8 @@ export default async function EvidenceListPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="col-span-3 text-center text-zinc-400 py-8 italic">
-                    Data evidence chybí
-                  </div>
+                  <div className="col-span-3 text-center text-zinc-400 py-8 italic">Data evidence chybí</div>
                 )}
-                
               </div>
             </div>
           ))}
