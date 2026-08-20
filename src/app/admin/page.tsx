@@ -1,7 +1,7 @@
 // src/app/admin/page.tsx
 
 import Link from 'next/link'
-import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, ArrowRight, CheckCircle2, Users, Database, ClipboardList, PenTool } from 'lucide-react'
+import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, ArrowRight, CheckCircle2, Users, Database, ClipboardList, PenTool, ClipboardCheck } from 'lucide-react'
 import { db } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
@@ -159,6 +159,17 @@ export default async function AdminDashboard() {
             icon={<Calculator size={28} className="text-[#000000]" />}
             colorClass="bg-zinc-100"
             hoverClass="group-hover:border-[#000000]"
+          />
+
+          {/* NOVÁ KARTA PRO EVIDENCI PRÁCE */}
+          <DashboardCard
+            title="Evidence"
+            value="Archiv prací"
+            subtitle="Technické parametry staveb"
+            href="/admin/evidence"
+            icon={<ClipboardCheck size={28} className="text-[#0D1B3E]" />}
+            colorClass="bg-[#0D1B3E]/10"
+            hoverClass="group-hover:border-[#0D1B3E]"
           />
           
           <DashboardCard
