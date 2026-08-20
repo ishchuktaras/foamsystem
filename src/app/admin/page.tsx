@@ -1,13 +1,161 @@
 // src/app/admin/page.tsx
 
 import Link from 'next/link'
-import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, ArrowRight, CheckCircle2, Users, Database, ClipboardList, PenTool, ClipboardCheck } from 'lucide-react'
+import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, ArrowRight, CheckCircle2, Users, Database, ClipboardList, PenTool, ClipboardCheck, Calendar, HardHat } from 'lucide-react'
 import { db } from '@/lib/db'
+import { auth } from '@/auth'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AdminDashboard() {
-  // Načtení reálných dat přímo z databáze přes Prisma (paralelně pro maximální rychlost)
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: { period?: string }
+}) {
+  const session = await auth()
+  const currentUser = session?.user as { id?: string; role?: string; name?: string } | undefined
+  const role = currentUser?.role ? String(currentUser.role).toUpperCase() : ''
+  const userId = currentUser?.id
+  const userName = currentUser?.name || 'Aplikátore'
+
+  const isApplicator = role === 'APLIKATOR' || role === 'POMOCNIK'
+
+  // ==========================================
+  // POHLED APLIKÁTORA (Omezený dashboard)
+  // ==========================================
+  if (isApplicator && userId) {
+    const period = searchParams?.period || 'today'
+    
+    // Výpočet počátečního data podle vybraného filtru
+    const now = new Date()
+    let startDate = new Date()
+    
+    if (period === 'today') {
+      startDate.setHours(0, 0, 0, 0)
+    } else if (period === 'week') {
+      const day = now.getDay() || 7
+      if (day !== 1) startDate.setHours(-24 * (day - 1))
+      startDate.setHours(0, 0, 0, 0)
+    } else if (period === 'month') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+    }
+
+    // 1. Kolik má aktivních (nedokončených) zakázek CELKEM (tady datum nefiltrujeme, musí vidět vše, co mu visí)
+    const pendingQuotes = await db.quote.count({
+      where: {
+        status: { not: 'COMPLETED' },
+        OR: [
+          { responsibleUserId: userId },
+          { assignedUsers: { some: { id: userId } } }
+        ]
+      }
+    })
+
+    // 2. Kolik zakázek dokončil ve vybraném období
+    const completedQuotesPeriod = await db.quote.count({
+      where: {
+        status: 'COMPLETED',
+        updatedAt: { gte: startDate },
+        OR: [
+          { responsibleUserId: userId },
+          { assignedUsers: { some: { id: userId } } }
+        ]
+      }
+    })
+
+    return (
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {/* Uvítací Banner Aplikátora */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0D1B3E] to-[#1a2b5e] border border-blue-900/50 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
+          <div className="relative z-10 max-w-2xl">
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+              Ahoj, {userName.split(' ')[0]}!
+            </h1>
+            <p className="text-blue-200 text-lg leading-relaxed">
+              Zde je tvůj osobní přehled. Zkontroluj si naplánované zakázky a nezapomeň u dokončených staveb včas vyplňovat technickou evidenci.
+            </p>
+          </div>
+          <div className="absolute right-0 top-0 -translate-y-4 translate-x-1/4 opacity-20 pointer-events-none text-blue-400">
+            <HardHat size={250} />
+          </div>
+        </div>
+
+        {/* Filtr období */}
+        <div className="flex items-center gap-2 bg-[#FEFEFA] p-2 rounded-xl border border-zinc-200 w-max shadow-sm">
+          <Link 
+            href="/admin?period=today" 
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${period === 'today' ? 'bg-[#FF4F00] text-white shadow-md' : 'text-zinc-500 hover:bg-zinc-100'}`}
+          >
+            Dnes
+          </Link>
+          <Link 
+            href="/admin?period=week" 
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${period === 'week' ? 'bg-[#FF4F00] text-white shadow-md' : 'text-zinc-500 hover:bg-zinc-100'}`}
+          >
+            Tento týden
+          </Link>
+          <Link 
+            href="/admin?period=month" 
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${period === 'month' ? 'bg-[#FF4F00] text-white shadow-md' : 'text-zinc-500 hover:bg-zinc-100'}`}
+          >
+            Tento měsíc
+          </Link>
+        </div>
+
+        {/* Metriky Aplikátora */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-amber-500">
+            <div className="p-4 bg-amber-50 text-amber-600 rounded-xl">
+              <ClipboardList size={28} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Čeká na realizaci</p>
+              <h3 className="text-3xl font-black text-[#000000]">{pendingQuotes}</h3>
+            </div>
+          </div>
+
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-green-500">
+            <div className="p-4 bg-green-50 text-green-600 rounded-xl">
+              <CheckCircle2 size={28} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Dokončeno (vybrané období)</p>
+              <h3 className="text-3xl font-black text-[#000000]">{completedQuotesPeriod}</h3>
+            </div>
+          </div>
+        </div>
+
+        {/* Rychlé akce Aplikátora */}
+        <div>
+          <h2 className="text-xl font-bold text-[#000000] mb-4">Kam dál?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <DashboardCard
+              title="Moje zakázky"
+              value="Seznam staveb"
+              subtitle="Přiřazené práce k realizaci"
+              href="/admin/quotes"
+              icon={<TrendingUp size={28} className="text-[#FF4F00]" />}
+              colorClass="bg-[#FF4F00]/10"
+              hoverClass="group-hover:border-[#FF4F00]"
+            />
+            <DashboardCard
+              title="Evidence"
+              value="Odevzdat práci"
+              subtitle="Vyplnit technické parametry"
+              href="/admin/evidence"
+              icon={<ClipboardCheck size={28} className="text-green-600" />}
+              colorClass="bg-green-50"
+              hoverClass="group-hover:border-green-500"
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ==========================================
+  // POHLED ADMINA / SUPERVIZORA (Globální data)
+  // ==========================================
   let materialsCount = 0
   let usersCount = 0
   let inquiriesCount = 0
@@ -31,7 +179,7 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      {/* 1. Uvítací Banner */}
+      {/* 1. Uvítací Banner Admina */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
@@ -41,7 +189,6 @@ export default async function AdminDashboard() {
             Vítejte v administraci FoamSystem. Zde máš rychlý přístup ke kalkulacím, zakázkám a kompletní správě izolačních materiálů.
           </p>
         </div>
-        {/* Dekorativní ikony v pozadí */}
         <div className="absolute right-0 top-0 -translate-y-12 translate-x-1/4 opacity-10 pointer-events-none text-[#FF4F00]">
           <Boxes size={300} />
         </div>
@@ -161,7 +308,6 @@ export default async function AdminDashboard() {
             hoverClass="group-hover:border-[#000000]"
           />
 
-          {/* NOVÁ KARTA PRO EVIDENCI PRÁCE */}
           <DashboardCard
             title="Evidence"
             value="Archiv prací"
