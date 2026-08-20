@@ -1,7 +1,7 @@
 // src/app/admin/quotes/page.tsx
 
 import Link from 'next/link'
-import { FileText, TrendingUp, PlusCircle, Trash2 } from 'lucide-react'
+import { FileText, TrendingUp, PlusCircle, Trash2, ClipboardCheck } from 'lucide-react'
 import { db } from '@/lib/db'
 import { deleteQuote } from '@/actions/quote'
 
@@ -25,7 +25,7 @@ export default async function QuotesPage() {
             Nabídky a poptávky
           </h1>
           <p className="text-zinc-400 text-sm md:text-lg leading-relaxed">
-            Kompletní evidence klientských zakázek. Tvořte cenové nabídky, sledujte stav rozpracovaných projektů a automaticky stahujte firemní údaje pomocí integrace ARES.
+            Kompletní evidence klientských zakázek. Tvořte cenové nabídky, sledujte stav rozpracovaných projektů a po realizaci vyplňte technickou evidenci.
           </p>
         </div>
         <div className="absolute right-0 top-0 -translate-y-12 translate-x-1/4 opacity-10 pointer-events-none text-[#FF4F00]">
@@ -75,8 +75,11 @@ export default async function QuotesPage() {
                   </div>
                   <div className="text-right shrink-0">
                     <div className="font-extrabold text-[#000000] text-lg">{Number(quote.totalCost).toLocaleString('cs-CZ')} Kč</div>
-                    <div className="text-xs text-zinc-400 mt-1">Vytvořeno: {new Date(quote.createdAt).toLocaleDateString('cs-CZ')}</div>
-                    <div className="text-xs text-zinc-400 mt-0.5">Změněno: {new Date(quote.updatedAt).toLocaleString('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                    <div className="text-xs text-zinc-400 mt-1">Stav: 
+                      <span className={`ml-1 font-bold ${quote.status === 'COMPLETED' ? 'text-green-600' : 'text-amber-600'}`}>
+                        {quote.status}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 
@@ -94,26 +97,37 @@ export default async function QuotesPage() {
                   </div>
                 </div>
 
-                {/* Tlačítka karty */}
-                <div className="pt-3 border-t border-zinc-100 flex justify-end gap-2">
-                  <Link 
-                    href={`/admin/quotes/${quote.id}/edit`}
-                    className="w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 text-[#000000] font-bold rounded-xl text-sm transition-colors flex items-center justify-center cursor-pointer"
-                  >
-                    Upravit
-                  </Link>
-                  <form action={async () => {
-                    'use server'
-                    await deleteQuote(quote.id)
-                  }} className="w-full">
-                    <button 
-                      type="submit"
-                      className="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer border border-red-100"
+                {/* Tlačítka karty - PŘIDÁNO TLAČÍTKO EVIDENCE */}
+                <div className="pt-3 border-t border-zinc-100 flex flex-col gap-2">
+                  {quote.status !== 'COMPLETED' && (
+                    <Link 
+                      href={`/admin/quotes/${quote.id}/evidence`}
+                      className="w-full py-2.5 bg-green-50 hover:bg-green-100 text-green-700 font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer border border-green-200"
                     >
-                      <Trash2 size={16} />
-                      Smazat
-                    </button>
-                  </form>
+                      <ClipboardCheck size={18} />
+                      Vyplnit evidenci stavby
+                    </Link>
+                  )}
+                  <div className="flex gap-2">
+                    <Link 
+                      href={`/admin/quotes/${quote.id}/edit`}
+                      className="w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 text-[#000000] font-bold rounded-xl text-sm transition-colors flex items-center justify-center cursor-pointer"
+                    >
+                      Upravit
+                    </Link>
+                    <form action={async () => {
+                      'use server'
+                      await deleteQuote(quote.id)
+                    }} className="w-full">
+                      <button 
+                        type="submit"
+                        className="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer border border-red-100"
+                      >
+                        <Trash2 size={16} />
+                        Smazat
+                      </button>
+                    </form>
+                  </div>
                 </div>
                 
               </div>
@@ -123,15 +137,13 @@ export default async function QuotesPage() {
           {/* 2. ZOBRAZENÍ PRO DESKTOP (Tabulka) */}
           <div className="hidden md:block bg-[#FEFEFA] rounded-2xl shadow-sm border border-zinc-200 overflow-hidden max-w-6xl mx-auto w-full">
             <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse min-w-[800px]">
+              <table className="w-full text-left border-collapse min-w-[900px]">
                 <thead>
                   <tr className="bg-[#000000] text-[#FEFEFA] text-xs uppercase tracking-wider">
                     <th className="py-4 px-6 font-semibold">Zákazník / Firma</th>
                     <th className="py-4 px-6 font-semibold">Materiál</th>
-                    <th className="py-4 px-6 font-semibold">Plocha / Tloušťka</th>
-                    <th className="py-4 px-6 font-semibold">Celková cena</th>
-                    <th className="py-4 px-6 font-semibold">Vytvořeno</th>
-                    <th className="py-4 px-6 font-semibold">Změněno</th>
+                    <th className="py-4 px-6 font-semibold">Stav</th>
+                    <th className="py-4 px-6 font-semibold">Cena</th>
                     <th className="py-4 px-6 font-semibold text-right">Akce</th>
                   </tr>
                 </thead>
@@ -144,30 +156,31 @@ export default async function QuotesPage() {
                         <div className="text-xs text-zinc-500">{quote.city}</div>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="bg-[#FF4F00]/10 text-[#FF4F00] font-semibold px-2.5 py-1 rounded-lg text-xs border border-[#FF4F00]/20">
+                        <span className="bg-[#FF4F00]/10 text-[#FF4F00] font-semibold px-2.5 py-1 rounded-lg text-xs border border-[#FF4F00]/20 block w-max mb-1">
                           {quote.materialName}
                         </span>
+                        <div className="text-xs text-zinc-500">{quote.area} m² / {quote.thickness} cm</div>
                       </td>
-                      <td className="py-4 px-6 text-zinc-600">
-                        <div className="font-medium text-[#000000]">{quote.area} m²</div>
-                        <div className="text-xs text-zinc-500">Tloušťka: {quote.thickness} cm</div>
+                      <td className="py-4 px-6">
+                        {quote.status === 'COMPLETED' ? (
+                          <span className="text-green-600 font-bold bg-green-50 px-2 py-1 rounded-md text-xs border border-green-200">Dokončeno</span>
+                        ) : (
+                          <span className="text-amber-600 font-bold bg-amber-50 px-2 py-1 rounded-md text-xs border border-amber-200">Rozpracováno</span>
+                        )}
                       </td>
                       <td className="py-4 px-6 font-extrabold text-[#000000]">
                         {Number(quote.totalCost).toLocaleString('cs-CZ')} Kč
                       </td>
-                      <td className="py-4 px-6 text-zinc-500 text-xs">
-                        {new Date(quote.createdAt).toLocaleDateString('cs-CZ')}
-                      </td>
-                      <td className="py-4 px-6 text-zinc-500 text-xs">
-                        {new Date(quote.updatedAt).toLocaleString('cs-CZ', { 
-                          day: 'numeric', 
-                          month: 'numeric', 
-                          year: 'numeric', 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
-                      </td>
                       <td className="py-4 px-6 text-right whitespace-nowrap">
+                        {/* PŘIDÁNO TLAČÍTKO EVIDENCE PRO DESKTOP */}
+                        {quote.status !== 'COMPLETED' && (
+                          <Link 
+                            href={`/admin/quotes/${quote.id}/evidence`}
+                            className="px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 font-bold text-sm rounded-md transition-colors inline-flex items-center gap-1 mr-2"
+                          >
+                            <ClipboardCheck size={14} /> Evidence
+                          </Link>
+                        )}
                         <Link 
                           href={`/admin/quotes/${quote.id}/edit`}
                           className="px-3 py-1.5 bg-zinc-100 text-[#000000] hover:bg-zinc-200 font-medium text-sm rounded-md transition-colors inline-block mr-2"
@@ -180,7 +193,7 @@ export default async function QuotesPage() {
                         }} className="inline-block">
                           <button 
                             type="submit"
-                            className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-lg text-xs transition-colors inline-flex items-center gap-1 cursor-pointer"
+                            className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-md text-sm transition-colors inline-flex items-center gap-1 cursor-pointer"
                           >
                             <Trash2 size={14} />
                             Smazat
