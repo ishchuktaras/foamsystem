@@ -1,7 +1,7 @@
 // src/app/admin/quotes/page.tsx
 
 import Link from 'next/link'
-import { FileText, TrendingUp, PlusCircle, Trash2, ClipboardCheck } from 'lucide-react'
+import { FileText, TrendingUp, PlusCircle, Trash2, ClipboardCheck, Calendar } from 'lucide-react'
 import { db } from '@/lib/db'
 import { deleteQuote } from '@/actions/quote'
 import { auth } from '@/auth'
@@ -9,7 +9,6 @@ import { auth } from '@/auth'
 export const dynamic = 'force-dynamic'
 
 export default async function QuotesPage() {
-  // 1. Zjistíme, kdo je aktuálně přihlášený
   const session = await auth()
   const currentUser = session?.user as { id?: string; role?: string } | undefined
   const role = currentUser?.role ? String(currentUser.role).toUpperCase() : ''
@@ -17,7 +16,6 @@ export default async function QuotesPage() {
 
   const isApplicator = role === 'APLIKATOR'
 
-  // 2. Sestavíme filtr pro databázi (pokud je to aplikátor, ukážeme jen jeho zakázky)
   const whereClause = isApplicator 
     ? {
         OR: [
@@ -25,9 +23,8 @@ export default async function QuotesPage() {
           { assignedUsers: { some: { id: userId } } }
         ]
       } 
-    : {} // Admin, Supervizor a Jednatel vidí vše
+    : {}
 
-  // 3. Načtení dat
   const quotes = await db.quote.findMany({
     where: whereClause,
     orderBy: { createdAt: 'desc' }
@@ -40,14 +37,14 @@ export default async function QuotesPage() {
     <div className="space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-full overflow-hidden">
       
       {/* Prémiový Banner */}
-      <div className="relative rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-6 md:p-10 text-[#FEFEFA] shadow-xl overflow-hidden">
+      <div className="relative rounded-2xl bg-linear-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-6 md:p-10 text-[#FEFEFA] shadow-xl overflow-hidden">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3">
             {isApplicator ? 'Moje naplánované zakázky' : 'Nabídky a poptávky'}
           </h1>
           <p className="text-zinc-400 text-sm md:text-lg leading-relaxed">
             {isApplicator 
-              ? 'Seznam zakázek, které vám byly přiděleny k realizaci. Po dokončení nezapomeňte vyplnit technickou evidenci.'
+              ? 'Seznam zakázek, které vám byly přiděleny k realizaci. Sledujte termíny a po dokončení vyplňte technickou evidenci.'
               : 'Kompletní evidence klientských zakázek. Tvořte cenové nabídky, sledujte stav rozpracovaných projektů a po realizaci vyplňte technickou evidenci.'
             }
           </p>
@@ -60,7 +57,6 @@ export default async function QuotesPage() {
         </div>
       </div>
 
-      {/* Akční panel s tlačítkem (Skryto pro aplikátory) */}
       {!isApplicator && (
         <div className="flex justify-end">
           <Link 
@@ -73,7 +69,6 @@ export default async function QuotesPage() {
         </div>
       )}
 
-      {/* Podmíněný výpis: Prázdný stav */}
       {quotes.length === 0 ? (
         <div className="bg-[#FEFEFA] p-8 md:p-12 rounded-2xl shadow-sm border border-zinc-200 text-center space-y-4 mt-8 max-w-4xl mx-auto">
           <div className="flex justify-center text-zinc-300 mb-2">
@@ -84,7 +79,7 @@ export default async function QuotesPage() {
           </h3>
           <p className="text-zinc-500 text-sm max-w-md mx-auto leading-relaxed">
             {isApplicator 
-              ? 'Počkejte, až vám supervizor přidělí práci na další den.'
+              ? 'Počkejte, až vám supervizor v dispečinku naplánuje práci na další dny.'
               : 'Klikněte na tlačítko Nová poptávka, vyzkoušejte si automatické načítání firem z ARES a uložte první zakázku.'
             }
           </p>
@@ -92,7 +87,7 @@ export default async function QuotesPage() {
       ) : (
         <div className="w-full">
           
-          {/* 1. ZOBRAZENÍ PRO MOBILY (Karty) */}
+          {/* 1. MOBILNÍ KARTY */}
           <div className="block space-y-4 md:hidden w-full">
             {quotes.map((quote) => (
               <div key={quote.id} className="bg-[#FEFEFA] p-5 rounded-2xl shadow-sm border border-zinc-200 flex flex-col gap-4">
@@ -125,9 +120,16 @@ export default async function QuotesPage() {
                     <span className="text-zinc-500">Rozměry:</span>
                     <span className="font-bold text-zinc-800">{quote.area} m² <span className="font-normal text-zinc-400">/ {quote.thickness} cm</span></span>
                   </div>
+                  {quote.scheduledDate && (
+                    <div className="flex justify-between items-center text-sm pt-2 border-t border-zinc-100">
+                      <span className="text-zinc-500 flex items-center gap-1"><Calendar size={14} className="text-[#FF4F00]" /> Termín:</span>
+                      <span className="font-bold text-[#FF4F00]">
+                        {new Date(quote.scheduledDate).toLocaleDateString('cs-CZ')}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Tlačítka karty */}
                 <div className="pt-3 border-t border-zinc-100 flex flex-col gap-2">
                   {quote.status !== 'COMPLETED' && (
                     <Link 
@@ -138,7 +140,6 @@ export default async function QuotesPage() {
                       Vyplnit evidenci stavby
                     </Link>
                   )}
-                  {/* Skryto pro aplikátory */}
                   {!isApplicator && (
                     <div className="flex gap-2 mt-1">
                       <Link 
@@ -167,7 +168,7 @@ export default async function QuotesPage() {
             ))}
           </div>
 
-          {/* 2. ZOBRAZENÍ PRO DESKTOP (Tabulka) */}
+          {/* 2. DESKTOP TABULKA */}
           <div className="hidden md:block bg-[#FEFEFA] rounded-2xl shadow-sm border border-zinc-200 overflow-hidden max-w-6xl mx-auto w-full">
             <div className="overflow-x-auto w-full">
               <table className="w-full text-left border-collapse min-w-[900px]">
@@ -175,7 +176,7 @@ export default async function QuotesPage() {
                   <tr className="bg-[#000000] text-[#FEFEFA] text-xs uppercase tracking-wider">
                     <th className="py-4 px-6 font-semibold">Zákazník / Město</th>
                     <th className="py-4 px-6 font-semibold">Materiál / Rozsah</th>
-                    <th className="py-4 px-6 font-semibold">Stav</th>
+                    <th className="py-4 px-6 font-semibold">Stav a termín</th>
                     {!isApplicator && <th className="py-4 px-6 font-semibold">Cena</th>}
                     <th className="py-4 px-6 font-semibold text-right">Akce</th>
                   </tr>
@@ -187,24 +188,36 @@ export default async function QuotesPage() {
                         <div className="font-bold text-[#000000] text-base">{quote.customerName}</div>
                         <div className="text-xs text-zinc-500 mt-0.5">{quote.city}</div>
                       </td>
+                      
                       <td className="py-4 px-6">
                         <span className="bg-[#FF4F00]/10 text-[#FF4F00] font-semibold px-2.5 py-1 rounded-lg text-xs border border-[#FF4F00]/20 block w-max mb-1">
                           {quote.materialName}
                         </span>
                         <div className="text-xs text-zinc-500 font-medium">{quote.area} m² / {quote.thickness} cm</div>
                       </td>
+                      
                       <td className="py-4 px-6">
                         {quote.status === 'COMPLETED' ? (
-                          <span className="text-green-600 font-bold bg-green-50 px-2 py-1 rounded-md text-xs border border-green-200">Dokončeno</span>
+                          <span className="text-green-600 font-bold bg-green-50 px-2.5 py-1 rounded-md text-xs border border-green-200 inline-block mb-1.5">Dokončeno</span>
                         ) : (
-                          <span className="text-amber-600 font-bold bg-amber-50 px-2 py-1 rounded-md text-xs border border-amber-200">K realizaci</span>
+                          <span className="text-amber-600 font-bold bg-amber-50 px-2.5 py-1 rounded-md text-xs border border-amber-200 inline-block mb-1.5">K realizaci</span>
+                        )}
+                        
+                        {quote.scheduledDate ? (
+                          <div className="text-xs font-bold text-[#FF4F00] flex items-center gap-1 mt-1">
+                            <Calendar size={13} /> {new Date(quote.scheduledDate).toLocaleDateString('cs-CZ')}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-zinc-400 mt-0.5 italic">Termín neurčen</div>
                         )}
                       </td>
+
                       {!isApplicator && (
                         <td className="py-4 px-6 font-extrabold text-[#000000]">
                           {Number(quote.totalCost).toLocaleString('cs-CZ')} Kč
                         </td>
                       )}
+                      
                       <td className="py-4 px-6 text-right whitespace-nowrap">
                         {quote.status !== 'COMPLETED' && (
                           <Link 
