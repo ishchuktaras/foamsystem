@@ -4,13 +4,13 @@ import Link from 'next/link'
 import { FileText, TrendingUp, PlusCircle, Trash2, ClipboardCheck } from 'lucide-react'
 import { db } from '@/lib/db'
 import { deleteQuote } from '@/actions/quote'
-import { getServerSession } from 'next-auth'
+import { auth } from '@/auth'
 
 export const dynamic = 'force-dynamic'
 
 export default async function QuotesPage() {
   // 1. Zjistíme, kdo je aktuálně přihlášený
-  const session = await getServerSession()
+  const session = await auth()
   const currentUser = session?.user as { id?: string; role?: string } | undefined
   const role = currentUser?.role ? String(currentUser.role).toUpperCase() : ''
   const userId = currentUser?.id

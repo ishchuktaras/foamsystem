@@ -1,12 +1,12 @@
 // src/app/admin/evidence/page.tsx
 import { db } from '@/lib/db'
 import { ClipboardCheck, Thermometer, Cog, Package } from 'lucide-react'
-import { getServerSession } from 'next-auth'
+import { auth } from '@/auth'
 
 export const dynamic = 'force-dynamic'
 
 export default async function EvidenceListPage() {
-  const session = await getServerSession()
+  const session = await auth()
   const currentUser = session?.user as { id?: string; role?: string } | undefined
   const role = currentUser?.role ? String(currentUser.role).toUpperCase() : ''
   const userId = currentUser?.id
