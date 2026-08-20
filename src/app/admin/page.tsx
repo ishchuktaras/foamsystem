@@ -10,7 +10,8 @@ export const dynamic = 'force-dynamic'
 export default async function AdminDashboard({
   searchParams,
 }: {
-  searchParams: { period?: string }
+  // Přidána podpora pro Promise (Next.js 15+)
+  searchParams: Promise<{ period?: string }> | { period?: string }
 }) {
   const session = await auth()
   const currentUser = session?.user as { id?: string; role?: string; name?: string } | undefined
@@ -24,7 +25,9 @@ export default async function AdminDashboard({
   // POHLED APLIKÁTORA (Omezený dashboard)
   // ==========================================
   if (isApplicator && userId) {
-    const period = searchParams?.period || 'today'
+    // OPRAVA: Bezpečné asynchronní načtení parametrů (vyřeší nepřepínání barvy)
+    const params = await searchParams
+    const period = params?.period || 'today'
     
     // Výpočet počátečního data podle vybraného filtru
     const now = new Date()
@@ -40,7 +43,7 @@ export default async function AdminDashboard({
       startDate = new Date(now.getFullYear(), now.getMonth(), 1)
     }
 
-    // 1. Kolik má aktivních (nedokončených) zakázek CELKEM (tady datum nefiltrujeme, musí vidět vše, co mu visí)
+    // 1. Kolik má aktivních (nedokončených) zakázek CELKEM
     const pendingQuotes = await db.quote.count({
       where: {
         status: { not: 'COMPLETED' },
@@ -83,19 +86,22 @@ export default async function AdminDashboard({
         {/* Filtr období */}
         <div className="flex items-center gap-2 bg-[#FEFEFA] p-2 rounded-xl border border-zinc-200 w-max shadow-sm">
           <Link 
-            href="/admin?period=today" 
+            href="/admin?period=today"
+            scroll={false} 
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${period === 'today' ? 'bg-[#FF4F00] text-white shadow-md' : 'text-zinc-500 hover:bg-zinc-100'}`}
           >
             Dnes
           </Link>
           <Link 
-            href="/admin?period=week" 
+            href="/admin?period=week"
+            scroll={false} 
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${period === 'week' ? 'bg-[#FF4F00] text-white shadow-md' : 'text-zinc-500 hover:bg-zinc-100'}`}
           >
             Tento týden
           </Link>
           <Link 
-            href="/admin?period=month" 
+            href="/admin?period=month"
+            scroll={false} 
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${period === 'month' ? 'bg-[#FF4F00] text-white shadow-md' : 'text-zinc-500 hover:bg-zinc-100'}`}
           >
             Tento měsíc
