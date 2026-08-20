@@ -10,17 +10,21 @@ export async function updateDispatchAssignment(formData: FormData): Promise<void
 
   if (!quoteId) return
 
+  const finalUserId = responsibleUserId && responsibleUserId !== "" ? responsibleUserId : null
+  const finalDate = dateStr && dateStr !== "" ? new Date(dateStr) : null
+
   try {
     await db.quote.update({
       where: { id: quoteId },
       data: {
-        scheduledDate: dateStr ? new Date(dateStr) : null,
-        responsibleUserId: responsibleUserId || null,
+        scheduledDate: finalDate,
+        responsibleUserId: finalUserId,
       }
     })
     revalidatePath('/admin/dispatch')
     revalidatePath('/admin/quotes')
   } catch (error) {
-    console.error('Chyba při ukládání dispečinku:', error)
+    console.error('Chyba při ukládání dispečinku v DB:', error)
+    throw error
   }
 }

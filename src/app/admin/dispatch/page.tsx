@@ -1,7 +1,7 @@
 // src/app/admin/dispatch/page.tsx
 
 import { db } from '@/lib/db'
-import { CalendarDays, MapPin, UserCheck } from 'lucide-react' // Smazán Calendar
+import { CalendarDays, MapPin, UserCheck } from 'lucide-react'
 import { updateDispatchAssignment } from '@/actions/dispatch'
 
 export const dynamic = 'force-dynamic'
@@ -24,7 +24,6 @@ export default async function DispatchPage() {
   return (
     <div className="space-y-6 p-4 md:p-8 animate-in fade-in duration-500 max-w-full overflow-hidden">
       
-      {/* Banner - upravena třída na bg-linear-to-r */}
       <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
@@ -95,7 +94,9 @@ export default async function DispatchPage() {
                             className="bg-zinc-100 border border-zinc-200 text-zinc-800 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-[#FF4F00] transition-colors"
                           />
 
+                          {/* Přidán klíč key, aby React správně přikreslil novou hodnotu z DB */}
                           <select 
+                            key={quote.responsibleUserId || 'none'}
                             name="responsibleUserId"
                             defaultValue={quote.responsibleUserId || ''}
                             className="bg-zinc-100 border border-zinc-200 text-zinc-800 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-[#FF4F00] transition-colors max-w-45"
