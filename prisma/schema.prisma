@@ -78,9 +78,15 @@ model User {
   image         String?
   password      String?   // Přidáno pro klasické přihlašování jménem a heslem
   role          Role      @default(APLIKATOR) // Přepnuto na bezpečný ENUM typ
+
+// Vazby na zakázky
+  responsibleForQuotes Quote[] @relation("ResponsibleQuote")
+  assignedQuotes       Quote[] @relation("AssignedQuotes")
+
   accounts      Account[]
   sessions      Session[]
-}
+
+ }
 
 model Account {
   id                 String  @id @default(cuid())
@@ -147,6 +153,13 @@ model Quote {
   area         String
   thickness    String
   totalCost    String
+
+// Plánování a přiřazení (Supervizor -> Aplikátor)
+  scheduledDate     DateTime? // Datum, kdy se má realizovat
+  responsibleUserId String?   // Kdo je hlavní aplikátor
+  responsibleUser   User?     @relation("ResponsibleQuote", fields: [responsibleUserId], references: [id])
+  assignedUsers     User[]    @relation("AssignedQuotes") // Další pomocníci ve skupině
+
   status         QuoteStatus @default(INQUIRY)
   evidence       JobEvidence?
   createdAt      DateTime @default(now())

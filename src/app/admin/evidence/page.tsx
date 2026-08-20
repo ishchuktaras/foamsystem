@@ -1,12 +1,31 @@
 // src/app/admin/evidence/page.tsx
 import { db } from '@/lib/db'
 import { ClipboardCheck, Thermometer, Cog, Package } from 'lucide-react'
+import { getServerSession } from 'next-auth'
 
 export const dynamic = 'force-dynamic'
 
 export default async function EvidenceListPage() {
+  const session = await getServerSession()
+  const currentUser = session?.user as { id?: string; role?: string } | undefined
+  const role = currentUser?.role ? String(currentUser.role).toUpperCase() : ''
+  const userId = currentUser?.id
+
+  const isApplicator = role === 'APLIKATOR'
+
+  // Pro evidenci nás zajímají POUZE dokončené zakázky. Aplikátor navíc vidí jen ty své.
+  const whereClause = isApplicator 
+    ? {
+        status: 'COMPLETED' as const,
+        OR: [
+          { responsibleUserId: userId },
+          { assignedUsers: { some: { id: userId } } }
+        ]
+      }
+    : { status: 'COMPLETED' as const }
+
   const completedQuotes = await db.quote.findMany({
-    where: { status: 'COMPLETED' },
+    where: whereClause,
     include: { evidence: true },
     orderBy: { updatedAt: 'desc' }
   })
@@ -17,7 +36,7 @@ export default async function EvidenceListPage() {
       <div className="relative overflow-hidden rounded-2xl bg-[#000000] border border-zinc-800 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
-            Evidence práce
+            {isApplicator ? 'Moje odevzdaná práce' : 'Evidence práce'}
           </h1>
           <p className="text-zinc-400 text-lg leading-relaxed">
             Archiv dokončených realizací. Technické parametry, klimatické podmínky a záznamy o spotřebě materiálu na stavbě.
@@ -32,7 +51,12 @@ export default async function EvidenceListPage() {
         <div className="bg-[#FEFEFA] p-12 rounded-2xl border border-zinc-200 text-center shadow-sm">
           <ClipboardCheck size={48} className="mx-auto text-zinc-300 mb-4" />
           <h3 className="text-xl font-bold text-[#000000]">Zatím žádná odevzdaná stavba</h3>
-          <p className="text-zinc-500 mt-2">Až u některé nabídky vyplníš technickou evidenci, objeví se zde.</p>
+          <p className="text-zinc-500 mt-2">
+            {isApplicator 
+              ? 'Až dokončíte a odevzdáte nějakou zakázku, objeví se v tomto archivu.'
+              : 'Až u některé nabídky vyplníš technickou evidenci, objeví se zde.'
+            }
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6">

@@ -1,5 +1,3 @@
-// src/components/Sidebar.tsx
-
 'use client'
 
 import Link from 'next/link'
@@ -31,18 +29,22 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
   const currentUser = session?.user as { name?: string | null; email?: string | null; role?: string | null } | undefined
   const userName = currentUser?.name || currentUser?.email || 'Nepojmenovaný uživatel'
-  const roleKey = currentUser?.role ? String(currentUser.role).toUpperCase() : ''
-  const userRole = roleKey && ROLE_LABELS[roleKey] ? ROLE_LABELS[roleKey] : 'Pracovník'
+  const roleKey = currentUser?.role ? String(currentUser.role).toUpperCase() : 'APLIKATOR'
+  const userRole = ROLE_LABELS[roleKey] || 'Pracovník'
 
-  const navItems = [
-    { name: 'Přehled', href: '/admin', icon: LayoutDashboard },
-    { name: 'Pracovníci', href: '/admin/users', icon: Users },
-    { name: 'Správa materiálů', href: '/admin/materials', icon: Boxes },
-    { name: 'Kalkulátor spotřeby', href: '/admin/calculator', icon: Calculator },
-    { name: 'Nabídky a poptávky', href: '/admin/quotes', icon: FileText },
-    { name: 'Evidence práce', href: '/admin/evidence', icon: ClipboardCheck }, // Přidána nová položka evidence
-    { name: 'Nastavení', href: '/admin/settings', icon: Settings },
+  // Omezení práv (RBAC) - definujeme, kdo vidí jakou položku
+  const allNavItems = [
+    { name: 'Přehled', href: '/admin', icon: LayoutDashboard, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR', 'TECHNIK', 'APLIKATOR'] },
+    { name: 'Pracovníci', href: '/admin/users', icon: Users, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR'] },
+    { name: 'Správa materiálů', href: '/admin/materials', icon: Boxes, roles: ['ADMIN', 'JEDNATEL', 'TECHNIK'] },
+    { name: 'Kalkulátor spotřeby', href: '/admin/calculator', icon: Calculator, roles: ['ADMIN', 'JEDNATEL', 'TECHNIK', 'SUPERVIZOR'] },
+    { name: 'Nabídky a poptávky', href: '/admin/quotes', icon: FileText, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR', 'TECHNIK', 'APLIKATOR'] },
+    { name: 'Evidence práce', href: '/admin/evidence', icon: ClipboardCheck, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR', 'APLIKATOR'] },
+    { name: 'Nastavení', href: '/admin/settings', icon: Settings, roles: ['ADMIN', 'JEDNATEL'] },
   ]
+
+  // Vyfiltrujeme menu podle role aktuálního uživatele
+  const navItems = allNavItems.filter(item => item.roles.includes(roleKey))
 
   return (
     <>
@@ -53,7 +55,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         />
       )}
 
-      {/* ABSOLUTNÍ ČERNÁ POZADÍ SIDEBARU */}
       <aside className={`
         w-64 bg-[#000000] text-[#FEFEFA] flex flex-col min-h-screen fixed left-0 top-0 bottom-0 z-50 
         transition-transform duration-300 ease-in-out border-r border-zinc-900
