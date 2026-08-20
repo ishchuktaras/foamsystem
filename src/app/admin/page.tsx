@@ -10,7 +10,6 @@ export const dynamic = 'force-dynamic'
 export default async function AdminDashboard({
   searchParams,
 }: {
-  // Přidána podpora pro Promise (Next.js 15+)
   searchParams: Promise<{ period?: string }> | { period?: string }
 }) {
   const session = await auth()
@@ -25,7 +24,6 @@ export default async function AdminDashboard({
   // POHLED APLIKÁTORA (Omezený dashboard)
   // ==========================================
   if (isApplicator && userId) {
-    // OPRAVA: Bezpečné asynchronní načtení parametrů (vyřeší nepřepínání barvy)
     const params = await searchParams
     const period = params?.period || 'today'
     
@@ -68,18 +66,18 @@ export default async function AdminDashboard({
 
     return (
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        {/* Uvítací Banner Aplikátora */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0D1B3E] to-[#1a2b5e] border border-blue-900/50 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
+        {/* Uvítací Banner Aplikátora (sjednocený styl s ostatními bannery) */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
           <div className="relative z-10 max-w-2xl">
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
               Ahoj, {userName.split(' ')[0]}!
             </h1>
-            <p className="text-blue-200 text-lg leading-relaxed">
+            <p className="text-zinc-400 text-lg leading-relaxed">
               Zde je tvůj osobní přehled. Zkontroluj si naplánované zakázky a nezapomeň u dokončených staveb včas vyplňovat technickou evidenci.
             </p>
           </div>
-          <div className="absolute right-0 top-0 -translate-y-4 translate-x-1/4 opacity-20 pointer-events-none text-blue-400">
-            <HardHat size={250} />
+          <div className="absolute right-0 top-0 -translate-y-12 translate-x-1/4 opacity-10 pointer-events-none text-[#FF4F00]">
+            <HardHat size={300} />
           </div>
         </div>
 
