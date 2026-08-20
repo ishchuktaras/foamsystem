@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Boxes, Calculator, FileText, Settings, LogOut, X, Users, ClipboardCheck } from 'lucide-react'
+import { LayoutDashboard, Boxes, Calculator, FileText, Settings, LogOut, X, Users, ClipboardCheck, CalendarDays } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import CompanyBadge from './CompanyBadge'
 
@@ -32,9 +32,9 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const roleKey = currentUser?.role ? String(currentUser.role).toUpperCase() : 'APLIKATOR'
   const userRole = ROLE_LABELS[roleKey] || 'Pracovník'
 
-  // Omezení práv (RBAC) - definujeme, kdo vidí jakou položku
   const allNavItems = [
     { name: 'Přehled', href: '/admin', icon: LayoutDashboard, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR', 'TECHNIK', 'APLIKATOR'] },
+    { name: 'Dispečink', href: '/admin/dispatch', icon: CalendarDays, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR'] },
     { name: 'Pracovníci', href: '/admin/users', icon: Users, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR'] },
     { name: 'Správa materiálů', href: '/admin/materials', icon: Boxes, roles: ['ADMIN', 'JEDNATEL', 'TECHNIK'] },
     { name: 'Kalkulátor spotřeby', href: '/admin/calculator', icon: Calculator, roles: ['ADMIN', 'JEDNATEL', 'TECHNIK', 'SUPERVIZOR'] },
@@ -43,7 +43,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     { name: 'Nastavení', href: '/admin/settings', icon: Settings, roles: ['ADMIN', 'JEDNATEL'] },
   ]
 
-  // Vyfiltrujeme menu podle role aktuálního uživatele
   const navItems = allNavItems.filter(item => item.roles.includes(roleKey))
 
   return (
