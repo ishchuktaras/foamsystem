@@ -37,7 +37,7 @@ export default async function EvidenceListPage() {
       ) : (
         <div className="grid grid-cols-1 gap-6">
           {completedQuotes.map((quote) => (
-            <div key={quote.id} className="bg-[#FEFEFA] rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col md:flex-row">
+            <div key={quote.id} className="bg-[#FEFEFA] text-[#000000] rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col md:flex-row">
               
               <div className="p-6 md:w-1/3 bg-zinc-50 border-b md:border-b-0 md:border-r border-zinc-200">
                 <div className="text-sm font-bold text-[#FF4F00] uppercase tracking-wider mb-1">Zákazník</div>
@@ -47,11 +47,11 @@ export default async function EvidenceListPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Materiál:</span>
-                    <span className="font-bold">{quote.materialName}</span>
+                    <span className="font-bold text-[#000000]">{quote.materialName}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Rozsah:</span>
-                    <span className="font-bold">{quote.area} m² / {quote.thickness} cm</span>
+                    <span className="font-bold text-[#000000]">{quote.area} m² / {quote.thickness} cm</span>
                   </div>
                 </div>
               </div>
@@ -64,10 +64,10 @@ export default async function EvidenceListPage() {
                         <Thermometer size={16} className="text-[#FF4F00]" /> Teploty
                       </div>
                       <div className="text-sm space-y-1">
-                        <div className="flex justify-between"><span className="text-zinc-500">Venkovní:</span> <strong>{quote.evidence.ambientTemp} °C</strong></div>
-                        <div className="flex justify-between"><span className="text-zinc-500">Vnitřní:</span> <strong>{quote.evidence.internalTemp} °C</strong></div>
-                        <div className="flex justify-between"><span className="text-zinc-500">Povrch:</span> <strong>{quote.evidence.surfaceTemp} °C</strong></div>
-                        <div className="flex justify-between mt-2 pt-2 border-t border-zinc-100"><span className="text-zinc-500">Podklad:</span> <strong className="uppercase">{quote.evidence.surfaceType}</strong></div>
+                        <div className="flex justify-between"><span className="text-zinc-500">Venkovní:</span> <strong className="text-[#000000]">{quote.evidence.ambientTemp} °C</strong></div>
+                        <div className="flex justify-between"><span className="text-zinc-500">Vnitřní:</span> <strong className="text-[#000000]">{quote.evidence.internalTemp} °C</strong></div>
+                        <div className="flex justify-between"><span className="text-zinc-500">Povrch:</span> <strong className="text-[#000000]">{quote.evidence.surfaceTemp} °C</strong></div>
+                        <div className="flex justify-between mt-2 pt-2 border-t border-zinc-100"><span className="text-zinc-500">Podklad:</span> <strong className="uppercase text-[#000000]">{quote.evidence.surfaceType}</strong></div>
                       </div>
                     </div>
 
@@ -76,8 +76,8 @@ export default async function EvidenceListPage() {
                         <Cog size={16} className="text-[#FF4F00]" /> Reaktory
                       </div>
                       <div className="text-sm space-y-1">
-                        <div className="flex justify-between"><span className="text-zinc-500">Start:</span> <strong>{quote.evidence.reactorStart}</strong></div>
-                        <div className="flex justify-between"><span className="text-zinc-500">Konec:</span> <strong>{quote.evidence.reactorEnd}</strong></div>
+                        <div className="flex justify-between"><span className="text-zinc-500">Start:</span> <strong className="text-[#000000]">{quote.evidence.reactorStart}</strong></div>
+                        <div className="flex justify-between"><span className="text-zinc-500">Konec:</span> <strong className="text-[#000000]">{quote.evidence.reactorEnd}</strong></div>
                         <div className="flex justify-between mt-2 pt-2 border-t border-zinc-100"><span className="text-zinc-500">Zdvihy celkem:</span> <strong className="text-[#FF4F00]">{quote.evidence.reactorEnd - quote.evidence.reactorStart}</strong></div>
                       </div>
                     </div>
@@ -87,8 +87,8 @@ export default async function EvidenceListPage() {
                         <Package size={16} className="text-[#FF4F00]" /> Provoz
                       </div>
                       <div className="text-sm space-y-1">
-                        <div className="flex justify-between"><span className="text-zinc-500">Balení (role):</span> <strong>{quote.evidence.foilRolls} ks</strong></div>
-                        <div className="flex justify-between"><span className="text-zinc-500">Čas balení:</span> <strong>{quote.evidence.packingHours} h</strong></div>
+                        <div className="flex justify-between"><span className="text-zinc-500">Balení (role):</span> <strong className="text-[#000000]">{quote.evidence.foilRolls} ks</strong></div>
+                        <div className="flex justify-between"><span className="text-zinc-500">Čas balení:</span> <strong className="text-[#000000]">{quote.evidence.packingHours} h</strong></div>
                         
                         {(quote.evidence.workingAtHeights || quote.evidence.ventilationUsed || quote.evidence.difficultEnv) && (
                           <div className="mt-2 pt-2 border-t border-zinc-100 flex flex-wrap gap-1">
