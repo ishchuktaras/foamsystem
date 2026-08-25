@@ -36,6 +36,9 @@ export default function DispatchForm({ quoteId, defaultDate, defaultUserId, appl
     
     if (result?.error) {
       alert('CHYBA: ' + result.error)
+    } else {
+      // PŘIDÁNO: Jasná zpětná vazba o úspěchu
+      alert('✅ Plán byl úspěšně uložen a zakázka předána aplikátorovi!')
     }
   }
 
