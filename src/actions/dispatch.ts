@@ -8,7 +8,16 @@ export async function updateDispatchAssignment(formData: FormData): Promise<void
   const dateStr = formData.get('scheduledDate') as string
   const responsibleUserId = formData.get('responsibleUserId') as string
 
-  if (!quoteId) return
+  // 1. KONTROLNÍ LOG - Vypíše se do terminálu, jakmile klikneš na Uložit
+  console.log('--- START DISPEČINK ---')
+  console.log('ID zakázky:', quoteId)
+  console.log('Přijaté datum:', dateStr)
+  console.log('ID uživatele:', responsibleUserId)
+
+  if (!quoteId) {
+    console.log('CHYBA: Chybí quoteId, ukončuji akci.')
+    return
+  }
 
   const finalUserId = responsibleUserId && responsibleUserId !== "" ? responsibleUserId : null
   const finalDate = dateStr && dateStr !== "" ? new Date(dateStr) : null
@@ -21,10 +30,16 @@ export async function updateDispatchAssignment(formData: FormData): Promise<void
         responsibleUserId: finalUserId,
       }
     })
+    
+    // 2. KONTROLNÍ LOG - Pokud to projde databází, vypíše se toto
+    console.log('--- ÚSPĚŠNĚ ULOŽENO V DB, OBNOVUJI STRÁNKU ---')
+    
     revalidatePath('/admin/dispatch')
     revalidatePath('/admin/quotes')
   } catch (error) {
-    console.error('Chyba při ukládání dispečinku v DB:', error)
+    // 3. KONTROLNÍ LOG - Pokud chybí sloupce v DB, vypíše se přesná chyba Prisma
+    console.error('--- KRITICKÁ CHYBA V DATABÁZI ---')
+    console.error(error)
     throw error
   }
 }
