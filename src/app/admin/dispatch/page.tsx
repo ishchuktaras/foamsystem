@@ -1,8 +1,8 @@
 // src/app/admin/dispatch/page.tsx
 
 import { db } from '@/lib/db'
-import { CalendarDays, MapPin, UserCheck } from 'lucide-react'
-import { updateDispatchAssignment } from '@/actions/dispatch'
+import { CalendarDays, MapPin } from 'lucide-react'
+import DispatchForm from '@/components/DispatchForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -56,8 +56,6 @@ export default async function DispatchPage() {
 
               return (
                 <div key={quote.id} className="bg-[#FEFEFA] p-5 rounded-2xl shadow-sm border border-zinc-200 flex flex-col gap-4">
-                  
-                  {/* Hlavička karty */}
                   <div className="flex justify-between items-start border-b border-zinc-100 pb-3">
                     <div className="pr-2">
                       <div className="font-bold text-[#000000] text-lg leading-tight">{quote.customerName}</div>
@@ -72,7 +70,6 @@ export default async function DispatchPage() {
                     </div>
                   </div>
                   
-                  {/* Parametry */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-zinc-500">Materiál:</span>
@@ -86,47 +83,15 @@ export default async function DispatchPage() {
                     </div>
                   </div>
 
-                  {/* Formulář pro mobil */}
                   <div className="pt-3 border-t border-zinc-100">
-                    <form action={updateDispatchAssignment} className="flex flex-col gap-4">
-                      <input type="hidden" name="quoteId" value={quote.id} />
-                      
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Datum realizace</label>
-                        <input 
-                          type="date" 
-                          name="scheduledDate" 
-                          defaultValue={dateValue}
-                          className="w-full bg-zinc-100 border border-zinc-200 text-zinc-800 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-[#FF4F00] transition-colors"
-                        />
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Hlavní aplikátor</label>
-                        <select 
-                          key={quote.responsibleUserId || 'none-mobile'}
-                          name="responsibleUserId"
-                          defaultValue={quote.responsibleUserId || ''}
-                          className="w-full bg-zinc-100 border border-zinc-200 text-zinc-800 rounded-xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-[#FF4F00] transition-colors"
-                        >
-                          <option value="">-- Nepřiřazeno --</option>
-                          {applicators.map((user) => (
-                            <option key={user.id} value={user.id}>
-                              {user.name || user.email}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <button 
-                        type="submit"
-                        className="w-full mt-1 bg-[#FF4F00] hover:bg-[#E64700] text-white px-4 py-3.5 rounded-xl text-sm font-bold transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
-                      >
-                        <UserCheck size={18} /> Uložit plán
-                      </button>
-                    </form>
+                    <DispatchForm 
+                      isMobile={true}
+                      quoteId={quote.id}
+                      defaultDate={dateValue}
+                      defaultUserId={quote.responsibleUserId || ''}
+                      applicators={applicators}
+                    />
                   </div>
-
                 </div>
               )
             })}
@@ -173,37 +138,13 @@ export default async function DispatchPage() {
                         </td>
 
                         <td className="py-4 px-6 text-right">
-                          <form action={updateDispatchAssignment} className="flex items-center justify-end gap-2">
-                            <input type="hidden" name="quoteId" value={quote.id} />
-                            
-                            <input 
-                              type="date" 
-                              name="scheduledDate" 
-                              defaultValue={dateValue}
-                              className="bg-zinc-100 border border-zinc-200 text-zinc-800 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-[#FF4F00] transition-colors"
-                            />
-
-                            <select 
-                              key={quote.responsibleUserId || 'none-desktop'}
-                              name="responsibleUserId"
-                              defaultValue={quote.responsibleUserId || ''}
-                              className="bg-zinc-100 border border-zinc-200 text-zinc-800 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-[#FF4F00] transition-colors max-w-[180px]"
-                            >
-                              <option value="">-- Nepřiřazeno --</option>
-                              {applicators.map((user) => (
-                                <option key={user.id} value={user.id}>
-                                  {user.name || user.email}
-                                </option>
-                              ))}
-                            </select>
-
-                            <button 
-                              type="submit"
-                              className="bg-[#FF4F00] hover:bg-[#E64700] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1 shrink-0"
-                            >
-                              <UserCheck size={14} /> Uložit
-                            </button>
-                          </form>
+                          <DispatchForm 
+                            isMobile={false}
+                            quoteId={quote.id}
+                            defaultDate={dateValue}
+                            defaultUserId={quote.responsibleUserId || ''}
+                            applicators={applicators}
+                          />
                         </td>
                       </tr>
                     )
