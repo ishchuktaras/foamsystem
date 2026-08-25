@@ -7,7 +7,7 @@ import { auth } from '@/auth'
 
 export const dynamic = 'force-dynamic'
 
-// 1. DEFINICE TYPU PRO DISPEČINK (nahrazuje 'any')
+// 1. DEFINICE TYPU PRO DISPEČINK
 type UpcomingDispatch = {
   id: string;
   scheduledDate: Date | null;
@@ -171,8 +171,6 @@ export default async function AdminDashboard({
   // POHLED ADMINA / SUPERVIZORA (Globální data + Přehled dispečinku)
   // ==========================================
   let materialsCount = 0, usersCount = 0, inquiriesCount = 0, ordersCount = 0, contractsCount = 0, completedCount = 0
-  
-  // Zde používáme nový přesný typ namísto 'any'
   let upcomingDispatches: UpcomingDispatch[] = []
 
   try {
@@ -251,30 +249,132 @@ export default async function AdminDashboard({
         </div>
       )}
 
-      {/* Rychlé statistiky */}
+      {/* 2. Stav zakázek (Business KPI) */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-4">Stav zakázek a procesů</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4"><div className="p-4 bg-blue-50 text-blue-600 rounded-xl"><FileText size={24} /></div><div><p className="text-sm font-semibold text-zinc-500 uppercase">Poptávky</p><h3 className="text-2xl font-bold text-[#000000]">{inquiriesCount}</h3></div></div>
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4"><div className="p-4 bg-amber-50 text-amber-600 rounded-xl"><ClipboardList size={24} /></div><div><p className="text-sm font-semibold text-zinc-500 uppercase">Objednávky</p><h3 className="text-2xl font-bold text-[#000000]">{ordersCount}</h3></div></div>
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4"><div className="p-4 bg-purple-50 text-purple-600 rounded-xl"><PenTool size={24} /></div><div><p className="text-sm font-semibold text-zinc-500 uppercase">Smlouvy</p><h3 className="text-2xl font-bold text-[#000000]">{contractsCount}</h3></div></div>
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4"><div className="p-4 bg-emerald-50 text-emerald-600 rounded-xl"><CheckCircle2 size={24} /></div><div><p className="text-sm font-semibold text-zinc-500 uppercase">Dokončeno</p><h3 className="text-2xl font-bold text-[#000000]">{completedCount}</h3></div></div>
+          
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-blue-500 transition-colors">
+            <div className="p-4 bg-blue-50 text-blue-600 rounded-xl"><FileText size={24} /></div>
+            <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Poptávky</p><h3 className="text-2xl font-bold text-[#000000]">{inquiriesCount}</h3></div>
+          </div>
+
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-amber-500 transition-colors">
+            <div className="p-4 bg-amber-50 text-amber-600 rounded-xl"><ClipboardList size={24} /></div>
+            <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Objednávky</p><h3 className="text-2xl font-bold text-[#000000]">{ordersCount}</h3></div>
+          </div>
+
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-purple-500 transition-colors">
+            <div className="p-4 bg-purple-50 text-purple-600 rounded-xl"><PenTool size={24} /></div>
+            <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Smlouvy</p><h3 className="text-2xl font-bold text-[#000000]">{contractsCount}</h3></div>
+          </div>
+
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-emerald-500 transition-colors">
+            <div className="p-4 bg-emerald-50 text-emerald-600 rounded-xl"><CheckCircle2 size={24} /></div>
+            <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Dokončeno</p><h3 className="text-2xl font-bold text-[#000000]">{completedCount}</h3></div>
+          </div>
+
         </div>
       </div>
 
+      {/* 3. Systémové metriky - TY JSOU ZPĚT! */}
+      <div>
+        <h2 className="text-xl font-bold text-[#000000] mb-4">Systémové metriky</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-[#FF4F00] transition-colors">
+            <div className="p-4 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl"><Boxes size={24} /></div>
+            <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Evidované materiály</p><h3 className="text-2xl font-bold text-[#000000]">{materialsCount}</h3></div>
+          </div>
+          
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-emerald-500 transition-colors">
+            <div className="p-4 bg-emerald-50 text-emerald-600 rounded-xl"><Users size={24} /></div>
+            <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Aktivní pracovníci</p><h3 className="text-2xl font-bold text-[#000000]">{usersCount}</h3></div>
+          </div>
+
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-purple-500 transition-colors">
+            <div className="p-4 bg-purple-50 text-purple-600 rounded-xl"><Database size={24} /></div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Stav databáze</p>
+              <h3 className="text-2xl font-bold text-emerald-600 text-lg mt-1">Připojeno</h3>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* 4. Hlavní rozcestník - Rychlé akce (VŠECHNY ZPĚT) */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-6">Rychlé akce</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <DashboardCard title="Nová poptávka" value="Vytvořit" subtitle="s automatickým ARES" href="/admin/quotes/new" icon={<FileText size={28} className="text-[#FF4F00]" />} colorClass="bg-[#FF4F00]/10" hoverClass="group-hover:border-[#FF4F00]" />
-          <DashboardCard title="Kalkulátor" value="Spočítat" subtitle="Spotřeba a cena" href="/admin/calculator" icon={<Calculator size={28} className="text-[#000000]" />} colorClass="bg-zinc-100" hoverClass="group-hover:border-[#000000]" />
-          <DashboardCard title="Evidence" value="Archiv prací" subtitle="Technické parametry staveb" href="/admin/evidence" icon={<ClipboardCheck size={28} className="text-[#0D1B3E]" />} colorClass="bg-[#0D1B3E]/10" hoverClass="group-hover:border-[#0D1B3E]" />
+          
+          <DashboardCard
+            title="Nová poptávka"
+            value="Vytvořit"
+            subtitle="s automatickým ARES"
+            href="/admin/quotes/new"
+            icon={<FileText size={28} className="text-[#FF4F00]" />}
+            colorClass="bg-[#FF4F00]/10"
+            hoverClass="group-hover:border-[#FF4F00]"
+          />
+
+          <DashboardCard
+            title="Kalkulátor"
+            value="Spočítat"
+            subtitle="Spotřeba a cena"
+            href="/admin/calculator"
+            icon={<Calculator size={28} className="text-[#000000]" />}
+            colorClass="bg-zinc-100"
+            hoverClass="group-hover:border-[#000000]"
+          />
+
+          <DashboardCard
+            title="Evidence"
+            value="Archiv prací"
+            subtitle="Technické parametry staveb"
+            href="/admin/evidence"
+            icon={<ClipboardCheck size={28} className="text-[#0D1B3E]" />}
+            colorClass="bg-[#0D1B3E]/10"
+            hoverClass="group-hover:border-[#0D1B3E]"
+          />
+          
+          <DashboardCard
+            title="Materiály"
+            value="Správa pěn"
+            subtitle="Úprava cen a parametrů"
+            href="/admin/materials"
+            icon={<Boxes size={28} className="text-amber-600" />}
+            colorClass="bg-amber-50"
+            hoverClass="group-hover:border-amber-500"
+          />
+          
+          <DashboardCard
+            title="Nabídky"
+            value="Seznam"
+            subtitle="Historie a stav poptávek"
+            href="/admin/quotes"
+            icon={<TrendingUp size={28} className="text-emerald-600" />}
+            colorClass="bg-emerald-50"
+            hoverClass="group-hover:border-emerald-500"
+          />
+          
+          <DashboardCard
+            title="Systém"
+            value="ARES Test"
+            subtitle="Ověření spojení s API"
+            href="/admin/ares-test"
+            icon={<ShieldCheck size={28} className="text-purple-600" />}
+            colorClass="bg-purple-50"
+            hoverClass="group-hover:border-purple-500"
+          />
+
         </div>
       </div>
     </div>
   )
 }
 
-// 2. DEFINICE TYPŮ PRO KARTU (nahrazuje 'any' ve spodní funkci)
+// 2. DEFINICE TYPŮ PRO KARTU
 interface DashboardCardProps {
   title: string;
   value: string;
