@@ -1,6 +1,7 @@
 // src/app/admin/evidence/page.tsx
+
 import { db } from '@/lib/db'
-import { ClipboardCheck, Thermometer, Cog, Package } from 'lucide-react'
+import { ClipboardCheck, Thermometer, Cog, Package, HardHat } from 'lucide-react'
 import { auth } from '@/auth'
 
 export const dynamic = 'force-dynamic'
@@ -26,7 +27,10 @@ export default async function EvidenceListPage() {
 
   const completedQuotes = await db.quote.findMany({
     where: whereClause,
-    include: { evidence: true },
+    include: { 
+      evidence: true,
+      responsibleUser: true // <-- TADY JSME PŘIDALI NAČTENÍ APLIKÁTORA Z DATABÁZE
+    },
     orderBy: { updatedAt: 'desc' }
   })
 
@@ -63,10 +67,12 @@ export default async function EvidenceListPage() {
           {completedQuotes.map((quote) => (
             <div key={quote.id} className="bg-[#FEFEFA] text-[#000000] rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col md:flex-row">
               
-              <div className="p-6 md:w-1/3 bg-zinc-50 border-b md:border-b-0 md:border-r border-zinc-200">
-                <div className="text-sm font-bold text-[#FF4F00] uppercase tracking-wider mb-1">Zákazník</div>
-                <h3 className="text-xl font-black text-[#000000] mb-2">{quote.customerName}</h3>
-                <div className="text-sm text-zinc-600 mb-4">{quote.city}</div>
+              <div className="p-6 md:w-1/3 bg-zinc-50 border-b md:border-b-0 md:border-r border-zinc-200 flex flex-col justify-between">
+                <div>
+                  <div className="text-sm font-bold text-[#FF4F00] uppercase tracking-wider mb-1">Zákazník</div>
+                  <h3 className="text-xl font-black text-[#000000] mb-2">{quote.customerName}</h3>
+                  <div className="text-sm text-zinc-600 mb-4">{quote.city}</div>
+                </div>
                 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -76,6 +82,16 @@ export default async function EvidenceListPage() {
                   <div className="flex justify-between">
                     <span className="text-zinc-500">Rozsah:</span>
                     <span className="font-bold text-[#000000]">{quote.area} m² / {quote.thickness} cm</span>
+                  </div>
+                  
+                  {/* NOVÝ ŘÁDEK S INFORMACÍ O APLIKÁTOROVI */}
+                  <div className="flex justify-between mt-2 pt-2 border-t border-zinc-200">
+                    <span className="text-zinc-500 flex items-center gap-1">
+                      <HardHat size={14} className="text-[#FF4F00]" /> Aplikátor:
+                    </span>
+                    <span className="font-bold text-[#000000]">
+                      {quote.responsibleUser?.name || quote.responsibleUser?.email || 'Nepřiřazeno'}
+                    </span>
                   </div>
                 </div>
               </div>
