@@ -1,10 +1,11 @@
 // src/app/admin/quotes/page.tsx
 
 import Link from 'next/link'
-import { FileText, TrendingUp, PlusCircle, Trash2, ClipboardCheck, Calendar } from 'lucide-react'
+import { FileText, TrendingUp, PlusCircle, ClipboardCheck, Calendar } from 'lucide-react'
 import { db } from '@/lib/db'
 import { deleteQuote } from '@/actions/quote'
 import { auth } from '@/auth'
+import DeleteButton from '@/components/DeleteButton' // <--- PŘIDANÝ IMPORT
 
 export const dynamic = 'force-dynamic'
 
@@ -34,7 +35,7 @@ export default async function QuotesPage() {
   })
 
   return (
-    <div className="space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-full overflow-hidden">
+    <div className="space-y-6 p-2 sm:p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-full overflow-hidden">
       
       {/* Prémiový Banner */}
       <div className="relative rounded-2xl bg-linear-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-6 md:p-10 text-[#FEFEFA] shadow-xl overflow-hidden">
@@ -90,7 +91,7 @@ export default async function QuotesPage() {
           {/* 1. MOBILNÍ KARTY */}
           <div className="block space-y-4 md:hidden w-full">
             {quotes.map((quote) => (
-              <div key={quote.id} className="bg-[#FEFEFA] p-5 rounded-2xl shadow-sm border border-zinc-200 flex flex-col gap-4">
+              <div key={quote.id} className="bg-[#FEFEFA] p-4 rounded-xl shadow-sm border border-zinc-200 flex flex-col gap-4">
                 
                 <div className="flex justify-between items-start border-b border-zinc-100 pb-3">
                   <div className="pr-2">
@@ -148,22 +149,18 @@ export default async function QuotesPage() {
                       >
                         Upravit
                       </Link>
+                      
+                      {/* NOVÉ POTVRZOVACÍ TLAČÍTKO PRO MOBIL */}
                       <form action={async () => {
                         'use server'
                         await deleteQuote(quote.id)
                       }} className="w-full">
-                        <button 
-                          type="submit"
-                          className="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer border border-red-100"
-                        >
-                          <Trash2 size={16} />
-                          Smazat
-                        </button>
+                        <DeleteButton isDesktop={false} />
                       </form>
+                      
                     </div>
                   )}
                 </div>
-                
               </div>
             ))}
           </div>
@@ -202,7 +199,6 @@ export default async function QuotesPage() {
                         ) : (
                           <span className="text-amber-600 font-bold bg-amber-50 px-2.5 py-1 rounded-md text-xs border border-amber-200 inline-block mb-1.5">K realizaci</span>
                         )}
-                        
                         {quote.scheduledDate ? (
                           <div className="text-xs font-bold text-[#FF4F00] flex items-center gap-1 mt-1">
                             <Calendar size={13} /> {new Date(quote.scheduledDate).toLocaleDateString('cs-CZ')}
@@ -235,18 +231,15 @@ export default async function QuotesPage() {
                             >
                               Upravit
                             </Link>
+                            
+                            {/* NOVÉ POTVRZOVACÍ TLAČÍTKO PRO DESKTOP */}
                             <form action={async () => {
                               'use server'
                               await deleteQuote(quote.id)
                             }} className="inline-block">
-                              <button 
-                                type="submit"
-                                className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-md text-sm transition-colors inline-flex items-center gap-1 cursor-pointer"
-                              >
-                                <Trash2 size={14} />
-                                Smazat
-                              </button>
+                              <DeleteButton isDesktop={true} />
                             </form>
+                            
                           </>
                         )}
                       </td>
@@ -256,10 +249,8 @@ export default async function QuotesPage() {
               </table>
             </div>
           </div>
-          
         </div>
       )}
-      
     </div>
   )
 }
