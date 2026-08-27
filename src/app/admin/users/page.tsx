@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Users, UserPlus, Archive, CheckCircle2 } from 'lucide-react'
 import AdminUsersTable from '@/components/AdminUsersTable'
 import { getAllUsers } from '@/actions/user'
+import { auth } from '@/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,6 +15,9 @@ export default async function UsersPage({
 }) {
   const params = await searchParams
   const isArchivedView = params?.archived === 'true'
+
+  const session = await auth()
+  const currentUserRole = session?.user?.role as string | undefined
 
   const users = await getAllUsers(isArchivedView)
 
@@ -68,7 +72,7 @@ export default async function UsersPage({
       </div>
 
       <div className="max-w-5xl mx-auto">
-        <AdminUsersTable users={users} isArchivedView={isArchivedView} />
+        <AdminUsersTable users={users} isArchivedView={isArchivedView} currentUserRole={currentUserRole} />
       </div>
     </div>
   )

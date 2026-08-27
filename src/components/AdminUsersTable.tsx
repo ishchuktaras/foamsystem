@@ -3,7 +3,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { deleteUser, restoreUser } from '@/actions/user'
+import { deleteUser, restoreUser, hardDeleteUser } from '@/actions/user'
 import DeleteButton from '@/components/DeleteButton'
 import { RefreshCw, Archive } from 'lucide-react'
 
@@ -23,8 +23,19 @@ const ROLE_BADGES: Record<string, { label: string, color: string }> = {
   ADMIN: { label: 'Admin', color: 'bg-red-100 text-red-700' },
 }
 
-export default function AdminUsersTable({ users, isArchivedView = false }: { users: User[], isArchivedView?: boolean }) {
+export default function AdminUsersTable({ 
+  users, 
+  isArchivedView = false, 
+  currentUserRole 
+}: { 
+  users: User[], 
+  isArchivedView?: boolean, 
+  currentUserRole?: string 
+}) {
   const router = useRouter()
+  
+  // Zkontrolujeme, zda je přihlášený uživatel Admin nebo Jednatel
+  const isAdmin = currentUserRole === 'ADMIN' || currentUserRole === 'JEDNATEL'
 
   if (users.length === 0) {
     return (
@@ -59,17 +70,33 @@ export default function AdminUsersTable({ users, isArchivedView = false }: { use
                 </span>
               </div>
               
-              <div className="flex gap-2 mt-2 pt-3 border-t border-zinc-100">
+              <div className="flex gap-2 mt-2 pt-3 border-t border-zinc-100 w-full">
                 {isArchivedView ? (
-                  <form action={async () => {
-                    const result = await restoreUser(user.id)
-                    if (result && !result.success) alert(result.error)
-                  }} className="w-full">
-                    <button type="submit" className="w-full py-2.5 bg-green-50 text-green-700 hover:bg-green-100 font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 border border-green-200">
-                      <RefreshCw size={16} />
-                      Obnovit
-                    </button>
-                  </form>
+                  <>
+                    <form action={async () => {
+                      const result = await restoreUser(user.id)
+                      if (result && !result.success) alert(result.error)
+                    }} className="flex-1">
+                      <button type="submit" className="w-full py-2.5 bg-green-50 text-green-700 hover:bg-green-100 font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 border border-green-200">
+                        <RefreshCw size={16} />
+                        Obnovit
+                      </button>
+                    </form>
+                    {isAdmin && (
+                      <form action={async () => {
+                        const result = await hardDeleteUser(user.id)
+                        if (result && !result.success) alert(result.error)
+                      }} className="flex-1">
+                        <DeleteButton 
+                          isDesktop={false}
+                          title="Smazání z archivu"
+                          message={`Opravdu chcete TRVALE smazat uživatele "${user.name || 'Neznámý'}"? Tuto akci nelze vrátit.`}
+                          buttonText="Smazat"
+                          confirmText="Smazat navždy"
+                        />
+                      </form>
+                    )}
+                  </>
                 ) : (
                   <>
                     <button 
@@ -126,14 +153,30 @@ export default function AdminUsersTable({ users, isArchivedView = false }: { use
                     </td>
                     <td className="p-4 text-right whitespace-nowrap">
                       {isArchivedView ? (
-                        <form action={async () => {
-                          const result = await restoreUser(user.id)
-                          if (result && !result.success) alert(result.error)
-                        }} className="inline-block">
-                          <button type="submit" className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 font-bold text-sm rounded-md transition-colors flex items-center gap-2 cursor-pointer shadow-sm">
-                            <RefreshCw size={14} /> Obnovit
-                          </button>
-                        </form>
+                        <div className="flex items-center justify-end gap-2">
+                          <form action={async () => {
+                            const result = await restoreUser(user.id)
+                            if (result && !result.success) alert(result.error)
+                          }} className="inline-block">
+                            <button type="submit" className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 font-bold text-sm rounded-md transition-colors flex items-center gap-2 cursor-pointer shadow-sm">
+                              <RefreshCw size={14} /> Obnovit
+                            </button>
+                          </form>
+                          {isAdmin && (
+                            <form action={async () => {
+                              const result = await hardDeleteUser(user.id)
+                              if (result && !result.success) alert(result.error)
+                            }} className="inline-block">
+                              <DeleteButton 
+                                isDesktop={true}
+                                title="Smazání z archivu"
+                                message={`Opravdu chcete TRVALE smazat uživatele "${user.name || 'Neznámý'}"? Tuto akci nelze vrátit.`}
+                                buttonText="Smazat"
+                                confirmText="Smazat navždy"
+                              />
+                            </form>
+                          )}
+                        </div>
                       ) : (
                         <>
                           <button onClick={() => router.push(`/admin/users/${user.id}/edit`)} className="px-3 py-1.5 bg-zinc-100 text-[#000000] hover:bg-zinc-200 font-medium text-sm rounded-md transition-colors mr-2">

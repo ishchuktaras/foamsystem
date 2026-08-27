@@ -102,7 +102,7 @@ export async function deleteUser(id: string) {
   }
 }
 
-// NOVÁ FUNKCE: Obnovení uživatele
+// FUNKCE: Obnovení uživatele
 export async function restoreUser(id: string) {
   try {
     await prisma.user.update({ 
@@ -115,5 +115,21 @@ export async function restoreUser(id: string) {
   } catch (error) {
     console.error(error)
     return { success: false, error: 'Chyba při obnově uživatele.' }
+  }
+}
+
+// FUNKCE: Skutečné a trvalé smazání uživatele z databáze (z Archívu)
+export async function hardDeleteUser(id: string) {
+  try {
+    await prisma.user.delete({ where: { id } })
+    revalidatePath('/admin/users')
+    revalidatePath('/admin/dispatch') 
+    return { success: true }
+  } catch (error) {
+    console.error(error)
+    return { 
+      success: false, 
+      error: 'Nelze smazat: Pracovník je již navázán na historické zakázky a smazání by rozbilo evidenci. Musí zůstat v archivu.' 
+    }
   }
 }
