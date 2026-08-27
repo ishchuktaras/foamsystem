@@ -7,10 +7,11 @@ import { revalidatePath } from 'next/cache'
 import bcrypt from 'bcryptjs'
 import { Role } from '@prisma/client'
 
-export async function getAllUsers() {
+// Přidali jsme parametr isArchived (defaultně false)
+export async function getAllUsers(isArchived: boolean = false) {
   try {
     return await prisma.user.findMany({
-      where: { isArchived: false }, 
+      where: { isArchived }, 
       orderBy: { name: 'asc' },
       select: { id: true, name: true, email: true, role: true }
     })
@@ -88,17 +89,31 @@ export async function updateUser(id: string, data: { name: string, email: string
 
 export async function deleteUser(id: string) {
   try {
-    // <-- ZMĚNA: UŽIVATELE NEMAŽEME, POUZE MU NASTAVÍME isArchived NA true
     await prisma.user.update({ 
       where: { id },
       data: { isArchived: true }
     })
-    
     revalidatePath('/admin/users')
-    revalidatePath('/admin/dispatch') // Revalidujeme i dispečink, ať zmizí z nabídky aplikátorů
+    revalidatePath('/admin/dispatch') 
     return { success: true }
   } catch (error) {
     console.error(error)
     return { success: false, error: 'Chyba při archivaci uživatele.' }
+  }
+}
+
+// NOVÁ FUNKCE: Obnovení uživatele
+export async function restoreUser(id: string) {
+  try {
+    await prisma.user.update({ 
+      where: { id },
+      data: { isArchived: false }
+    })
+    revalidatePath('/admin/users')
+    revalidatePath('/admin/dispatch') 
+    return { success: true }
+  } catch (error) {
+    console.error(error)
+    return { success: false, error: 'Chyba při obnově uživatele.' }
   }
 }

@@ -3,8 +3,9 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { deleteUser } from '@/actions/user'
-import DeleteButton from '@/components/DeleteButton' // <-- Přidáno naše nové tlačítko
+import { deleteUser, restoreUser } from '@/actions/user'
+import DeleteButton from '@/components/DeleteButton'
+import { RefreshCw, Archive } from 'lucide-react'
 
 type User = {
   id: string
@@ -22,8 +23,21 @@ const ROLE_BADGES: Record<string, { label: string, color: string }> = {
   ADMIN: { label: 'Admin', color: 'bg-red-100 text-red-700' },
 }
 
-export default function AdminUsersTable({ users }: { users: User[] }) {
+export default function AdminUsersTable({ users, isArchivedView = false }: { users: User[], isArchivedView?: boolean }) {
   const router = useRouter()
+
+  if (users.length === 0) {
+    return (
+      <div className="bg-[#FEFEFA] p-8 md:p-12 rounded-2xl shadow-sm border border-zinc-200 text-center space-y-4">
+        <div className="flex justify-center text-zinc-300 mb-2">
+          <Archive size={48} />
+        </div>
+        <h3 className="text-xl font-bold text-[#000000]">
+          {isArchivedView ? 'Archiv je prázdný' : 'Zatím tu nejsou žádní pracovníci'}
+        </h3>
+      </div>
+    )
+  }
 
   return (
     <div className="w-full">
@@ -46,27 +60,38 @@ export default function AdminUsersTable({ users }: { users: User[] }) {
               </div>
               
               <div className="flex gap-2 mt-2 pt-3 border-t border-zinc-100">
-                <button 
-                  onClick={() => router.push(`/admin/users/${user.id}/edit`)} 
-                  className="flex-1 px-3 py-2.5 bg-zinc-100 text-[#000000] hover:bg-zinc-200 font-bold text-sm rounded-xl transition-colors flex items-center justify-center"
-                >
-                  Upravit
-                </button>
-                
-                {/* NOVÉ POTVRZOVACÍ TLAČÍTKO PRO MOBIL */}
-                <form action={async () => {
-                  const result = await deleteUser(user.id)
-                  if (result && !result.success) alert(result.error)
-                }} className="flex-1">
-                  <DeleteButton 
-                    isDesktop={false}
-                    title="Archivace pracovníka"
-                    message={`Opravdu chcete archivovat uživatele "${user.name || 'Neznámý'}"? Ztratí přístup do systému.`}
-                    buttonText="Smazat"
-                    confirmText="Ano, archivovat"
-                  />
-                </form>
-
+                {isArchivedView ? (
+                  <form action={async () => {
+                    const result = await restoreUser(user.id)
+                    if (result && !result.success) alert(result.error)
+                  }} className="w-full">
+                    <button type="submit" className="w-full py-2.5 bg-green-50 text-green-700 hover:bg-green-100 font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 border border-green-200">
+                      <RefreshCw size={16} />
+                      Obnovit
+                    </button>
+                  </form>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => router.push(`/admin/users/${user.id}/edit`)} 
+                      className="flex-1 px-3 py-2.5 bg-zinc-100 text-[#000000] hover:bg-zinc-200 font-bold text-sm rounded-xl transition-colors flex items-center justify-center"
+                    >
+                      Upravit
+                    </button>
+                    <form action={async () => {
+                      const result = await deleteUser(user.id)
+                      if (result && !result.success) alert(result.error)
+                    }} className="flex-1">
+                      <DeleteButton 
+                        isDesktop={false}
+                        title="Archivace pracovníka"
+                        message={`Opravdu chcete archivovat uživatele "${user.name || 'Neznámý'}"? Ztratí přístup do systému.`}
+                        buttonText="Archivovat" 
+                        confirmText="Ano, archivovat"
+                      />
+                    </form>
+                  </>
+                )}
               </div>
             </div>
           )
@@ -74,7 +99,7 @@ export default function AdminUsersTable({ users }: { users: User[] }) {
       </div>
 
       {/* 2. DESKTOP VIEW */}
-      <div className="hidden md:block bg-[#FEFEFA] rounded-xl shadow-lg border border-zinc-200 overflow-hidden w-full">
+      <div className="hidden md:block bg-[#FEFEFA] rounded-xl shadow-sm border border-zinc-200 overflow-hidden w-full">
         <div className="overflow-x-auto w-full">
           <table className="w-full text-left border-collapse min-w-[600px]">
             <thead>
@@ -100,24 +125,34 @@ export default function AdminUsersTable({ users }: { users: User[] }) {
                       </span>
                     </td>
                     <td className="p-4 text-right whitespace-nowrap">
-                      <button onClick={() => router.push(`/admin/users/${user.id}/edit`)} className="px-3 py-1.5 bg-zinc-100 text-[#000000] hover:bg-zinc-200 font-medium text-sm rounded-md transition-colors mr-2">
-                        Upravit
-                      </button>
-
-                      {/* NOVÉ POTVRZOVACÍ TLAČÍTKO PRO DESKTOP */}
-                      <form action={async () => {
-                        const result = await deleteUser(user.id)
-                        if (result && !result.success) alert(result.error)
-                      }} className="inline-block">
-                        <DeleteButton 
-                          isDesktop={true}
-                          title="Archivace pracovníka"
-                          message={`Opravdu chcete archivovat uživatele "${user.name || 'Neznámý'}"? Ztratí přístup do systému.`}
-                          buttonText="Smazat"
-                          confirmText="Ano, archivovat"
-                        />
-                      </form>
-
+                      {isArchivedView ? (
+                        <form action={async () => {
+                          const result = await restoreUser(user.id)
+                          if (result && !result.success) alert(result.error)
+                        }} className="inline-block">
+                          <button type="submit" className="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 font-bold text-sm rounded-md transition-colors flex items-center gap-2 cursor-pointer shadow-sm">
+                            <RefreshCw size={14} /> Obnovit
+                          </button>
+                        </form>
+                      ) : (
+                        <>
+                          <button onClick={() => router.push(`/admin/users/${user.id}/edit`)} className="px-3 py-1.5 bg-zinc-100 text-[#000000] hover:bg-zinc-200 font-medium text-sm rounded-md transition-colors mr-2">
+                            Upravit
+                          </button>
+                          <form action={async () => {
+                            const result = await deleteUser(user.id)
+                            if (result && !result.success) alert(result.error)
+                          }} className="inline-block">
+                            <DeleteButton 
+                              isDesktop={true}
+                              title="Archivace pracovníka"
+                              message={`Opravdu chcete archivovat uživatele "${user.name || 'Neznámý'}"? Ztratí přístup do systému.`}
+                              buttonText="Archivovat"
+                              confirmText="Ano, archivovat"
+                            />
+                          </form>
+                        </>
+                      )}
                     </td>
                   </tr>
                 )
