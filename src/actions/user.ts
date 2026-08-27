@@ -1,3 +1,5 @@
+// src/actions/user.ts
+
 'use server'
 
 import prisma from '@/lib/prisma'
@@ -8,6 +10,7 @@ import { Role } from '@prisma/client'
 export async function getAllUsers() {
   try {
     return await prisma.user.findMany({
+      where: { isArchived: false }, 
       orderBy: { name: 'asc' },
       select: { id: true, name: true, email: true, role: true }
     })
@@ -43,7 +46,7 @@ export async function createUser(data: { name: string, email: string, password?:
         name: data.name,
         email: data.email,
         password: hashedPassword,
-        role: data.role as Role, // <-- ZDE ŘÍKÁME TYPESCRIPTU, ŽE JE TO SPRÁVNÁ ROLE
+        role: data.role as Role,
       }
     })
     revalidatePath('/admin/users')
@@ -56,7 +59,6 @@ export async function createUser(data: { name: string, email: string, password?:
 
 export async function updateUser(id: string, data: { name: string, email: string, password?: string, role: string }) {
   try {
-    // Nahradili jsme 'any' přesným typem, takže TypeScript ví, že 'password' je volitelné (s otazníkem)
     const updateData: {
       name: string;
       email: string;
@@ -68,7 +70,6 @@ export async function updateUser(id: string, data: { name: string, email: string
       role: data.role as Role, 
     }
 
-    // Heslo aktualizujeme jen tehdy, pokud ho admin ve formuláři reálně vyplnil
     if (data.password && data.password.trim() !== '') {
       updateData.password = await bcrypt.hash(data.password, 10)
     }
@@ -87,11 +88,17 @@ export async function updateUser(id: string, data: { name: string, email: string
 
 export async function deleteUser(id: string) {
   try {
-    await prisma.user.delete({ where: { id } })
+    // <-- ZMĚNA: UŽIVATELE NEMAŽEME, POUZE MU NASTAVÍME isArchived NA true
+    await prisma.user.update({ 
+      where: { id },
+      data: { isArchived: true }
+    })
+    
     revalidatePath('/admin/users')
+    revalidatePath('/admin/dispatch') // Revalidujeme i dispečink, ať zmizí z nabídky aplikátorů
     return { success: true }
   } catch (error) {
     console.error(error)
-    return { success: false, error: 'Chyba při smazání uživatele.' }
+    return { success: false, error: 'Chyba při archivaci uživatele.' }
   }
 }

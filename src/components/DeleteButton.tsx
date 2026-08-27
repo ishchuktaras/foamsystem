@@ -40,7 +40,7 @@ export default function DeleteButton({
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 whitespace-normal">
           
           <div className="bg-[#FEFEFA] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-zinc-200">
             
@@ -51,8 +51,7 @@ export default function DeleteButton({
               <h3 className="text-xl font-extrabold text-[#000000]">{title}</h3>
             </div>
             
-            {/* Zalamování textu zachováno */}
-            <div className="p-6 text-center text-zinc-600 break-words">
+            <div className="p-6 text-center text-zinc-600">
               <p className="text-base">{message}</p>
             </div>
 
