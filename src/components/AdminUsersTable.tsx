@@ -3,8 +3,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 import { deleteUser } from '@/actions/user'
+import DeleteButton from '@/components/DeleteButton' // <-- Přidáno naše nové tlačítko
 
 type User = {
   id: string
@@ -24,17 +24,6 @@ const ROLE_BADGES: Record<string, { label: string, color: string }> = {
 
 export default function AdminUsersTable({ users }: { users: User[] }) {
   const router = useRouter()
-  const [isDeleting, setIsDeleting] = useState<string | null>(null)
-
-  const handleDelete = async (id: string, name: string) => {
-    if (!window.confirm(`Opravdu chcete archivovat uživatele "${name}"?`)) return
-
-    setIsDeleting(id)
-    const result = await deleteUser(id)
-    
-    if (!result.success) alert(result.error)
-    setIsDeleting(null)
-  }
 
   return (
     <div className="w-full">
@@ -56,20 +45,28 @@ export default function AdminUsersTable({ users }: { users: User[] }) {
                 </span>
               </div>
               
-              <div className="flex gap-2 justify-end mt-2 pt-3 border-t border-zinc-100">
+              <div className="flex gap-2 mt-2 pt-3 border-t border-zinc-100">
                 <button 
                   onClick={() => router.push(`/admin/users/${user.id}/edit`)} 
-                  className="flex-1 sm:flex-none px-3 py-1.5 bg-zinc-100 text-[#000000] hover:bg-zinc-200 font-medium text-sm rounded-md transition-colors"
+                  className="flex-1 px-3 py-2.5 bg-zinc-100 text-[#000000] hover:bg-zinc-200 font-bold text-sm rounded-xl transition-colors flex items-center justify-center"
                 >
                   Upravit
                 </button>
-                <button 
-                  onClick={() => handleDelete(user.id, user.name || 'Neznámý')} 
-                  disabled={isDeleting === user.id}
-                  className="flex-1 sm:flex-none px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 font-medium text-sm rounded-md transition-colors disabled:opacity-50"
-                >
-                  {isDeleting === user.id ? 'Zpracování...' : 'Smazat'}
-                </button>
+                
+                {/* NOVÉ POTVRZOVACÍ TLAČÍTKO PRO MOBIL */}
+                <form action={async () => {
+                  const result = await deleteUser(user.id)
+                  if (result && !result.success) alert(result.error)
+                }} className="flex-1">
+                  <DeleteButton 
+                    isDesktop={false}
+                    title="Archivace pracovníka"
+                    message={`Opravdu chcete archivovat uživatele "${user.name || 'Neznámý'}"? Ztratí přístup do systému.`}
+                    buttonText="Smazat"
+                    confirmText="Ano, archivovat"
+                  />
+                </form>
+
               </div>
             </div>
           )
@@ -102,17 +99,25 @@ export default function AdminUsersTable({ users }: { users: User[] }) {
                         {badge.label}
                       </span>
                     </td>
-                    <td className="p-4 text-right space-x-2 whitespace-nowrap">
-                      <button onClick={() => router.push(`/admin/users/${user.id}/edit`)} className="px-3 py-1.5 bg-zinc-100 text-[#000000] hover:bg-zinc-200 font-medium text-sm rounded-md transition-colors">
+                    <td className="p-4 text-right whitespace-nowrap">
+                      <button onClick={() => router.push(`/admin/users/${user.id}/edit`)} className="px-3 py-1.5 bg-zinc-100 text-[#000000] hover:bg-zinc-200 font-medium text-sm rounded-md transition-colors mr-2">
                         Upravit
                       </button>
-                      <button 
-                        onClick={() => handleDelete(user.id, user.name || 'Neznámý')} 
-                        disabled={isDeleting === user.id}
-                        className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 font-medium text-sm rounded-md transition-colors disabled:opacity-50"
-                      >
-                        {isDeleting === user.id ? 'Mažu...' : 'Smazat'}
-                      </button>
+
+                      {/* NOVÉ POTVRZOVACÍ TLAČÍTKO PRO DESKTOP */}
+                      <form action={async () => {
+                        const result = await deleteUser(user.id)
+                        if (result && !result.success) alert(result.error)
+                      }} className="inline-block">
+                        <DeleteButton 
+                          isDesktop={true}
+                          title="Archivace pracovníka"
+                          message={`Opravdu chcete archivovat uživatele "${user.name || 'Neznámý'}"? Ztratí přístup do systému.`}
+                          buttonText="Smazat"
+                          confirmText="Ano, archivovat"
+                        />
+                      </form>
+
                     </td>
                   </tr>
                 )
