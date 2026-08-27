@@ -13,7 +13,6 @@ export default async function EditQuotePage({
 }) {
   const resolvedParams = await params
   
-  // 1. Načtení existující nabídky
   const quote = await db.quote.findUnique({
     where: { id: resolvedParams.id }
   })
@@ -22,17 +21,14 @@ export default async function EditQuotePage({
     redirect('/admin/quotes')
   }
 
-  // 2. Načtení materiálů a profilu firmy
   const materials = await db.material.findMany({
     where: { isArchived: false },
     orderBy: { name: 'asc' }
   })
   const companyProfile = await getCompanyProfile()
 
-  // 3. Pokus o nalezení správného ID materiálu podle uloženého jména
   const selectedMaterial = materials.find(m => m.name === quote.materialName)
 
-  // 4. Předpřipravení dat pro formulář
   const initialData = {
     id: quote.id,
     materialId: selectedMaterial?.id || materials[0]?.id || '',
@@ -47,15 +43,15 @@ export default async function EditQuotePage({
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-full overflow-hidden">
+    <div className="space-y-4 md:space-y-6 p-2 sm:p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-full overflow-hidden">
       
       {/* Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] p-8 md:p-10 text-[#FEFEFA] shadow-xl border border-zinc-800">
+      <div className="relative overflow-hidden rounded-xl md:rounded-2xl bg-linear-to-r from-[#000000] to-[#1a1a1a] p-5 sm:p-8 md:p-10 text-[#FEFEFA] shadow-xl border border-zinc-800">
         <div className="relative z-10 max-w-2xl">
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight mb-2 md:mb-3">
             Úprava nabídky
           </h1>
-          <p className="text-zinc-400 text-lg leading-relaxed">
+          <p className="text-zinc-400 text-sm md:text-lg leading-relaxed">
             Aktualizujte údaje o zákazníkovi, změňte parametry zakázky nebo upravte obchodní marži pro zákazníka: <strong className="text-white">{quote.customerName}</strong>.
           </p>
         </div>
@@ -67,7 +63,7 @@ export default async function EditQuotePage({
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto mt-8">
+      <div className="max-w-5xl mx-auto mt-4 md:mt-8">
         <QuoteForm 
           materials={materials} 
           companyProfile={companyProfile}
