@@ -5,6 +5,7 @@
 import { useState } from 'react'
 import { Scan, Maximize, Ruler, Save, Edit3, Camera, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import ARScanner from '@/components/ARScanner' // Import nové komponenty
 
 export default function MeasurementPage() {
   const [isScanning, setIsScanning] = useState(false)
@@ -16,17 +17,6 @@ export default function MeasurementPage() {
 
   // Vypočtená plocha
   const area = (width * height).toFixed(2)
-
-  // Simulace načtení dat z AR / AI
-  const handleSimulateScan = () => {
-    setIsScanning(true)
-    setTimeout(() => {
-      setWidth(4.5) // Simulovaná šířka
-      setHeight(2.2) // Simulovaná výška/délka
-      setHasData(true)
-      setIsScanning(false)
-    }, 1500)
-  }
 
   return (
     <div className="space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-full overflow-hidden">
@@ -55,27 +45,41 @@ export default function MeasurementPage() {
             
             {!hasData ? (
               <div className="space-y-4">
-                <button 
-                  onClick={handleSimulateScan}
-                  disabled={isScanning}
-                  className="w-full p-6 border-2 border-dashed border-[#FF4F00] bg-orange-50 hover:bg-orange-100 rounded-xl flex flex-col items-center justify-center gap-3 transition-colors cursor-pointer"
-                >
-                  <Scan size={32} className={isScanning ? "animate-pulse text-[#FF4F00]" : "text-[#FF4F00]"} />
-                  <span className="font-bold text-[#FF4F00]">
-                    {isScanning ? 'Probíhá skenování prostoru...' : 'Spustit AR měření (WebXR)'}
-                  </span>
-                </button>
+                {/* ZDE JSME PŘIDALI PODMÍNKU PRO ZOBRAZENÍ SKENERU */}
+                {isScanning ? (
+                  <ARScanner 
+                    onClose={() => setIsScanning(false)}
+                    onComplete={(w, h) => {
+                      setWidth(w)
+                      setHeight(h)
+                      setHasData(true)
+                      setIsScanning(false)
+                    }}
+                  />
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => setIsScanning(true)} // Změna: Spouští reálný stav skenování
+                      className="w-full p-6 border-2 border-dashed border-[#FF4F00] bg-orange-50 hover:bg-orange-100 rounded-xl flex flex-col items-center justify-center gap-3 transition-colors cursor-pointer"
+                    >
+                      <Scan size={32} className="text-[#FF4F00]" />
+                      <span className="font-bold text-[#FF4F00]">
+                        Spustit AR měření (WebXR)
+                      </span>
+                    </button>
 
-                <div className="relative flex items-center py-2">
-                  <div className="flex-grow border-t border-zinc-200"></div>
-                  <span className="flex-shrink-0 mx-4 text-zinc-400 text-sm font-medium">NEBO</span>
-                  <div className="flex-grow border-t border-zinc-200"></div>
-                </div>
+                    <div className="relative flex items-center py-2">
+                      <div className="flex-grow border-t border-zinc-200"></div>
+                      <span className="flex-shrink-0 mx-4 text-zinc-400 text-sm font-medium">NEBO</span>
+                      <div className="flex-grow border-t border-zinc-200"></div>
+                    </div>
 
-                <button className="w-full p-4 border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 rounded-xl flex items-center justify-center gap-2 transition-colors font-semibold text-zinc-700 cursor-pointer">
-                  <Camera size={20} />
-                  Nahrát fotku pro AI analýzu
-                </button>
+                    <button className="w-full p-4 border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 rounded-xl flex items-center justify-center gap-2 transition-colors font-semibold text-zinc-700 cursor-pointer">
+                      <Camera size={20} />
+                      Nahrát fotku pro AI analýzu
+                    </button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="space-y-6 animate-in fade-in">
@@ -126,7 +130,7 @@ export default function MeasurementPage() {
                     Měřit znovu
                   </button>
                   <Link 
-                    href={`/admin/quotes/new?area=${area}`} // Příklad napojení na tvou kalkulačku
+                    href={`/admin/quotes/new?area=${area}`} 
                     className="flex-1 px-4 py-3 bg-[#000000] hover:bg-zinc-800 text-[#FEFEFA] font-bold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md"
                   >
                     <Save size={18} />
@@ -158,7 +162,6 @@ export default function MeasurementPage() {
                 <div 
                   className="bg-[#FF4F00] bg-opacity-20 border-2 border-[#FF4F00] border-dashed rounded-lg flex items-center justify-center shadow-inner transition-all duration-300 relative"
                   style={{ 
-                    // Tento styl zajistí, že se obdélník vykreslí přesně v poměru zadaných stran
                     aspectRatio: height > 0 ? `${width} / ${height}` : '1 / 1',
                     maxHeight: '250px',
                     maxWidth: '100%',
