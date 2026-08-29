@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Boxes, Calculator, FileText, Settings, LogOut, X, Users, ClipboardCheck, CalendarDays } from 'lucide-react'
+import { LayoutDashboard, Boxes, Calculator, FileText, Settings, LogOut, X, Users, ClipboardCheck, CalendarDays, Scan } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import CompanyBadge from './CompanyBadge'
 
@@ -40,6 +40,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     { name: 'Kalkulátor spotřeby', href: '/admin/calculator', icon: Calculator, roles: ['ADMIN', 'JEDNATEL', 'TECHNIK', 'SUPERVIZOR'] },
     { name: 'Nabídky a poptávky', href: '/admin/quotes', icon: FileText, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR', 'TECHNIK', 'APLIKATOR'] },
     { name: 'Evidence práce', href: '/admin/evidence', icon: ClipboardCheck, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR', 'APLIKATOR'] },
+    { name: 'Chytré měření', href: '/admin/mereni', icon: Scan, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR', 'TECHNIK', 'APLIKATOR'] },
     { name: 'Nastavení', href: '/admin/settings', icon: Settings, roles: ['ADMIN', 'JEDNATEL'] },
   ]
 
