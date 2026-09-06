@@ -197,6 +197,14 @@ model JobEvidence {
   difficultEnv     String? // Popis ztíženého prostředí
   workingAtHeights Boolean @default(false)
   ventilationUsed  Boolean @default(false)
+
+  // --- NOVÉ FINANCE A SUPERVIZE ---
+  pricePerKg            Float?
+  machineCoefficient    Float?
+  packingPriceRate      Float?
+  heightsSurcharge      Float?
+  difficultEnvSurcharge Float?
+  finalInvoiceTotal     Float?
   
   createdAt        DateTime @default(now())
 }
