@@ -14,6 +14,7 @@ export async function createQuote(data: {
   area: string
   thickness: string
   totalCost: string
+  applicatorNotes?: string | null
 }) {
   try {
     const quote = await db.quote.create({
@@ -27,6 +28,7 @@ export async function createQuote(data: {
         area: data.area,
         thickness: data.thickness,
         totalCost: data.totalCost,
+        applicatorNotes: data.applicatorNotes,
       }
     })
     
@@ -62,6 +64,7 @@ export async function updateQuote(id: string, data: {
   area: string
   thickness: string
   totalCost: string
+  applicatorNotes?: string | null
 }) {
   try {
     await db.quote.update({
@@ -76,6 +79,7 @@ export async function updateQuote(id: string, data: {
         area: data.area,
         thickness: data.thickness,
         totalCost: data.totalCost,
+        applicatorNotes: data.applicatorNotes,
       }
     })
     

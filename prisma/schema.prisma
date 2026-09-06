@@ -144,22 +144,25 @@ model CompanyProfile {
 
 
 model Quote {
-  id           String   @id @default(cuid())
-  customerName String
-  ico          String?
-  street       String?
-  city         String
-  zip          String?
-  materialName String
-  area         String
-  thickness    String
-  totalCost    String
+  id               String   @id @default(cuid())
+  customerName     String
+  ico              String?
+  street           String?
+  city             String
+  zip              String?
+  materialName     String
+  area             String
+  thickness        String
+  totalCost        String
 
-// Plánování a přiřazení (Supervizor -> Aplikátor)
-  scheduledDate     DateTime? // Datum, kdy se má realizovat
-  responsibleUserId String?   // Kdo je hlavní aplikátor
+  // --- UPOZORNĚNÍ A POKYNY PRO APLIKÁTORA ---
+  applicatorNotes  String?
+
+  // Plánování a přiřazení (Supervizor -> Aplikátor)
+  scheduledDate     DateTime? 
+  responsibleUserId String?   
   responsibleUser   User?     @relation("ResponsibleQuote", fields: [responsibleUserId], references: [id])
-  assignedUsers     User[]    @relation("AssignedQuotes") // Další pomocníci ve skupině
+  assignedUsers     User[]    @relation("AssignedQuotes") 
 
   status         QuoteStatus @default(INQUIRY)
   evidence       JobEvidence?

@@ -3,7 +3,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Building2, MapPin, Search, Save, Loader2, AlertCircle, FileDown, Percent, AlertTriangle } from 'lucide-react'
+import { Building2, MapPin, Search, Save, Loader2, AlertCircle, FileDown, Percent } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createQuote, updateQuote } from '@/actions/quote'
 import { calculateFoamProject, parseLambda } from '@/lib/calculations'
@@ -42,6 +42,7 @@ interface QuoteFormProps {
     city?: string;
     zip?: string;
     totalCost?: string;
+    applicatorNotes?: string | null;
   };
 }
 
@@ -54,6 +55,9 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
   const [city, setCity] = useState(initialData.city || '')
   const [zip, setZip] = useState(initialData.zip || '')
   
+  // Stav pro pokyny pro aplikátora
+  const [applicatorNotes, setApplicatorNotes] = useState(initialData.applicatorNotes || '')
+
   const [selectedMaterialId, setSelectedMaterialId] = useState(initialData.materialId || (materials[0]?.id || ''))
   const [area, setArea] = useState<number | ''>(initialData.area ? Number(initialData.area) : '')
   const [thickness, setThickness] = useState<number | ''>(initialData.thickness ? Number(initialData.thickness) : '')
@@ -120,6 +124,11 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     } finally {
       setIsFetchingAres(false)
     }
+  }
+
+  // Funkce pro přidání šablonových pokynů jedním kliknutím
+  const handleAddPreset = (presetText: string) => {
+    setApplicatorNotes(prev => prev ? `${prev}\n• ${presetText}` : `• ${presetText}`)
   }
 
   const handleGenerateClientPDF = () => {
@@ -241,7 +250,8 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       materialName: selectedMaterial?.name || 'Nespecifikováno',
       area: String(area),
       thickness: String(thickness),
-      totalCost: String(clientFinalPrice) 
+      totalCost: String(clientFinalPrice),
+      applicatorNotes // Odeslání pokynů
     }
 
     let result;
@@ -261,11 +271,9 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
   }
 
   return (
-    // ZMĚNA: Mezera (gap) snížena pro mobily
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8 items-start">
       
       {/* LEVÝ SLOUPEC: Formulář */}
-      {/* ZMĚNA: p-4 na mobilech pro maximalizaci vnitřního prostoru */}
       <form onSubmit={handleSubmit} className="lg:col-span-2 bg-[#FEFEFA] p-4 sm:p-6 md:p-8 rounded-xl md:rounded-2xl shadow-sm border border-zinc-200 space-y-6 md:space-y-8">
         
         <div className="space-y-5 md:space-y-6">
@@ -345,6 +353,55 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
               <input type="number" required value={thickness} onChange={(e) => setThickness(Number(e.target.value))} className="w-full px-3 md:px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-bold bg-zinc-50/50"/>
             </div>
           </div>
+
+          {/* --- UPOZORNĚNÍ A POKYNY PRO APLIKÁTORA --- */}
+          <div className="space-y-3 pt-2">
+            <label className="block text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide flex items-center gap-2">
+              <AlertCircle size={16} className="text-[#FF4F00]" />
+              Upozornění a pokyny pro aplikátora na stavbě
+            </label>
+            
+            {/* Rychlé šablony pro jednotné formátování */}
+            <div className="flex flex-wrap gap-2">
+              <button 
+                type="button"
+                onClick={() => handleAddPreset('Volat vždy 30 minut předem zákazníkovi')}
+                className="text-xs bg-zinc-100 hover:bg-orange-50 hover:text-[#FF4F00] text-zinc-700 font-semibold px-3 py-1.5 rounded-lg border border-zinc-200 transition-colors cursor-pointer"
+              >
+                + Volat 30 min předem
+              </button>
+              <button 
+                type="button"
+                onClick={() => handleAddPreset('Zakrýt: Trámy, omítky + střešní okna')}
+                className="text-xs bg-zinc-100 hover:bg-orange-50 hover:text-[#FF4F00] text-zinc-700 font-semibold px-3 py-1.5 rounded-lg border border-zinc-200 transition-colors cursor-pointer"
+              >
+                + Zakrýt trámy/okna
+              </button>
+              <button 
+                type="button"
+                onClick={() => handleAddPreset('Přípojka 380 V, jistič 25 A + zásuvka pětikolík')}
+                className="text-xs bg-zinc-100 hover:bg-orange-50 hover:text-[#FF4F00] text-zinc-700 font-semibold px-3 py-1.5 rounded-lg border border-zinc-200 transition-colors cursor-pointer"
+              >
+                + Přípojka 380V
+              </button>
+              <button 
+                type="button"
+                onClick={() => handleAddPreset('Použít uvazovací opasek a řádně se zajistit (práce ve výškách)')}
+                className="text-xs bg-zinc-100 hover:bg-orange-50 hover:text-[#FF4F00] text-zinc-700 font-semibold px-3 py-1.5 rounded-lg border border-zinc-200 transition-colors cursor-pointer"
+              >
+                + Bezpečnost ve výškách
+              </button>
+            </div>
+
+            <textarea 
+              rows={4}
+              value={applicatorNotes}
+              onChange={(e) => setApplicatorNotes(e.target.value)}
+              placeholder="• Zde se propisují jednotné pokyny pro aplikátora na stavbě..."
+              className="w-full p-3 bg-zinc-50/50 border border-zinc-200 rounded-xl font-medium text-sm text-[#000000] focus:ring-2 focus:ring-[#FF4F00] outline-none"
+            />
+          </div>
+
         </div>
 
         <div className="pt-2 flex justify-end">
@@ -376,7 +433,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
         </div>
 
         {calcResults && (
-          <div className="bg-gradient-to-br from-[#000000] to-[#1a1a1a] p-5 sm:p-6 rounded-xl md:rounded-2xl shadow-lg text-[#FEFEFA] border border-zinc-800">
+          <div className="bg-linear-to-br from-[#000000] to-[#1a1a1a] p-5 sm:p-6 rounded-xl md:rounded-2xl shadow-lg text-[#FEFEFA] border border-zinc-800">
             <p className="text-zinc-400 text-xs md:text-sm font-semibold uppercase tracking-wider mb-1">Cena pro klienta</p>
             <div className="text-3xl md:text-4xl font-black mb-4 truncate">{clientFinalPrice.toLocaleString('cs-CZ')} <span className="text-xl">Kč</span></div>
             

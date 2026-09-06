@@ -38,7 +38,7 @@ export default function ARScanner({
   }
 
   return (
-    <div className="relative w-full h-[450px] bg-[#1a1a1a] rounded-2xl overflow-hidden border-2 border-[#FF4F00] shadow-inner">
+    <div className="relative w-full h-112.5 bg-[#1a1a1a] rounded-2xl overflow-hidden border-2 border-[#FF4F00] shadow-inner">
       
       <button 
         onClick={onClose}
