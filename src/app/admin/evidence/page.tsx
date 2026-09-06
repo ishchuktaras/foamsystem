@@ -3,6 +3,7 @@
 import { db } from '@/lib/db'
 import { ClipboardCheck, Thermometer, Cog, Package, HardHat } from 'lucide-react'
 import { auth } from '@/auth'
+import SupervisorBillingForm from '@/components/SupervisorBillingForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +14,8 @@ export default async function EvidenceListPage() {
   const userId = currentUser?.id
 
   const isApplicator = role === 'APLIKATOR'
+  // Zjistíme, zda má uživatel právo vidět finance
+  const hasBillingAccess = role === 'SUPERVIZOR' || role === 'JEDNATEL' || role === 'ADMIN'
 
   // Pro evidenci nás zajímají POUZE dokončené zakázky. Aplikátor navíc vidí jen ty své.
   const whereClause = isApplicator 
@@ -29,7 +32,7 @@ export default async function EvidenceListPage() {
     where: whereClause,
     include: { 
       evidence: true,
-      responsibleUser: true // <-- TADY JSME PŘIDALI NAČTENÍ APLIKÁTORA Z DATABÁZE
+      responsibleUser: true
     },
     orderBy: { updatedAt: 'desc' }
   })
@@ -65,85 +68,94 @@ export default async function EvidenceListPage() {
       ) : (
         <div className="grid grid-cols-1 gap-6">
           {completedQuotes.map((quote) => (
-            <div key={quote.id} className="bg-[#FEFEFA] text-[#000000] rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col md:flex-row">
+            <div key={quote.id} className="bg-[#FEFEFA] text-[#000000] rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col">
               
-              <div className="p-6 md:w-1/3 bg-zinc-50 border-b md:border-b-0 md:border-r border-zinc-200 flex flex-col justify-between">
-                <div>
-                  <div className="text-sm font-bold text-[#FF4F00] uppercase tracking-wider mb-1">Zákazník</div>
-                  <h3 className="text-xl font-black text-[#000000] mb-2">{quote.customerName}</h3>
-                  <div className="text-sm text-zinc-600 mb-4">{quote.city}</div>
-                </div>
-                
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">Materiál:</span>
-                    <span className="font-bold text-[#000000]">{quote.materialName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">Rozsah:</span>
-                    <span className="font-bold text-[#000000]">{quote.area} m² / {quote.thickness} cm</span>
+              <div className="flex flex-col md:flex-row w-full">
+                <div className="p-6 md:w-1/3 bg-zinc-50 border-b md:border-b-0 md:border-r border-zinc-200 flex flex-col justify-between">
+                  <div>
+                    <div className="text-sm font-bold text-[#FF4F00] uppercase tracking-wider mb-1">Zákazník</div>
+                    <h3 className="text-xl font-black text-[#000000] mb-2">{quote.customerName}</h3>
+                    <div className="text-sm text-zinc-600 mb-4">{quote.city}</div>
                   </div>
                   
-                  {/* NOVÝ ŘÁDEK S INFORMACÍ O APLIKÁTOROVI */}
-                  <div className="flex justify-between mt-2 pt-2 border-t border-zinc-200">
-                    <span className="text-zinc-500 flex items-center gap-1">
-                      <HardHat size={14} className="text-[#FF4F00]" /> Aplikátor:
-                    </span>
-                    <span className="font-bold text-[#000000]">
-                      {quote.responsibleUser?.name || quote.responsibleUser?.email || 'Nepřiřazeno'}
-                    </span>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Materiál:</span>
+                      <span className="font-bold text-[#000000]">{quote.materialName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Rozsah:</span>
+                      <span className="font-bold text-[#000000]">{quote.area} m² / {quote.thickness} cm</span>
+                    </div>
+                    
+                    <div className="flex justify-between mt-2 pt-2 border-t border-zinc-200">
+                      <span className="text-zinc-500 flex items-center gap-1">
+                        <HardHat size={14} className="text-[#FF4F00]" /> Aplikátor:
+                      </span>
+                      <span className="font-bold text-[#000000]">
+                        {quote.responsibleUser?.name || quote.responsibleUser?.email || 'Nepřiřazeno'}
+                      </span>
+                    </div>
                   </div>
+                </div>
+
+                <div className="p-6 md:w-2/3 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  {quote.evidence ? (
+                    <>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-[#000000] font-bold border-b border-zinc-100 pb-2">
+                          <Thermometer size={16} className="text-[#FF4F00]" /> Teploty
+                        </div>
+                        <div className="text-sm space-y-1">
+                          <div className="flex justify-between"><span className="text-zinc-500">Venkovní:</span> <strong className="text-[#000000]">{quote.evidence.ambientTemp} °C</strong></div>
+                          <div className="flex justify-between"><span className="text-zinc-500">Vnitřní:</span> <strong className="text-[#000000]">{quote.evidence.internalTemp} °C</strong></div>
+                          <div className="flex justify-between"><span className="text-zinc-500">Povrch:</span> <strong className="text-[#000000]">{quote.evidence.surfaceTemp} °C</strong></div>
+                          <div className="flex justify-between mt-2 pt-2 border-t border-zinc-100"><span className="text-zinc-500">Podklad:</span> <strong className="uppercase text-[#000000]">{quote.evidence.surfaceType}</strong></div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-[#000000] font-bold border-b border-zinc-100 pb-2">
+                          <Cog size={16} className="text-[#FF4F00]" /> Reaktory
+                        </div>
+                        <div className="text-sm space-y-1">
+                          <div className="flex justify-between"><span className="text-zinc-500">Start:</span> <strong className="text-[#000000]">{quote.evidence.reactorStart}</strong></div>
+                          <div className="flex justify-between"><span className="text-zinc-500">Konec:</span> <strong className="text-[#000000]">{quote.evidence.reactorEnd}</strong></div>
+                          <div className="flex justify-between mt-2 pt-2 border-t border-zinc-100"><span className="text-zinc-500">Zdvihy celkem:</span> <strong className="text-[#FF4F00]">{quote.evidence.reactorEnd - quote.evidence.reactorStart}</strong></div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-[#000000] font-bold border-b border-zinc-100 pb-2">
+                          <Package size={16} className="text-[#FF4F00]" /> Provoz
+                        </div>
+                        <div className="text-sm space-y-1">
+                          <div className="flex justify-between"><span className="text-zinc-500">Balení (role):</span> <strong className="text-[#000000]">{quote.evidence.foilRolls} ks</strong></div>
+                          <div className="flex justify-between"><span className="text-zinc-500">Čas balení:</span> <strong className="text-[#000000]">{quote.evidence.packingHours} h</strong></div>
+                          
+                          {(quote.evidence.workingAtHeights || quote.evidence.ventilationUsed || quote.evidence.difficultEnv) && (
+                            <div className="mt-2 pt-2 border-t border-zinc-100 flex flex-wrap gap-1">
+                              {quote.evidence.workingAtHeights && <span className="bg-red-50 text-red-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Výšky</span>}
+                              {quote.evidence.ventilationUsed && <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Odvětrávání</span>}
+                              {quote.evidence.difficultEnv && <span className="bg-amber-50 text-amber-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Ztížené podm.</span>}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="col-span-3 text-center text-zinc-400 py-8 italic">Data evidence chybí</div>
+                  )}
                 </div>
               </div>
 
-              <div className="p-6 md:w-2/3 grid grid-cols-1 sm:grid-cols-3 gap-6">
-                {quote.evidence ? (
-                  <>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-[#000000] font-bold border-b border-zinc-100 pb-2">
-                        <Thermometer size={16} className="text-[#FF4F00]" /> Teploty
-                      </div>
-                      <div className="text-sm space-y-1">
-                        <div className="flex justify-between"><span className="text-zinc-500">Venkovní:</span> <strong className="text-[#000000]">{quote.evidence.ambientTemp} °C</strong></div>
-                        <div className="flex justify-between"><span className="text-zinc-500">Vnitřní:</span> <strong className="text-[#000000]">{quote.evidence.internalTemp} °C</strong></div>
-                        <div className="flex justify-between"><span className="text-zinc-500">Povrch:</span> <strong className="text-[#000000]">{quote.evidence.surfaceTemp} °C</strong></div>
-                        <div className="flex justify-between mt-2 pt-2 border-t border-zinc-100"><span className="text-zinc-500">Podklad:</span> <strong className="uppercase text-[#000000]">{quote.evidence.surfaceType}</strong></div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-[#000000] font-bold border-b border-zinc-100 pb-2">
-                        <Cog size={16} className="text-[#FF4F00]" /> Reaktory
-                      </div>
-                      <div className="text-sm space-y-1">
-                        <div className="flex justify-between"><span className="text-zinc-500">Start:</span> <strong className="text-[#000000]">{quote.evidence.reactorStart}</strong></div>
-                        <div className="flex justify-between"><span className="text-zinc-500">Konec:</span> <strong className="text-[#000000]">{quote.evidence.reactorEnd}</strong></div>
-                        <div className="flex justify-between mt-2 pt-2 border-t border-zinc-100"><span className="text-zinc-500">Zdvihy celkem:</span> <strong className="text-[#FF4F00]">{quote.evidence.reactorEnd - quote.evidence.reactorStart}</strong></div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-[#000000] font-bold border-b border-zinc-100 pb-2">
-                        <Package size={16} className="text-[#FF4F00]" /> Provoz
-                      </div>
-                      <div className="text-sm space-y-1">
-                        <div className="flex justify-between"><span className="text-zinc-500">Balení (role):</span> <strong className="text-[#000000]">{quote.evidence.foilRolls} ks</strong></div>
-                        <div className="flex justify-between"><span className="text-zinc-500">Čas balení:</span> <strong className="text-[#000000]">{quote.evidence.packingHours} h</strong></div>
-                        
-                        {(quote.evidence.workingAtHeights || quote.evidence.ventilationUsed || quote.evidence.difficultEnv) && (
-                          <div className="mt-2 pt-2 border-t border-zinc-100 flex flex-wrap gap-1">
-                            {quote.evidence.workingAtHeights && <span className="bg-red-50 text-red-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Výšky</span>}
-                            {quote.evidence.ventilationUsed && <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Odvětrávání</span>}
-                            {quote.evidence.difficultEnv && <span className="bg-amber-50 text-amber-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Ztížené podm.</span>}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="col-span-3 text-center text-zinc-400 py-8 italic">Data evidence chybí</div>
-                )}
-              </div>
+              {/* TADY SE ZOBRAZÍ NOVÝ PANEL PRO SUPERVIZORA */}
+              {hasBillingAccess && quote.evidence && (
+                <div className="px-6 pb-6">
+                  <SupervisorBillingForm evidence={quote.evidence} quote={quote} />
+                </div>
+              )}
+              
             </div>
           ))}
         </div>
