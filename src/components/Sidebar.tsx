@@ -1,3 +1,4 @@
+// src/components/Sidebar.tsx
 'use client'
 
 import Link from 'next/link'
@@ -63,9 +64,9 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         
         <div className="p-6 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-extrabold flex items-center gap-2">
-              <span className="bg-[#FF4F00] p-1.5 rounded-lg text-sm text-white">N</span>
-              <span>Foam<span className="text-[#FF4F00]">System</span></span>
+            <h2 className="text-xl font-extrabold flex items-center gap-2">
+              <span className="bg-[#FF4F00] px-2 py-1 rounded-lg text-xs text-white tracking-wider">RS</span>
+              <span>FOAM<span className="text-[#FF4F00]">SYSTEM</span></span>
             </h2>
             <p className="text-xs text-zinc-500 mt-2 font-medium tracking-wide">INTERNÍ SYSTÉM</p>
           </div>
