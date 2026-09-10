@@ -12,7 +12,6 @@ export default function Footer() {
             <span className="bg-[#FF4F00] px-2 py-1 rounded-lg text-sm font-black text-white tracking-wider">RS</span>
           </div>
           <p className="text-sm leading-relaxed mb-4">Profesionální aplikace stříkané PUR izolace s důrazem na kvalitu, rychlost a čistotu práce.</p>
-          <p className="text-sm font-bold text-white">IČO: 23874694</p>
         </div>
         <div>
           <h4 className="text-white font-bold mb-4">Rychlé odkazy</h4>
