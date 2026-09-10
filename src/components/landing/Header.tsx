@@ -6,7 +6,7 @@ export default function Header() {
     <header className="fixed top-0 w-full bg-[#F9FAFB]/90 backdrop-blur-md z-50 border-b border-zinc-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         
-        {/* --- NOVÉ LOGO --- */}
+        {/* --- LOGO --- */}
         <div className="flex items-center gap-2">
           <span className="text-xl font-extrabold text-[#000000]">IZOLACE</span>
           <span className="bg-[#FF4F00] px-2 py-1 rounded-lg text-sm font-black text-white tracking-wider">RS</span>
