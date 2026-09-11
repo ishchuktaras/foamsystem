@@ -22,10 +22,11 @@ export default async function UsersPage({
   const users = await getAllUsers(isArchivedView)
 
   return (
-    <div className="space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-full overflow-hidden">
+    // FIX ZDE: Přidáno w-full min-w-0
+    <div className="space-y-6 p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full min-w-0">
       
-      {/* Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] p-8 md:p-10 text-[#FEFEFA] shadow-xl border border-zinc-800">
+      {/* Banner - FIX ZDE: Přidáno w-full */}
+      <div className="relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] p-8 md:p-10 text-[#FEFEFA] shadow-xl border border-zinc-800">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
             {isArchivedView ? 'Archiv pracovníků' : 'Správa pracovníků'}
@@ -41,8 +42,8 @@ export default async function UsersPage({
         </div>
       </div>
 
-      {/* Ovládací panel s Taby */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#FEFEFA] p-2 rounded-xl border border-zinc-200 shadow-sm max-w-5xl mx-auto">
+      {/* Ovládací panel s Taby - FIX ZDE: w-full min-w-0 */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#FEFEFA] p-2 rounded-xl border border-zinc-200 shadow-sm w-full max-w-5xl mx-auto min-w-0">
         <div className="flex items-center gap-1 w-full sm:w-auto">
           <Link 
             href="/admin/users"
@@ -71,7 +72,7 @@ export default async function UsersPage({
         )}
       </div>
 
-      <div className="max-w-5xl mx-auto">
+      <div className="w-full max-w-5xl mx-auto min-w-0">
         <AdminUsersTable users={users} isArchivedView={isArchivedView} currentUserRole={currentUserRole} />
       </div>
     </div>

@@ -22,10 +22,11 @@ export default async function DispatchPage() {
   ])
 
   return (
-    <div className="space-y-6 p-4 md:p-8 animate-in fade-in duration-500 max-w-full overflow-hidden">
+    // FIX ZDE: Přidáno w-full min-w-0 k hlavnímu kontejneru
+    <div className="space-y-6 p-4 md:p-8 animate-in fade-in duration-500 w-full min-w-0">
       
-      {/* Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
+      {/* Banner - FIX ZDE: Přidáno w-full */}
+      <div className="relative w-full overflow-hidden rounded-2xl bg-linear-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
             Dispečink & Rozvrh tras
@@ -40,12 +41,12 @@ export default async function DispatchPage() {
       </div>
 
       {quotes.length === 0 ? (
-        <div className="bg-[#FEFEFA] p-12 rounded-2xl border border-zinc-200 text-center shadow-sm">
+        <div className="w-full bg-[#FEFEFA] p-12 rounded-2xl border border-zinc-200 text-center shadow-sm">
           <CalendarDays size={48} className="mx-auto text-zinc-300 mb-4" />
           <h3 className="text-xl font-bold text-[#000000]">Žádné aktivní zakázky</h3>
         </div>
       ) : (
-        <div className="w-full">
+        <div className="w-full min-w-0">
           
           {/* 1. ZOBRAZENÍ PRO MOBILY (Karty pod sebou) */}
           <div className="block md:hidden space-y-4 w-full">
@@ -55,7 +56,7 @@ export default async function DispatchPage() {
                 : ''
 
               return (
-                <div key={quote.id} className="bg-[#FEFEFA] p-5 rounded-2xl shadow-sm border border-zinc-200 flex flex-col gap-4">
+                <div key={quote.id} className="w-full bg-[#FEFEFA] p-5 rounded-2xl shadow-sm border border-zinc-200 flex flex-col gap-4">
                   <div className="flex justify-between items-start border-b border-zinc-100 pb-3">
                     <div className="pr-2">
                       <div className="font-bold text-[#000000] text-lg leading-tight">{quote.customerName}</div>
@@ -98,7 +99,7 @@ export default async function DispatchPage() {
           </div>
 
           {/* 2. ZOBRAZENÍ PRO DESKTOP (Tabulka) */}
-          <div className="hidden md:block bg-[#FEFEFA] rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
+          <div className="hidden md:block w-full bg-[#FEFEFA] rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto w-full">
               <table className="w-full text-left border-collapse min-w-[900px]">
                 <thead>
