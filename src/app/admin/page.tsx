@@ -277,7 +277,7 @@ export default async function AdminDashboard({
         </div>
       </div>
 
-      {/* 3. Systémové metriky - TY JSOU ZPĚT! */}
+      {/* 3. Systémové metriky  */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-4">Systémové metriky</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -296,14 +296,14 @@ export default async function AdminDashboard({
             <div className="p-4 bg-purple-50 text-purple-600 rounded-xl"><Database size={24} /></div>
             <div>
               <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Stav databáze</p>
-              <h3 className="text-2xl font-bold text-emerald-600 text-lg mt-1">Připojeno</h3>
+              <h3 className="text-lg font-bold text-emerald-600 text-lg mt-1">Připojeno</h3>
             </div>
           </div>
 
         </div>
       </div>
 
-      {/* 4. Hlavní rozcestník - Rychlé akce (VŠECHNY ZPĚT) */}
+      {/* 4. Hlavní rozcestník - Rychlé akce */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-6">Rychlé akce</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
