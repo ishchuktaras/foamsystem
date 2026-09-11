@@ -356,7 +356,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
 
           {/* --- UPOZORNĚNÍ A POKYNY PRO APLIKÁTORA --- */}
           <div className="space-y-3 pt-2">
-            <label className="block text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide flex items-center gap-2">
+            <label className="flex text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide flex items-center gap-2">
               <AlertCircle size={16} className="text-[#FF4F00]" />
               Upozornění a pokyny pro aplikátora na stavbě
             </label>
