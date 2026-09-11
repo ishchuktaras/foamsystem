@@ -1,7 +1,6 @@
 // src/components/Sidebar.tsx
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Boxes, Calculator, FileText, Settings, LogOut, X, Users, ClipboardCheck, CalendarDays, Scan, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -11,6 +10,8 @@ import CompanyBadge from './CompanyBadge'
 interface SidebarProps {
   isOpen?: boolean
   setIsOpen?: (open: boolean) => void
+  isCollapsed?: boolean // Nová prop
+  setIsCollapsed?: (collapsed: boolean) => void // Nová prop
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -22,11 +23,8 @@ const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Admin',
 }
 
-export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
+export default function Sidebar({ isOpen, setIsOpen, isCollapsed = false, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname()
-  
-  // Stav pro sbalení sidebaru na ikony (pouze na desktopu)
-  const [isCollapsed, setIsCollapsed] = useState(false) 
   
   const sessionHook = useSession()
   const session = sessionHook?.data
@@ -64,7 +62,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
       <aside className={`
         bg-[#000000] text-[#FEFEFA] flex flex-col fixed left-0 top-0 bottom-0 z-50 
         transition-all duration-300 ease-in-out border-r border-zinc-900 
-        h-[100dvh] /* Zásadní pro mobily - přizpůsobí se výšce včetně lišt prohlížeče */
+        h-dvh 
         ${isOpen ? 'translate-x-0 w-72' : '-translate-x-full md:translate-x-0'}
         ${!isOpen && isCollapsed ? 'md:w-20' : 'md:w-64'}
       `}>
@@ -88,17 +86,19 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         </div>
 
         {/* Přepínač velikosti sidebaru (viditelný jen na PC) */}
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="hidden md:flex absolute -right-3 top-10 bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 border border-zinc-900 rounded-full p-1 z-50 cursor-pointer shadow-md transition-colors"
-          title={isCollapsed ? "Rozbalit panel" : "Sbalit panel"}
-        >
-          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
+        {setIsCollapsed && (
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="hidden md:flex absolute -right-3 top-10 bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 border border-zinc-900 rounded-full p-1 z-50 cursor-pointer shadow-md transition-colors"
+            title={isCollapsed ? "Rozbalit panel" : "Sbalit panel"}
+          >
+            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
+        )}
 
         {!isCollapsed && <div className="px-6 pb-2 shrink-0"><CompanyBadge /></div>}
 
-        {/* NAVIGACE (Obaleno v overflow-y-auto, aby vnitřek roloval a patička zůstala dole) */}
+        {/* NAVIGACE */}
         <nav className="flex-1 overflow-y-auto px-4 space-y-1.5 pb-4 [&::-webkit-scrollbar]:hidden">
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -123,7 +123,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           })}
         </nav>
 
-        {/* UŽIVATEL A ODHLÁŠENÍ (Fixováno dole pomocí shrink-0) */}
+        {/* UŽIVATEL A ODHLÁŠENÍ */}
         <div className="p-4 border-t border-zinc-900 shrink-0">
           {isCollapsed ? (
             <button 
