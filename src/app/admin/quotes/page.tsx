@@ -35,10 +35,11 @@ export default async function QuotesPage() {
   })
 
   return (
-    <div className="space-y-6 p-2 sm:p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-full overflow-hidden">
+    // FIX ZDE: min-w-0 a w-full zamezí kontejneru roztahovat se nad 100% dostupné šířky.
+    <div className="space-y-6 p-2 sm:p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full min-w-0">
       
-      {/* Prémiový Banner */}
-      <div className="relative rounded-2xl bg-linear-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-6 md:p-10 text-[#FEFEFA] shadow-xl overflow-hidden">
+      {/* Prémiový Banner - FIX: w-full zamezí tomu, aby ho roztáhlo okolí */}
+      <div className="relative w-full rounded-2xl bg-linear-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-6 md:p-10 text-[#FEFEFA] shadow-xl overflow-hidden">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3">
             {isApplicator ? 'Moje naplánované zakázky' : 'Nabídky a poptávky'}
@@ -59,7 +60,7 @@ export default async function QuotesPage() {
       </div>
 
       {!isApplicator && (
-        <div className="flex justify-end">
+        <div className="flex justify-end w-full">
           <Link 
             href="/admin/quotes/new" 
             className="bg-[#FF4F00] hover:bg-[#E64700] text-[#FEFEFA] px-6 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2 hover:scale-[1.02] w-full md:w-auto"
@@ -71,7 +72,7 @@ export default async function QuotesPage() {
       )}
 
       {quotes.length === 0 ? (
-        <div className="bg-[#FEFEFA] p-8 md:p-12 rounded-2xl shadow-sm border border-zinc-200 text-center space-y-4 mt-8 max-w-4xl mx-auto">
+        <div className="bg-[#FEFEFA] p-8 md:p-12 rounded-2xl shadow-sm border border-zinc-200 text-center space-y-4 mt-8 w-full max-w-4xl mx-auto">
           <div className="flex justify-center text-zinc-300 mb-2">
             <FileText size={64} />
           </div>
@@ -86,12 +87,12 @@ export default async function QuotesPage() {
           </p>
         </div>
       ) : (
-        <div className="w-full">
+        <div className="w-full min-w-0">
           
           {/* 1. MOBILNÍ KARTY */}
           <div className="block space-y-4 md:hidden w-full">
             {quotes.map((quote) => (
-              <div key={quote.id} className="bg-[#FEFEFA] p-4 rounded-xl shadow-sm border border-zinc-200 flex flex-col gap-4">
+              <div key={quote.id} className="bg-[#FEFEFA] p-4 rounded-xl shadow-sm border border-zinc-200 flex flex-col gap-4 w-full">
                 
                 <div className="flex justify-between items-start border-b border-zinc-100 pb-3">
                   <div className="pr-2">
@@ -150,7 +151,6 @@ export default async function QuotesPage() {
                         Upravit
                       </Link>
                       
-                      {/* NOVÉ POTVRZOVACÍ TLAČÍTKO PRO MOBIL */}
                       <form action={async () => {
                         'use server'
                         await deleteQuote(quote.id)
@@ -165,10 +165,10 @@ export default async function QuotesPage() {
             ))}
           </div>
 
-          {/* 2. DESKTOP TABULKA */}
-          <div className="hidden md:block bg-[#FEFEFA] rounded-2xl shadow-sm border border-zinc-200 overflow-hidden max-w-6xl mx-auto w-full">
+          {/* 2. DESKTOP TABULKA - FIX: w-full a overflow-x-auto, navíc oddělený kontejner */}
+          <div className="hidden md:block bg-[#FEFEFA] rounded-2xl shadow-sm border border-zinc-200 overflow-hidden w-full max-w-full">
             <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse min-w-[900px]">
+              <table className="w-full text-left border-collapse min-w-225">
                 <thead>
                   <tr className="bg-[#000000] text-[#FEFEFA] text-xs uppercase tracking-wider">
                     <th className="py-4 px-6 font-semibold">Zákazník / Město</th>
@@ -232,7 +232,6 @@ export default async function QuotesPage() {
                               Upravit
                             </Link>
                             
-                            {/* NOVÉ POTVRZOVACÍ TLAČÍTKO PRO DESKTOP */}
                             <form action={async () => {
                               'use server'
                               await deleteQuote(quote.id)
