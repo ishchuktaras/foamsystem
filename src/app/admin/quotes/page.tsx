@@ -5,7 +5,7 @@ import { FileText, TrendingUp, PlusCircle, ClipboardCheck, Calendar } from 'luci
 import { db } from '@/lib/db'
 import { deleteQuote } from '@/actions/quote'
 import { auth } from '@/auth'
-import DeleteButton from '@/components/DeleteButton' // <--- PŘIDANÝ IMPORT
+import DeleteButton from '@/components/DeleteButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,10 +35,8 @@ export default async function QuotesPage() {
   })
 
   return (
-    // FIX ZDE: min-w-0 a w-full zamezí kontejneru roztahovat se nad 100% dostupné šířky.
     <div className="space-y-6 p-2 sm:p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full min-w-0">
       
-      {/* Prémiový Banner - FIX: w-full zamezí tomu, aby ho roztáhlo okolí */}
       <div className="relative w-full rounded-2xl bg-linear-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-6 md:p-10 text-[#FEFEFA] shadow-xl overflow-hidden">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3">
@@ -89,7 +87,7 @@ export default async function QuotesPage() {
       ) : (
         <div className="w-full min-w-0">
           
-          {/* 1. MOBILNÍ KARTY */}
+          {/* MOBILNÍ KARTY */}
           <div className="block space-y-4 md:hidden w-full">
             {quotes.map((quote) => (
               <div key={quote.id} className="bg-[#FEFEFA] p-4 rounded-xl shadow-sm border border-zinc-200 flex flex-col gap-4 w-full">
@@ -151,12 +149,13 @@ export default async function QuotesPage() {
                         Upravit
                       </Link>
                       
-                      <form action={async () => {
-                        'use server'
-                        await deleteQuote(quote.id)
-                      }} className="w-full">
-                        <DeleteButton isDesktop={false} />
-                      </form>
+                      {/* ZDE JE NOVÉ VOLÁNÍ S PŘEDÁNÍM AKCE NAPŘÍMO */}
+                      <div className="w-full">
+                        <DeleteButton 
+                          isDesktop={false} 
+                          onDelete={deleteQuote.bind(null, quote.id)} 
+                        />
+                      </div>
                       
                     </div>
                   )}
@@ -165,10 +164,10 @@ export default async function QuotesPage() {
             ))}
           </div>
 
-          {/* 2. DESKTOP TABULKA - FIX: w-full a overflow-x-auto, navíc oddělený kontejner */}
+          {/* DESKTOP TABULKA */}
           <div className="hidden md:block bg-[#FEFEFA] rounded-2xl shadow-sm border border-zinc-200 overflow-hidden w-full max-w-full">
             <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse min-w-225">
+              <table className="w-full text-left border-collapse min-w-[900px]">
                 <thead>
                   <tr className="bg-[#000000] text-[#FEFEFA] text-xs uppercase tracking-wider">
                     <th className="py-4 px-6 font-semibold">Zákazník / Město</th>
@@ -214,11 +213,11 @@ export default async function QuotesPage() {
                         </td>
                       )}
                       
-                      <td className="py-4 px-6 text-right whitespace-nowrap">
+                      <td className="py-4 px-6 text-right whitespace-nowrap flex justify-end items-center gap-2">
                         {quote.status !== 'COMPLETED' && (
                           <Link 
                             href={`/admin/quotes/${quote.id}/evidence`}
-                            className="px-4 py-2 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 font-bold text-sm rounded-lg transition-colors inline-flex items-center gap-2 shadow-sm mr-2"
+                            className="px-4 py-2 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 font-bold text-sm rounded-lg transition-colors inline-flex items-center gap-2 shadow-sm"
                           >
                             <ClipboardCheck size={16} /> Evidence
                           </Link>
@@ -227,17 +226,16 @@ export default async function QuotesPage() {
                           <>
                             <Link 
                               href={`/admin/quotes/${quote.id}/edit`}
-                              className="px-3 py-1.5 bg-zinc-100 text-[#000000] hover:bg-zinc-200 font-medium text-sm rounded-md transition-colors inline-block mr-2"
+                              className="px-3 py-1.5 bg-zinc-100 text-[#000000] hover:bg-zinc-200 font-medium text-sm rounded-md transition-colors inline-block"
                             >
                               Upravit
                             </Link>
                             
-                            <form action={async () => {
-                              'use server'
-                              await deleteQuote(quote.id)
-                            }} className="inline-block">
-                              <DeleteButton isDesktop={true} />
-                            </form>
+                            {/* ZDE JE NOVÉ VOLÁNÍ S PŘEDÁNÍM AKCE NAPŘÍMO */}
+                            <DeleteButton 
+                              isDesktop={true} 
+                              onDelete={deleteQuote.bind(null, quote.id)} 
+                            />
                             
                           </>
                         )}
