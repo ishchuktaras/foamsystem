@@ -11,16 +11,14 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  // 1. Nový stav pro sbalení sidebaru
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    // 1. Force the root to exactly 100vw to prevent horizontal scrolling of the whole page
+    <div className="flex min-h-screen bg-zinc-50 w-full max-w-[100vw] overflow-x-hidden">
       
-      {/* Mobilní horní lišta (zobrazená jen na malých obrazovkách) */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#000000] text-white z-30 flex items-center justify-between px-4 shadow-md">
         <div className="flex items-center gap-2">
-          {/* Aktualizované logo i pro mobilní zobrazení */}
           <span className="text-xl font-extrabold text-white">IZOLACE</span>
           <span className="bg-[#FF4F00] px-2 py-1 rounded-lg text-sm font-black text-white tracking-wider">RS</span>
         </div>
@@ -33,7 +31,6 @@ export default function AdminLayout({
         </button>
       </div>
 
-      {/* 2. Sidebar komponenta - předáváme jí stav sbalení */}
       <Sidebar 
         isOpen={sidebarOpen} 
         setIsOpen={setSidebarOpen} 
@@ -41,13 +38,16 @@ export default function AdminLayout({
         setIsCollapsed={setIsSidebarCollapsed}
       />
       
-      {/* 3. Hlavní obsahová část - DYNAMICKÝ PADDING podle stavu sidebaru */}
+      {/* 2. STRICT WIDTH CONSTRAINT: We explicitly calculate the width to ensure it cannot overflow */}
       <main 
-        className={`flex-1 flex flex-col min-h-screen pt-16 md:pt-0 transition-all duration-300 ease-in-out pl-0 ${
-          isSidebarCollapsed ? 'md:pl-20' : 'md:pl-64'
-        }`}
+        className={`flex flex-col min-h-screen pt-16 md:pt-0 transition-all duration-300 ease-in-out pl-0 ${
+          isSidebarCollapsed 
+            ? 'md:pl-20 md:w-[calc(100vw-80px)]' // 80px is md:w-20
+            : 'md:pl-64 md:w-[calc(100vw-256px)]' // 256px is md:w-64
+        } w-full max-w-full overflow-hidden`}
       >
-        <div className="p-4 md:p-8 flex-1 max-w-7xl w-full mx-auto">
+        {/* 3. The inner container also needs to be strictly constrained */}
+        <div className="p-4 md:p-8 flex-1 max-w-7xl w-full min-w-0 mx-auto overflow-hidden">
           {children}
         </div>
       </main>
