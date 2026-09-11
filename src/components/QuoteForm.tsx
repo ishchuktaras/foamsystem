@@ -113,8 +113,13 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
         setCity(data.sidlo.nazevObce || '')
         setZip(data.sidlo.psc ? data.sidlo.psc.toString() : '')
       }
-    } catch (error: any) {
-      setAresError(error.message || 'Nepodařilo se spojit s ARES.')
+    } catch (error: unknown) {
+      // FIX ZDE: Nahrazení `any` za `unknown` a bezpečné ověření chyby
+      if (error instanceof Error) {
+        setAresError(error.message)
+      } else {
+        setAresError('Nepodařilo se spojit s ARES.')
+      }
     } finally {
       setIsFetchingAres(false)
     }
@@ -133,7 +138,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     const loadFont = async (url: string, name: string, style: string) => {
       try {
         const res = await fetch(url)
-        if (!res.ok) return // Ignoruje, pokud soubor v public/fonts chybí
+        if (!res.ok) return 
         const blob = await res.blob()
         const base64 = await new Promise<string>((resolve) => {
           const reader = new FileReader()
@@ -150,9 +155,8 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     await loadFont('/fonts/Roboto-Regular.ttf', 'Roboto', 'normal')
     await loadFont('/fonts/Roboto-Bold.ttf', 'Roboto', 'bold')
     
-    doc.setFont('Roboto', 'normal') // Výchozí UTF-8 font
+    doc.setFont('Roboto', 'normal') 
 
-    // Pomocná funkce pro vykreslení přesného vektorového loga IZOLACE RS
     const drawLogo = (x: number, y: number) => {
       doc.setFont("Roboto", "bold")
       doc.setFontSize(22)
@@ -160,13 +164,13 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       doc.text("IZOLACE", x, y)
       
       const w = doc.getTextWidth("IZOLACE")
-      doc.setFillColor(255, 79, 0) // Naše firemní oranžová #FF4F00
+      doc.setFillColor(255, 79, 0) 
       doc.roundedRect(x + w + 3, y - 7, 13, 9, 1.5, 1.5, 'F')
       
       doc.setTextColor(255, 255, 255)
       doc.setFontSize(11)
       doc.text("RS", x + w + 4.5, y - 0.5)
-      doc.setTextColor(0, 0, 0) // Vrátíme barvu pro zbytek dokumentu
+      doc.setTextColor(0, 0, 0) 
     }
 
     return { doc, drawLogo }
@@ -242,7 +246,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
   }
 
   // ==========================================
-  // 2. GENERÁTOR: SMLOUVA O DÍLO (S obchodními podmínkami)
+  // 2. GENERÁTOR: SMLOUVA O DÍLO
   // ==========================================
   const handleGenerateContractPDF = async () => {
     if (!calcResults || !selectedMaterial || !customerName) return alert("Vyplňte jméno zákazníka a parametry.")
@@ -277,7 +281,6 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       if (ico) doc.text(`IČO: ${ico}`, 45, 110)
       doc.text(`${street || ''}, ${city || ''} ${zip || ''}`, 45, ico ? 115 : 110)
 
-      // Detailní podmínky řešené cyklem kvůli automatickému zalamování řádků
       const conditions = [
         "2. Předmět díla",
         `Zhotovitel se zavazuje k provedení aplikace stříkané izolační PUR pěny (${selectedMaterial.name}). Předpokládaný rozsah prací je ${area} m² o tloušťce ${thickness} cm.`,
@@ -496,7 +499,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
           </div>
 
           <div className="space-y-3 pt-2">
-            <label className="flex text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide flex items-center gap-2">
+            <label className="flex text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide items-center gap-2">
               <AlertCircle size={16} className="text-[#FF4F00]" />
               Upozornění a pokyny pro aplikátora na stavbě
             </label>
