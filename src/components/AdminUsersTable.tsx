@@ -1,5 +1,4 @@
 // src/components/AdminUsersTable.tsx
-
 'use client'
 
 import { useRouter } from 'next/navigation'
@@ -83,18 +82,16 @@ export default function AdminUsersTable({
                       </button>
                     </form>
                     {isAdmin && (
-                      <form action={async () => {
-                        const result = await hardDeleteUser(user.id)
-                        if (result && !result.success) alert(result.error)
-                      }} className="flex-1">
+                      <div className="flex-1">
                         <DeleteButton 
                           isDesktop={false}
                           title="Smazání z archivu"
                           message={`Opravdu chcete TRVALE smazat uživatele "${user.name || 'Neznámý'}"? Tuto akci nelze vrátit.`}
                           buttonText="Smazat"
                           confirmText="Smazat navždy"
+                          onDelete={hardDeleteUser.bind(null, user.id)}
                         />
-                      </form>
+                      </div>
                     )}
                   </>
                 ) : (
@@ -105,18 +102,16 @@ export default function AdminUsersTable({
                     >
                       Upravit
                     </button>
-                    <form action={async () => {
-                      const result = await deleteUser(user.id)
-                      if (result && !result.success) alert(result.error)
-                    }} className="flex-1">
+                    <div className="flex-1">
                       <DeleteButton 
                         isDesktop={false}
                         title="Archivace pracovníka"
                         message={`Opravdu chcete archivovat uživatele "${user.name || 'Neznámý'}"? Ztratí přístup do systému.`}
                         buttonText="Archivovat" 
                         confirmText="Ano, archivovat"
+                        onDelete={deleteUser.bind(null, user.id)}
                       />
-                    </form>
+                    </div>
                   </>
                 )}
               </div>
@@ -128,7 +123,7 @@ export default function AdminUsersTable({
       {/* 2. DESKTOP VIEW */}
       <div className="hidden md:block bg-[#FEFEFA] rounded-xl shadow-sm border border-zinc-200 overflow-hidden w-full">
         <div className="overflow-x-auto w-full">
-          <table className="w-full text-left border-collapse min-w-[600px]">
+          <table className="w-full text-left border-collapse min-w-150">
             <thead>
               <tr className="bg-[#000000] text-[#FEFEFA]">
                 <th className="p-4 font-semibold text-sm whitespace-nowrap">Jméno a e-mail</th>
@@ -163,38 +158,30 @@ export default function AdminUsersTable({
                             </button>
                           </form>
                           {isAdmin && (
-                            <form action={async () => {
-                              const result = await hardDeleteUser(user.id)
-                              if (result && !result.success) alert(result.error)
-                            }} className="inline-block">
-                              <DeleteButton 
-                                isDesktop={true}
-                                title="Smazání z archivu"
-                                message={`Opravdu chcete TRVALE smazat uživatele "${user.name || 'Neznámý'}"? Tuto akci nelze vrátit.`}
-                                buttonText="Smazat"
-                                confirmText="Smazat navždy"
-                              />
-                            </form>
+                            <DeleteButton 
+                              isDesktop={true}
+                              title="Smazání z archivu"
+                              message={`Opravdu chcete TRVALE smazat uživatele "${user.name || 'Neznámý'}"? Tuto akci nelze vrátit.`}
+                              buttonText="Smazat"
+                              confirmText="Smazat navždy"
+                              onDelete={hardDeleteUser.bind(null, user.id)}
+                            />
                           )}
                         </div>
                       ) : (
-                        <>
+                        <div className="flex items-center justify-end gap-2">
                           <button onClick={() => router.push(`/admin/users/${user.id}/edit`)} className="px-3 py-1.5 bg-zinc-100 text-[#000000] hover:bg-zinc-200 font-medium text-sm rounded-md transition-colors mr-2">
                             Upravit
                           </button>
-                          <form action={async () => {
-                            const result = await deleteUser(user.id)
-                            if (result && !result.success) alert(result.error)
-                          }} className="inline-block">
-                            <DeleteButton 
-                              isDesktop={true}
-                              title="Archivace pracovníka"
-                              message={`Opravdu chcete archivovat uživatele "${user.name || 'Neznámý'}"? Ztratí přístup do systému.`}
-                              buttonText="Archivovat"
-                              confirmText="Ano, archivovat"
-                            />
-                          </form>
-                        </>
+                          <DeleteButton 
+                            isDesktop={true}
+                            title="Archivace pracovníka"
+                            message={`Opravdu chcete archivovat uživatele "${user.name || 'Neznámý'}"? Ztratí přístup do systému.`}
+                            buttonText="Archivovat"
+                            confirmText="Ano, archivovat"
+                            onDelete={deleteUser.bind(null, user.id)}
+                          />
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -204,7 +191,6 @@ export default function AdminUsersTable({
           </table>
         </div>
       </div>
-
     </div>
   )
 }
