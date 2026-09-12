@@ -36,6 +36,10 @@ type CalculatorResult = {
   costPerM3: number;
   exactMaterialCost: number;
   thermalResistance: number | null;
+  // Přidány parametry materiálu pro výpočet jednotkových cen za kg a m³
+  buyPricePerSet: number;
+  density: number;
+  yieldPerSetM3: number;
 }
 
 export default function CalculatorForm({ materials }: { materials: Material[] }) {
@@ -71,11 +75,14 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       materialName: material.name,
       areaSqm: Number(area),
       thicknessCm: Number(thickness),
+      buyPricePerSet: material.buyPricePerSet || 0,
+      density: material.density,
+      yieldPerSetM3: material.yieldPerSetM3,
       ...calcResults
     })
   }
 
-  // PDF Export s novými barvami
+  // PDF Export obohacený o jednotkové ceny za kg a m³
   const handleExportPDF = async () => {
     if (!result) return
     setIsExportingPDF(true)
@@ -84,14 +91,19 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       const doc = new jsPDF()
       const date = new Date().toLocaleDateString('cs-CZ')
       
+      const pricePerSet = result.buyPricePerSet
+      const pricePerM3 = result.yieldPerSetM3 > 0 ? pricePerSet / result.yieldPerSetM3 : 0
+      const totalWeightKg = result.yieldPerSetM3 * result.density
+      const pricePerKg = totalWeightKg > 0 ? pricePerSet / totalWeightKg : 0
+
       // Hlavička v černé
       doc.setFontSize(22)
       doc.setTextColor(0, 0, 0) 
-      doc.text('Kalkulace spotreby materialu', 20, 20)
+      doc.text('Kalkulace spotřeby materiálu', 20, 20)
       
       doc.setFontSize(10)
       doc.setTextColor(100, 100, 100)
-      doc.text(`Vygenerovano systemem FoamSystem dne: ${date}`, 20, 28)
+      doc.text(`Vygenerováno systémem FoamSystem dne: ${date}`, 20, 28)
 
       // Oranžová dělící čára
       doc.setDrawColor(255, 79, 0) 
@@ -101,29 +113,33 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       doc.setFontSize(12)
       doc.setTextColor(0, 0, 0)
       
-      doc.text(`Material: ${result.materialName}`, 20, 45)
-      doc.text(`Zadana plocha: ${result.areaSqm} m2`, 20, 53)
-      doc.text(`Pozadovana tloustka: ${result.thicknessCm} cm`, 20, 61)
+      doc.text(`Materiál: ${result.materialName}`, 20, 42)
+      doc.text(`Zadaná plocha: ${result.areaSqm} m²`, 20, 50)
+      doc.text(`Požadovaná tloušťka: ${result.thicknessCm} cm`, 20, 58)
       
-      doc.text(`Cisty objem: ${result.pureVolumeM3} m3`, 20, 75)
-      doc.text(`Objem vc. ztrat: ${result.totalVolumeM3} m3 (${result.totalVolumeLiters} litru)`, 20, 83)
-      doc.text(`Celkova hmotnost materialu: ${result.totalMassKg} kg`, 20, 91)
+      // Jednotkové ceny materiálu
+      doc.text(`Jednotková cena / m³: ${Math.round(pricePerM3).toLocaleString('cs-CZ')} Kč`, 20, 70)
+      doc.text(`Jednotková cena / kg: ${Math.round(pricePerKg).toLocaleString('cs-CZ')} Kč`, 20, 78)
+
+      doc.text(`Čistý objem: ${result.pureVolumeM3} m³`, 20, 92)
+      doc.text(`Objem vč. ztrát: ${result.totalVolumeM3} m³ (${result.totalVolumeLiters} litrů)`, 20, 100)
+      doc.text(`Celková hmotnost materiálu: ${result.totalMassKg} kg`, 20, 108)
       
       if (result.thermalResistance) {
-        doc.setTextColor(255, 79, 0) // Oranžové zvýraznění
-        doc.text(`Dosazeny tepelny odpor (R): ${result.thermalResistance} m2K/W`, 20, 99)
+        doc.setTextColor(255, 79, 0) 
+        doc.text(`Dosažený tepelný odpor (R): ${result.thermalResistance} m²K/W`, 20, 116)
         doc.setTextColor(0, 0, 0)
       }
 
       // Finanční box v černé
       doc.setFillColor(0, 0, 0) 
-      doc.rect(20, 110, 170, 30, 'F')
+      doc.rect(20, 126, 170, 30, 'F')
       
       doc.setFontSize(14)
       doc.setTextColor(255, 255, 255)
       doc.setFont("helvetica", "bold")
-      doc.text(`Potrebny pocet sad: ${result.totalSets} ks`, 25, 120)
-      doc.text(`Celkovy naklad na material: ${result.totalCost.toLocaleString('cs-CZ')} Kc`, 25, 130)
+      doc.text(`Potřebný počet sad: ${result.totalSets} ks`, 25, 136)
+      doc.text(`Celkový náklad na materiál: ${result.totalCost.toLocaleString('cs-CZ')} Kč`, 25, 146)
 
       doc.save(`kalkulace-${result.materialName.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.pdf`)
     } catch (error) {
@@ -149,6 +165,14 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
     })
     router.push(`/admin/quotes/new?${params.toString()}`)
   }
+
+  // Výpočet jednotkových cen pro zobrazení v UI
+  const pricePerSet = result ? result.buyPricePerSet : 0
+  const yieldM3 = result ? result.yieldPerSetM3 : 0
+  const density = result ? result.density : 0
+  const calcPricePerM3 = yieldM3 > 0 ? pricePerSet / yieldM3 : 0
+  const totalWeightPerSet = yieldM3 * density
+  const calcPricePerKg = totalWeightPerSet > 0 ? pricePerSet / totalWeightPerSet : 0
 
   return (
     <div className="space-y-6">
@@ -217,7 +241,7 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
         </button>
       </form>
 
-      {/* SUPERVISOR DASHBOARD */}
+      {/* VÝSLEDKY KALKULACE */}
       {result && (
         <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden mt-8 animate-in fade-in zoom-in-95 duration-300">
           <div className="bg-gradient-to-r from-[#000000] to-zinc-900 px-6 py-5 border-b-4 border-[#FF4F00]">
@@ -268,10 +292,19 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
                     <p className="text-sm text-zinc-500 font-medium">Náklad na 1 m²</p>
                     <p className="text-2xl font-extrabold text-[#000000]">{result.costPerM2.toLocaleString('cs-CZ')} <span className="text-sm font-semibold">Kč</span></p>
                   </div>
-                  <div>
-                    <p className="text-sm text-zinc-500 font-medium">Náklad na 1 m³</p>
-                    <p className="text-xl font-bold text-[#000000]">{result.costPerM3.toLocaleString('cs-CZ')} <span className="text-sm font-semibold">Kč</span></p>
+                  
+                  {/* Nově doplněné jednotkové ceny za m³ a kg materiálu */}
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div>
+                      <p className="text-xs text-zinc-500 font-medium">Cena / m³</p>
+                      <p className="text-base font-bold text-blue-600">{Math.round(calcPricePerM3).toLocaleString('cs-CZ')} Kč</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-zinc-500 font-medium">Cena / kg</p>
+                      <p className="text-base font-bold text-emerald-600">{Math.round(calcPricePerKg).toLocaleString('cs-CZ')} Kč</p>
+                    </div>
                   </div>
+
                   <div className="pt-3 border-t border-zinc-200">
                     <p className="text-sm text-zinc-500 font-medium">Vystříkaný materiál (čistá cena)</p>
                     <p className="text-lg font-bold text-[#FF4F00]">{result.exactMaterialCost.toLocaleString('cs-CZ')} <span className="text-xs text-zinc-500">Kč</span></p>
