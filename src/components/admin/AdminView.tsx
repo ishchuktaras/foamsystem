@@ -51,85 +51,104 @@ export default async function AdminView() {
   const netProfit = totalEarnings - totalExpenses
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full overflow-x-hidden">
       
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
+      {/* Hlavní prémiový banner */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-6 md:p-10 text-[#FEFEFA] shadow-xl">
         <div className="relative z-10 max-w-2xl">
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">Analýza Work & Cash Flow</h1>
-          <p className="text-zinc-400 text-lg leading-relaxed">
+          <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3">Analýza Work & Cash Flow</h1>
+          <p className="text-zinc-400 text-sm md:text-lg leading-relaxed">
             Přehledný byznysový kokpit: sledujte stav zakázek předaných aplikátorům, dokončené stavby, celkové výdaje na materiál a čistý výdělek firmy.
           </p>
         </div>
         <div className="absolute right-0 top-0 -translate-y-12 translate-x-1/4 opacity-10 pointer-events-none text-[#FF4F00]"><Boxes size={300} /></div>
       </div>
 
+      {/* 1. CASH FLOW & FINANČNÍ ANALÝZA */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
           <Wallet size={24} className="text-[#FF4F00]" /> Cash Flow & Finanční přehled
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-emerald-500">
-            <div className="p-4 bg-emerald-50 text-emerald-600 rounded-xl"><ArrowUpRight size={28} /></div>
-            <div>
-              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Celkový výdělek (Obrat)</p>
-              <h3 className="text-2xl md:text-3xl font-black text-[#000000]">{totalEarnings.toLocaleString('cs-CZ')} Kč</h3>
+          <div className="bg-[#FEFEFA] p-5 md:p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-emerald-500 min-w-0">
+            <div className="p-3 md:p-4 bg-emerald-50 text-emerald-600 rounded-xl shrink-0"><ArrowUpRight size={24} /></div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs md:text-sm font-semibold text-zinc-500 uppercase tracking-wider truncate">Celkový výdělek (Obrat)</p>
+              <h3 className="text-xl md:text-2xl font-black text-[#000000] truncate">{totalEarnings.toLocaleString('cs-CZ')} Kč</h3>
             </div>
           </div>
 
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-red-500">
-            <div className="p-4 bg-red-50 text-red-600 rounded-xl"><ArrowDownRight size={28} /></div>
-            <div>
-              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Odhadované výdaje (Materiál)</p>
-              <h3 className="text-2xl md:text-3xl font-black text-[#000000]">{totalExpenses.toLocaleString('cs-CZ')} Kč</h3>
+          <div className="bg-[#FEFEFA] p-5 md:p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-red-500 min-w-0">
+            <div className="p-3 md:p-4 bg-red-50 text-red-600 rounded-xl shrink-0"><ArrowDownRight size={24} /></div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs md:text-sm font-semibold text-zinc-500 uppercase tracking-wider truncate">Odhadované výdaje (Materiál)</p>
+              <h3 className="text-xl md:text-2xl font-black text-[#000000] truncate">{totalExpenses.toLocaleString('cs-CZ')} Kč</h3>
             </div>
           </div>
 
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-[#FF4F00]">
-            <div className="p-4 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl"><Wallet size={28} /></div>
-            <div>
-              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Čistý zisk (Marže)</p>
-              <h3 className="text-2xl md:text-3xl font-black text-[#FF4F00]">{netProfit.toLocaleString('cs-CZ')} Kč</h3>
+          <div className="bg-[#FEFEFA] p-5 md:p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-[#FF4F00] min-w-0">
+            <div className="p-3 md:p-4 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl shrink-0"><Wallet size={24} /></div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs md:text-sm font-semibold text-zinc-500 uppercase tracking-wider truncate">Čistý zisk (Marže)</p>
+              <h3 className="text-xl md:text-2xl font-black text-[#FF4F00] truncate">{netProfit.toLocaleString('cs-CZ')} Kč</h3>
             </div>
           </div>
 
         </div>
       </div>
 
+      {/* 2. WORKFLOW: STAV ZAKÁZEK A PROVOZU */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
           <Briefcase size={24} className="text-[#FF4F00]" /> Provozní stav zakázek (Workflow)
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl"><FileText size={22} /></div>
-            <div><p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Poptávky</p><h3 className="text-2xl font-bold text-[#000000]">{inquiriesCount}</h3></div>
+          <div className="bg-[#FEFEFA] p-5 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 min-w-0">
+            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl shrink-0"><FileText size={20} /></div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider truncate">Poptávky</p>
+              <h3 className="text-xl font-bold text-[#000000]">{inquiriesCount}</h3>
+            </div>
           </div>
 
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-amber-50 text-amber-600 rounded-xl"><ClipboardList size={22} /></div>
-            <div><p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Objednávky</p><h3 className="text-2xl font-bold text-[#000000]">{ordersCount}</h3></div>
+          <div className="bg-[#FEFEFA] p-5 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 min-w-0">
+            <div className="p-3 bg-amber-50 text-amber-600 rounded-xl shrink-0"><ClipboardList size={20} /></div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider truncate">Objednávky</p>
+              <h3 className="text-xl font-bold text-[#000000]">{ordersCount}</h3>
+            </div>
           </div>
 
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-purple-50 text-purple-600 rounded-xl"><PenTool size={22} /></div>
-            <div><p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Smlouvy</p><h3 className="text-2xl font-bold text-[#000000]">{contractsCount}</h3></div>
+          <div className="bg-[#FEFEFA] p-5 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 min-w-0">
+            <div className="p-3 bg-purple-50 text-purple-600 rounded-xl shrink-0"><PenTool size={20} /></div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider truncate">Smlouvy</p>
+              <h3 className="text-xl font-bold text-[#000000]">{contractsCount}</h3>
+            </div>
           </div>
 
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-blue-600">
-            <div className="p-3 bg-blue-50 text-blue-700 rounded-xl"><Truck size={22} /></div>
-            <div><p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Předáno aplikátorům</p><h3 className="text-2xl font-bold text-[#000000]">{dispatchedCount}</h3></div>
+          <div className="bg-[#FEFEFA] p-5 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-blue-600 min-w-0">
+            <div className="p-3 bg-blue-50 text-blue-700 rounded-xl shrink-0"><Truck size={20} /></div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider truncate">Předáno aplikátorům</p>
+              <h3 className="text-xl font-bold text-[#000000]">{dispatchedCount}</h3>
+            </div>
           </div>
 
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-emerald-500">
-            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><CheckCircle2 size={22} /></div>
-            <div><p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Dokončené stavby</p><h3 className="text-2xl font-bold text-[#000000]">{completedCount}</h3></div>
+          <div className="bg-[#FEFEFA] p-5 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-emerald-500 min-w-0">
+            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl shrink-0"><CheckCircle2 size={20} /></div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider truncate">Dokončené stavby</p>
+              <h3 className="text-xl font-bold text-[#000000]">{completedCount}</h3>
+            </div>
           </div>
 
         </div>
       </div>
 
+      {/* SOUHRN PŘEDANÝCH ZAKÁZEK (DISPEČINK) */}
       {upcomingDispatches.length > 0 && (
         <div>
           <h2 className="text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
@@ -137,7 +156,7 @@ export default async function AdminView() {
           </h2>
           <div className="bg-[#FEFEFA] rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm border-collapse">
+              <table className="w-full text-left text-sm border-collapse min-w-[600px]">
                 <thead>
                   <tr className="bg-zinc-50 text-zinc-500 uppercase tracking-wider text-xs">
                     <th className="px-6 py-3 font-semibold">Datum realizace</th>
@@ -173,19 +192,20 @@ export default async function AdminView() {
         </div>
       )}
 
+      {/* 3. Systémové metriky */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-4">Systémové metriky</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-[#FF4F00] transition-colors">
-            <div className="p-4 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl"><Boxes size={24} /></div>
+          <div className="bg-[#FEFEFA] p-5 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-[#FF4F00] transition-colors">
+            <div className="p-4 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl shrink-0"><Boxes size={24} /></div>
             <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Evidované materiály</p><h3 className="text-2xl font-bold text-[#000000]">{materialsCount}</h3></div>
           </div>
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-emerald-500 transition-colors">
-            <div className="p-4 bg-emerald-50 text-emerald-600 rounded-xl"><Users size={24} /></div>
+          <div className="bg-[#FEFEFA] p-5 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-emerald-500 transition-colors">
+            <div className="p-4 bg-emerald-50 text-emerald-600 rounded-xl shrink-0"><Users size={24} /></div>
             <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Aktivní pracovníci</p><h3 className="text-2xl font-bold text-[#000000]">{usersCount}</h3></div>
           </div>
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-purple-500 transition-colors">
-            <div className="p-4 bg-purple-50 text-purple-600 rounded-xl"><Database size={24} /></div>
+          <div className="bg-[#FEFEFA] p-5 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-purple-500 transition-colors">
+            <div className="p-4 bg-purple-50 text-purple-600 rounded-xl shrink-0"><Database size={24} /></div>
             <div>
               <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Stav databáze</p>
               <h3 className="text-lg font-bold text-emerald-600 mt-1">Připojeno</h3>
@@ -194,6 +214,7 @@ export default async function AdminView() {
         </div>
       </div>
 
+      {/* 4. Rychlé akce */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-6">Rychlé akce</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
