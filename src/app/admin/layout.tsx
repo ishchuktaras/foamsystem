@@ -18,7 +18,7 @@ export default function AdminLayout({
   return (
     <div className="flex min-h-screen bg-zinc-50 w-full overflow-hidden">
       
-      {/* Mobilní navigace (Tmavé pozadí -> text-white) */}
+      {/* Mobilní navigace */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#000000] text-white z-30 flex items-center justify-between px-4 shadow-md">
         <Link href="/admin" className="flex items-center text-white active:scale-95 transition-transform">
           <Logo className="h-8 w-auto" />
@@ -46,12 +46,12 @@ export default function AdminLayout({
       >
         <div className="p-4 md:p-8 flex-1 max-w-7xl w-full mx-auto flex flex-col">
           
-          {/* Obsah */}
+          {/* Hlavní obsah */}
           <div className="flex-1">
             {children}
           </div>
-
-          {/* Patička administrace */}
+          
+          {/* Patička administrace s odkazem na WhatsApp */}
           <footer className="mt-12 pt-6 border-t border-zinc-200 flex flex-col sm:flex-row items-center justify-between text-zinc-500 text-xs md:text-sm gap-4 pb-4 shrink-0">
             <div className="flex flex-col sm:flex-row items-center gap-3">
               <div className="text-zinc-400">
@@ -63,10 +63,18 @@ export default function AdminLayout({
             </div>
             <div className="flex items-center gap-4">
               <span className="opacity-70">Verze 1.0</span>
-              <a href="#" className="hover:text-[#FF4F00] transition-colors font-medium">Podpora IT</a>
+              <a 
+                href="https://wa.me/420777596216" 
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Taras Ishchuk - OSVČ | webnamiru.site"
+                className="hover:text-[#FF4F00] transition-colors font-bold"
+              >
+                Podpora IT
+              </a>
             </div>
           </footer>
-          
+
         </div>
       </main>
     </div>
