@@ -1,12 +1,12 @@
 // src/components/admin/AdminView.tsx
 import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, CheckCircle2, Users, Database, ClipboardList, PenTool, ClipboardCheck, CalendarDays, Wallet, ArrowUpRight, ArrowDownRight, Briefcase, Truck } from 'lucide-react'
 import { db } from '@/lib/db'
-import { UpcomingDispatch, QuoteItem } from '@/types/dashboard'
+import { UpcomingDispatch } from '@/types/dashboard'
 import DashboardCard from './DashboardCard'
 
 export default async function AdminView() {
   let materialsCount = 0, usersCount = 0, inquiriesCount = 0, ordersCount = 0, contractsCount = 0, completedCount = 0, dispatchedCount = 0
-  let allQuotes: QuoteItem[] = []
+  let allQuotes: any[] = []
   let upcomingDispatches: UpcomingDispatch[] = []
 
   try {
@@ -18,7 +18,7 @@ export default async function AdminView() {
       db.quote.count({ where: { status: 'CONTRACT' } }),
       db.quote.count({ where: { status: 'COMPLETED' } }),
       db.quote.count({ where: { scheduledDate: { not: null }, status: { not: 'COMPLETED' } } }),
-      db.quote.findMany().catch(() => []),
+      db.quote.findMany({ include: { evidence: true } }).catch(() => []),
       db.quote.findMany({
         where: { status: { not: 'COMPLETED' }, scheduledDate: { not: null } },
         include: { responsibleUser: true },
@@ -34,37 +34,48 @@ export default async function AdminView() {
     contractsCount = results[4]
     completedCount = results[5]
     dispatchedCount = results[6]
-    allQuotes = results[7] as QuoteItem[]
+    allQuotes = results[7]
     upcomingDispatches = results[8] as unknown as UpcomingDispatch[]
   } catch (error) {
     console.error("Chyba při načítání statistik:", error)
   }
 
-  const totalEarnings = allQuotes
-    .filter(q => q.status === 'COMPLETED' || q.status === 'ORDER' || q.status === 'CONTRACT')
-    .reduce((acc, q) => acc + (Number(q.totalCost) || Number(q.price) || 0), 0)
+  // Výpočet obratu a reálných výdajů z materiálu + technické evidence (příplatky, výšky, doprava atd.)
+  const activeQuotes = allQuotes.filter(q => q.status === 'COMPLETED' || q.status === 'ORDER' || q.status === 'CONTRACT')
 
-  const totalExpenses = allQuotes
-    .filter(q => q.status === 'COMPLETED' || q.status === 'ORDER' || q.status === 'CONTRACT')
-    .reduce((acc, q) => acc + (q.cost || 0), 0)
+  const totalEarnings = activeQuotes.reduce((acc, q) => acc + (Number(q.totalCost) || Number(q.price) || 0), 0)
+
+  const totalExpenses = activeQuotes.reduce((acc, q) => {
+    // 1. Základní náklad na materiál z poptávky/kalkulace
+    const baseMaterialCost = q.totalCost ? parseFloat(String(q.totalCost).replace(/\s+/g, '').replace(',', '.')) || 0 : 0
+    
+    // 2. Příplatky a položky z technické evidence (JobEvidence)
+    const evidence = q.evidence
+    const evidenceSurcharges = evidence ? (
+      (evidence.heightsSurcharge || 0) +
+      (evidence.difficultEnvSurcharge || 0) +
+      (evidence.packingPriceRate || 0) * (evidence.packingHours || 0) +
+      (evidence.finalInvoiceTotal || 0)
+    ) : 0
+
+    return acc + baseMaterialCost + evidenceSurcharges
+  }, 0)
 
   const netProfit = totalEarnings - totalExpenses
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full overflow-x-hidden">
       
-      {/* Hlavní prémiový banner */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-6 md:p-10 text-[#FEFEFA] shadow-xl">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3">Analýza Work & Cash Flow</h1>
           <p className="text-zinc-400 text-sm md:text-lg leading-relaxed">
-            Přehledný byznysový kokpit: sledujte stav zakázek předaných aplikátorům, dokončené stavby, celkové výdaje na materiál a čistý výdělek firmy.
+            Přehledný byznysový kokpit: sledujte stav zakázek předaných aplikátorům, dokončené stavby, celkové výdaje (včetně materiálu a evidence) a čistý výdělek firmy.
           </p>
         </div>
         <div className="absolute right-0 top-0 -translate-y-12 translate-x-1/4 opacity-10 pointer-events-none text-[#FF4F00]"><Boxes size={300} /></div>
       </div>
 
-      {/* 1. CASH FLOW & FINANČNÍ ANALÝZA */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
           <Wallet size={24} className="text-[#FF4F00]" /> Cash Flow & Finanční přehled
@@ -82,7 +93,7 @@ export default async function AdminView() {
           <div className="bg-[#FEFEFA] p-5 md:p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-red-500 min-w-0">
             <div className="p-3 md:p-4 bg-red-50 text-red-600 rounded-xl shrink-0"><ArrowDownRight size={24} /></div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs md:text-sm font-semibold text-zinc-500 uppercase tracking-wider truncate">Odhadované výdaje (Materiál)</p>
+              <p className="text-xs md:text-sm font-semibold text-zinc-500 uppercase tracking-wider truncate">Celkové výdaje (Materiál + Evidence)</p>
               <h3 className="text-xl md:text-2xl font-black text-[#000000] truncate">{totalExpenses.toLocaleString('cs-CZ')} Kč</h3>
             </div>
           </div>
@@ -98,7 +109,6 @@ export default async function AdminView() {
         </div>
       </div>
 
-      {/* 2. WORKFLOW: STAV ZAKÁZEK A PROVOZU */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
           <Briefcase size={24} className="text-[#FF4F00]" /> Provozní stav zakázek (Workflow)
@@ -148,7 +158,6 @@ export default async function AdminView() {
         </div>
       </div>
 
-      {/* SOUHRN PŘEDANÝCH ZAKÁZEK (DISPEČINK) */}
       {upcomingDispatches.length > 0 && (
         <div>
           <h2 className="text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
@@ -192,7 +201,6 @@ export default async function AdminView() {
         </div>
       )}
 
-      {/* 3. Systémové metriky */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-4">Systémové metriky</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -214,7 +222,6 @@ export default async function AdminView() {
         </div>
       </div>
 
-      {/* 4. Rychlé akce */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-6">Rychlé akce</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
