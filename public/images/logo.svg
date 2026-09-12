@@ -1,15 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 120" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 550 130" width="100%" height="100%">
   <defs>
     <style>
       .text-izolace { 
-        font-family: 'Impact', 'Arial Black', sans-serif; 
+        font-family: 'Roboto', sans-serif; 
         font-size: 65px; 
-        font-weight: 900; 
+        font-weight: 700; 
         font-style: italic; 
         fill: #FFFFFF; 
       }
       .text-rs { 
-        font-family: 'Impact', 'Arial Black', sans-serif; 
+        font-family: 'Roboto', sans-serif; 
         font-size: 65px; 
         font-weight: 900; 
         font-style: italic; 
@@ -17,6 +17,13 @@
       }
       .bolt { 
         fill: #FF4F00; 
+      }
+      .subtitle { 
+        font-family: 'Roboto', sans-serif; 
+        font-size: 16px; 
+        font-weight: 700; 
+        fill: #A0A0A0; 
+        letter-spacing: 2.5px; 
       }
     </style>
   </defs>
@@ -27,13 +34,13 @@
     <!-- Stylizovaný blesk před nápisem -->
     <path class="bolt" d="M 35 95 L 65 45 L 40 45 L 75 0 L 45 45 L 70 45 Z" />
     
-    <!-- Texty -->
-    <text x="85" y="80" class="text-izolace">IZOLACE</text>
-    <text x="350" y="80" class="text-rs">RS</text>
-    
-    <!-- Drobný podtitul (volitelný, odpovídá designu z dodávky) -->
-    <text x="90" y="105" font-family="'Arial', sans-serif" font-size="16" font-weight="bold" fill="#A0A0A0" letter-spacing="2">
-      STŘÍKANÉ IZOLACE
+    <!-- Texty s využitím tspan pro přesnou mezeru nezávisle na fontu -->
+    <text y="80">
+      <tspan x="85" class="text-izolace">IZOLACE</tspan>
+      <tspan dx="15" class="text-rs">RS</tspan>
     </text>
+    
+    <!-- Drobný podtitul -->
+    <text x="90" y="105" class="subtitle">STŘÍKANÉ IZOLACE</text>
   </g>
 </svg>

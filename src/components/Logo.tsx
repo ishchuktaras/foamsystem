@@ -21,7 +21,7 @@ export default function Logo({ className = "h-10 w-auto", collapsed = false }: L
   }
 
   return (
-    // Zvětšili jsme viewBox na "0 0 490 130", aby se nápis dole neořezával
+    
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 490 130" className={className}>
       <defs>
         <style>
@@ -29,7 +29,7 @@ export default function Logo({ className = "h-10 w-auto", collapsed = false }: L
             .text-izolace { font-family: 'Impact', 'Arial Black', sans-serif; font-size: 65px; font-weight: 900; font-style: italic; fill: currentColor; }
             .text-rs { font-family: 'Impact', 'Arial Black', sans-serif; font-size: 65px; font-weight: 900; font-style: italic; fill: #FF4F00; }
             .bolt { fill: #FF4F00; }
-            .subtitle { font-family: 'Arial', sans-serif; font-size: 16px; font-weight: bold; fill: #A0A0A0; letter-spacing: 2.5px; }
+            .subtitle { font-family: 'Arial', sans-serif; font-size: 20px; font-weight: bold; fill: #A0A0A0; letter-spacing: 2.5px; }
           `}
         </style>
       </defs>
