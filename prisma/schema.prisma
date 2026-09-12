@@ -144,7 +144,7 @@ model CompanyProfile {
 
 
 model Quote {
-  id               String   @id @default(cuid())
+  id               String       @id @default(cuid())
   customerName     String
   ico              String?
   street           String?
@@ -166,8 +166,41 @@ model Quote {
 
   status         QuoteStatus @default(INQUIRY)
   evidence       JobEvidence?
+  
+  // Vazba na fakturu
+  invoice        Invoice?
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt @default(now())
+}
+
+// --- MODEL PRO FAKTURACI A ÚČETNICTVÍ ---
+model Invoice {
+  id             String        @id @default(cuid())
+  invoiceNumber  String        @unique // Číslo faktury (např. 20260001)
+  quoteId        String        @unique
+  quote          Quote         @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  
+  // Finanční údaje
+  amountWithoutVat Float       // Základ daně
+  vatRate          Float       @default(21) // Sazba DPH (21 %, případně 0 pro neplátce)
+  totalAmount      Float       // Celková částka s DPH
+  
+  // Stavy a data pro úřady a cash flow
+  status           InvoiceStatus @default(ISSUED) 
+  issueDate        DateTime      @default(now()) // Datum vystavení
+  dueDate          DateTime      // Datum splatnosti
+  paidAt           DateTime?     // Reálné datum připsání peněz na účet (Klíčové pro Cash Flow!)
+  variableSymbol   String        // Variabilní symbol pro banku
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+enum InvoiceStatus {
+  ISSUED     // Vystaveno / Čeká na platbu
+  PAID       // Zaplaceno (tento stav odemkne peníze v grafu Cash Flow)
+  CANCELLED  // Stornováno
 }
 
 enum QuoteStatus {
