@@ -1,7 +1,7 @@
 // src/app/admin/page.tsx
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, ArrowRight, CheckCircle2, Users, Database, ClipboardList, PenTool, ClipboardCheck, Calendar, HardHat, Clock, Truck, Flame, CalendarDays, Loader2 } from 'lucide-react'
+import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, ArrowRight, CheckCircle2, Users, Database, ClipboardList, PenTool, ClipboardCheck, Calendar, HardHat, Clock, Truck, Flame, CalendarDays, Loader2, Wallet, ArrowUpRight, ArrowDownRight, Briefcase } from 'lucide-react'
 import { db } from '@/lib/db'
 import { auth } from '@/auth'
 
@@ -47,7 +47,7 @@ export default async function AdminDashboard({
 }
 
 // ==========================================
-// NAČÍTACÍ SKELETON (Zobrazí se bez čekání na DB)
+// NAČÍTACÍ SKELETON
 // ==========================================
 function DashboardLoading() {
   return (
@@ -85,7 +85,6 @@ async function ApplicatorView({
     startDate = new Date(now.getFullYear(), now.getMonth(), 1)
   }
 
-  // FIX: Všechny 3 dotazy běží paralelně
   const [pendingQuotes, completedQuotesPeriod, myUpcomingJobs] = await Promise.all([
     db.quote.count({
       where: { status: { not: 'COMPLETED' }, OR: [{ responsibleUserId: userId }, { assignedUsers: { some: { id: userId } } }] }
@@ -200,20 +199,23 @@ async function ApplicatorView({
 }
 
 // ==========================================
-// POHLED ADMINA / SUPERVIZORA
+// POHLED ADMINA / SUPERVIZORA (Work & Cash Flow)
 // ==========================================
 async function AdminView() {
-  let materialsCount = 0, usersCount = 0, inquiriesCount = 0, ordersCount = 0, contractsCount = 0, completedCount = 0
+  let materialsCount = 0, usersCount = 0, inquiriesCount = 0, ordersCount = 0, contractsCount = 0, completedCount = 0, dispatchedCount = 0
+  let allQuotes: any[] = []
   let upcomingDispatches: UpcomingDispatch[] = []
 
   try {
-    [materialsCount, usersCount, inquiriesCount, ordersCount, contractsCount, completedCount, upcomingDispatches] = await Promise.all([
+    [materialsCount, usersCount, inquiriesCount, ordersCount, contractsCount, completedCount, dispatchedCount, allQuotes, upcomingDispatches] = await Promise.all([
       db.material.count(),
       db.user.count(),
       db.quote.count({ where: { status: 'INQUIRY' } }),
       db.quote.count({ where: { status: 'ORDER' } }),
       db.quote.count({ where: { status: 'CONTRACT' } }),
       db.quote.count({ where: { status: 'COMPLETED' } }),
+      db.quote.count({ where: { scheduledDate: { not: null }, status: { not: 'COMPLETED' } } }),
+      db.quote.findMany({ select: { status: true, totalPrice: true, cost: true, price: true } }).catch(() => []),
       db.quote.findMany({
         where: { status: { not: 'COMPLETED' }, scheduledDate: { not: null } },
         include: { responsibleUser: true },
@@ -225,19 +227,101 @@ async function AdminView() {
     console.error("Chyba při načítání statistik:", error)
   }
 
+  // Výpočet Cash Flow a financí z databáze
+  const totalEarnings = allQuotes
+    .filter(q => q.status === 'COMPLETED' || q.status === 'ORDER' || q.status === 'CONTRACT')
+    .reduce((acc, q) => acc + (Number(q.totalPrice) || Number(q.price) || 0), 0)
+
+  const totalExpenses = allQuotes
+    .filter(q => q.status === 'COMPLETED' || q.status === 'ORDER' || q.status === 'CONTRACT')
+    .reduce((acc, q) => acc + (Number(q.cost) || 0), 0)
+
+  const netProfit = totalEarnings - totalExpenses
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
+      {/* Hlavní prémiový banner */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
         <div className="relative z-10 max-w-2xl">
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">Přehled systému</h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">Analýza Work & Cash Flow</h1>
           <p className="text-zinc-400 text-lg leading-relaxed">
-            Vítejte v administraci FoamSystem. Zde máš rychlý přístup ke kalkulacím, zakázkám a kompletní správě izolačních materiálů.
+            Přehledný byznysový kokpit: sledujte stav zakázek předaných aplikátorům, dokončené stavby, celkové výdaje na materiál a čistý výdělek firmy.
           </p>
         </div>
         <div className="absolute right-0 top-0 -translate-y-12 translate-x-1/4 opacity-10 pointer-events-none text-[#FF4F00]"><Boxes size={300} /></div>
       </div>
 
+      {/* 1. CASH FLOW & FINANČNÍ ANALÝZA (Výdaje a Výdělek) */}
+      <div>
+        <h2 className="text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
+          <Wallet size={24} className="text-[#FF4F00]" /> Cash Flow & Finanční přehled
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-emerald-500">
+            <div className="p-4 bg-emerald-50 text-emerald-600 rounded-xl"><ArrowUpRight size={28} /></div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Celkový výdělek (Obrat)</p>
+              <h3 className="text-2xl md:text-3xl font-black text-[#000000]">{totalEarnings.toLocaleString('cs-CZ')} Kč</h3>
+            </div>
+          </div>
+
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-red-500">
+            <div className="p-4 bg-red-50 text-red-600 rounded-xl"><ArrowDownRight size={28} /></div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Odhadované výdaje (Materiál)</p>
+              <h3 className="text-2xl md:text-3xl font-black text-[#000000]">{totalExpenses.toLocaleString('cs-CZ')} Kč</h3>
+            </div>
+          </div>
+
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-[#FF4F00]">
+            <div className="p-4 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl"><Wallet size={28} /></div>
+            <div>
+              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Čistý zisk (Marže)</p>
+              <h3 className="text-2xl md:text-3xl font-black text-[#FF4F00]">{netProfit.toLocaleString('cs-CZ')} Kč</h3>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* 2. WORKFLOW: STAV ZAKÁZEK A PROVOZU */}
+      <div>
+        <h2 className="text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
+          <Briefcase size={24} className="text-[#FF4F00]" /> Provozní stav zakázek (Workflow)
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4">
+            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl"><FileText size={22} /></div>
+            <div><p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Poptávky</p><h3 className="text-2xl font-bold text-[#000000]">{inquiriesCount}</h3></div>
+          </div>
+
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4">
+            <div className="p-3 bg-amber-50 text-amber-600 rounded-xl"><ClipboardList size={22} /></div>
+            <div><p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Objednávky</p><h3 className="text-2xl font-bold text-[#000000]">{ordersCount}</h3></div>
+          </div>
+
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4">
+            <div className="p-3 bg-purple-50 text-purple-600 rounded-xl"><PenTool size={22} /></div>
+            <div><p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Smlouvy</p><h3 className="text-2xl font-bold text-[#000000]">{contractsCount}</h3></div>
+          </div>
+
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-blue-600">
+            <div className="p-3 bg-blue-50 text-blue-700 rounded-xl"><Truck size={22} /></div>
+            <div><p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Předáno aplikátorům</p><h3 className="text-2xl font-bold text-[#000000]">{dispatchedCount}</h3></div>
+          </div>
+
+          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-emerald-500">
+            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><CheckCircle2 size={22} /></div>
+            <div><p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Dokončené stavby</p><h3 className="text-2xl font-bold text-[#000000]">{completedCount}</h3></div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* SOUHRN PŘEDANÝCH ZAKÁZEK (DISPEČINK) */}
       {upcomingDispatches.length > 0 && (
         <div>
           <h2 className="text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
@@ -281,28 +365,7 @@ async function AdminView() {
         </div>
       )}
 
-      <div>
-        <h2 className="text-xl font-bold text-[#000000] mb-4">Stav zakázek a procesů</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-blue-500 transition-colors">
-            <div className="p-4 bg-blue-50 text-blue-600 rounded-xl"><FileText size={24} /></div>
-            <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Poptávky</p><h3 className="text-2xl font-bold text-[#000000]">{inquiriesCount}</h3></div>
-          </div>
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-amber-500 transition-colors">
-            <div className="p-4 bg-amber-50 text-amber-600 rounded-xl"><ClipboardList size={24} /></div>
-            <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Objednávky</p><h3 className="text-2xl font-bold text-[#000000]">{ordersCount}</h3></div>
-          </div>
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-purple-500 transition-colors">
-            <div className="p-4 bg-purple-50 text-purple-600 rounded-xl"><PenTool size={24} /></div>
-            <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Smlouvy</p><h3 className="text-2xl font-bold text-[#000000]">{contractsCount}</h3></div>
-          </div>
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-emerald-500 transition-colors">
-            <div className="p-4 bg-emerald-50 text-emerald-600 rounded-xl"><CheckCircle2 size={24} /></div>
-            <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Dokončeno</p><h3 className="text-2xl font-bold text-[#000000]">{completedCount}</h3></div>
-          </div>
-        </div>
-      </div>
-
+      {/* 3. Systémové metriky */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-4">Systémové metriky</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -324,6 +387,7 @@ async function AdminView() {
         </div>
       </div>
 
+      {/* 4. Rychlé akce */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-6">Rychlé akce</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
