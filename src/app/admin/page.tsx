@@ -215,7 +215,7 @@ async function AdminView() {
       db.quote.count({ where: { status: 'CONTRACT' } }),
       db.quote.count({ where: { status: 'COMPLETED' } }),
       db.quote.count({ where: { scheduledDate: { not: null }, status: { not: 'COMPLETED' } } }),
-      db.quote.findMany({ select: { status: true, totalPrice: true, cost: true, price: true } }).catch(() => []),
+      db.quote.findMany().catch(() => []),
       db.quote.findMany({
         where: { status: { not: 'COMPLETED' }, scheduledDate: { not: null } },
         include: { responsibleUser: true },
@@ -230,7 +230,7 @@ async function AdminView() {
   // Výpočet Cash Flow a financí z databáze
   const totalEarnings = allQuotes
     .filter(q => q.status === 'COMPLETED' || q.status === 'ORDER' || q.status === 'CONTRACT')
-    .reduce((acc, q) => acc + (Number(q.totalPrice) || Number(q.price) || 0), 0)
+    .reduce((acc, q) => acc + (Number(q.price) || 0), 0)
 
   const totalExpenses = allQuotes
     .filter(q => q.status === 'COMPLETED' || q.status === 'ORDER' || q.status === 'CONTRACT')
