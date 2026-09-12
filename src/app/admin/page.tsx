@@ -1,7 +1,7 @@
 // src/app/admin/page.tsx
-
 import Link from 'next/link'
-import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, ArrowRight, CheckCircle2, Users, Database, ClipboardList, PenTool, ClipboardCheck, Calendar, HardHat, Clock, Truck, Flame, CalendarDays } from 'lucide-react'
+import { Suspense } from 'react'
+import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, ArrowRight, CheckCircle2, Users, Database, ClipboardList, PenTool, ClipboardCheck, Calendar, HardHat, Clock, Truck, Flame, CalendarDays, Loader2 } from 'lucide-react'
 import { db } from '@/lib/db'
 import { auth } from '@/auth'
 
@@ -20,6 +20,9 @@ type UpcomingDispatch = {
   } | null;
 }
 
+// ==========================================
+// HLAVNÍ STRÁNKA (Okamžitý render)
+// ==========================================
 export default async function AdminDashboard({
   searchParams,
 }: {
@@ -30,37 +33,67 @@ export default async function AdminDashboard({
   const role = currentUser?.role ? String(currentUser.role).toUpperCase() : ''
   const userId = currentUser?.id
   const userName = currentUser?.name || 'Aplikátore'
-
   const isApplicator = role === 'APLIKATOR' || role === 'POMOCNIK'
 
-  // ==========================================
-  // POHLED APLIKÁTORA (Omezený dashboard s rozvrhem a časy)
-  // ==========================================
-  if (isApplicator && userId) {
-    const params = await searchParams
-    const period = params?.period || 'today'
-    
-    const now = new Date()
-    let startDate = new Date()
-    
-    if (period === 'today') startDate.setHours(0, 0, 0, 0)
-    else if (period === 'week') {
-      const day = now.getDay() || 7
-      if (day !== 1) startDate.setHours(-24 * (day - 1))
-      startDate.setHours(0, 0, 0, 0)
-    } else if (period === 'month') {
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-    }
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      {isApplicator && userId ? (
+        <ApplicatorView userId={userId} userName={userName} searchParams={searchParams} />
+      ) : (
+        <AdminView />
+      )}
+    </Suspense>
+  )
+}
 
-    const pendingQuotes = await db.quote.count({
+// ==========================================
+// NAČÍTACÍ SKELETON (Zobrazí se bez čekání na DB)
+// ==========================================
+function DashboardLoading() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-zinc-400 space-y-4">
+      <Loader2 size={48} className="animate-spin text-[#FF4F00]" />
+      <p className="font-bold tracking-wider uppercase text-sm">Načítám data ze serveru...</p>
+    </div>
+  )
+}
+
+// ==========================================
+// POHLED APLIKÁTORA (Paralelní načítání)
+// ==========================================
+async function ApplicatorView({ 
+  userId, 
+  userName, 
+  searchParams 
+}: { 
+  userId: string; 
+  userName: string; 
+  searchParams: Promise<{ period?: string }> | { period?: string }
+}) {
+  const params = await searchParams
+  const period = params?.period || 'today'
+  
+  const now = new Date()
+  let startDate = new Date()
+  
+  if (period === 'today') startDate.setHours(0, 0, 0, 0)
+  else if (period === 'week') {
+    const day = now.getDay() || 7
+    if (day !== 1) startDate.setHours(-24 * (day - 1))
+    startDate.setHours(0, 0, 0, 0)
+  } else if (period === 'month') {
+    startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+  }
+
+  // FIX: Všechny 3 dotazy běží paralelně
+  const [pendingQuotes, completedQuotesPeriod, myUpcomingJobs] = await Promise.all([
+    db.quote.count({
       where: { status: { not: 'COMPLETED' }, OR: [{ responsibleUserId: userId }, { assignedUsers: { some: { id: userId } } }] }
-    })
-    const completedQuotesPeriod = await db.quote.count({
+    }),
+    db.quote.count({
       where: { status: 'COMPLETED', updatedAt: { gte: startDate }, OR: [{ responsibleUserId: userId }, { assignedUsers: { some: { id: userId } } }] }
-    })
-
-    // Načtení konkrétních budoucích úkolů pro aplikátora
-    const myUpcomingJobs = await db.quote.findMany({
+    }),
+    db.quote.findMany({
       where: {
         status: { not: 'COMPLETED' },
         scheduledDate: { not: null },
@@ -68,108 +101,108 @@ export default async function AdminDashboard({
       },
       orderBy: { scheduledDate: 'asc' }
     })
+  ])
 
-    return (
-      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0D1B3E] to-[#1a2b5e] border border-blue-900/50 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
-          <div className="relative z-10 max-w-2xl">
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
-              Ahoj, {userName.split(' ')[0]}!
-            </h1>
-            <p className="text-blue-200 text-lg leading-relaxed">
-              Zkontroluj si svůj plán realizací a nezapomeň u dokončených staveb vyplňovat technickou evidenci.
-            </p>
-          </div>
-          <div className="absolute right-0 top-0 -translate-y-4 translate-x-1/4 opacity-20 pointer-events-none text-blue-400">
-            <HardHat size={250} />
+  return (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0D1B3E] to-[#1a2b5e] border border-blue-900/50 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
+        <div className="relative z-10 max-w-2xl">
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+            Ahoj, {userName.split(' ')[0]}!
+          </h1>
+          <p className="text-blue-200 text-lg leading-relaxed">
+            Zkontroluj si svůj plán realizací a nezapomeň u dokončených staveb vyplňovat technickou evidenci.
+          </p>
+        </div>
+        <div className="absolute right-0 top-0 -translate-y-4 translate-x-1/4 opacity-20 pointer-events-none text-blue-400">
+          <HardHat size={250} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-amber-500">
+          <div className="p-4 bg-amber-50 text-amber-600 rounded-xl"><ClipboardList size={28} /></div>
+          <div>
+            <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Čeká na realizaci</p>
+            <h3 className="text-3xl font-black text-[#000000]">{pendingQuotes}</h3>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-amber-500">
-            <div className="p-4 bg-amber-50 text-amber-600 rounded-xl"><ClipboardList size={28} /></div>
-            <div>
-              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Čeká na realizaci</p>
-              <h3 className="text-3xl font-black text-[#000000]">{pendingQuotes}</h3>
-            </div>
-          </div>
-          <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-green-500">
-            <div className="p-4 bg-green-50 text-green-600 rounded-xl"><CheckCircle2 size={28} /></div>
-            <div>
-              <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Dokončeno</p>
-              <h3 className="text-3xl font-black text-[#000000]">{completedQuotesPeriod}</h3>
-            </div>
+        <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-green-500">
+          <div className="p-4 bg-green-50 text-green-600 rounded-xl"><CheckCircle2 size={28} /></div>
+          <div>
+            <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Dokončeno</p>
+            <h3 className="text-3xl font-black text-[#000000]">{completedQuotesPeriod}</h3>
           </div>
         </div>
+      </div>
 
-        {/* HARMONOGRAM APLIKÁTORA S ČASY */}
-        <div>
-          <h2 className="text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
-            <Calendar size={24} className="text-[#FF4F00]" /> Můj plán realizací
-          </h2>
-          
-          {myUpcomingJobs.length === 0 ? (
-            <div className="bg-[#FEFEFA] p-8 rounded-2xl border border-zinc-200 text-center text-zinc-500">
-              Zatím nemáš na nejbližší dny naplánovanou žádnou trasu.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {myUpcomingJobs.map(job => {
-                const areaNum = Number(job.area) || 0
-                // Hrubý odhad: 40m2 za hodinu stříkání
-                const applicationHours = Math.max(1, Math.round((areaNum / 40) * 10) / 10)
-                const totalHours = 1 + 1.5 + applicationHours // 1h doprava + 1.5h příprava
+      <div>
+        <h2 className="text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
+          <Calendar size={24} className="text-[#FF4F00]" /> Můj plán realizací
+        </h2>
+        
+        {myUpcomingJobs.length === 0 ? (
+          <div className="bg-[#FEFEFA] p-8 rounded-2xl border border-zinc-200 text-center text-zinc-500">
+            Zatím nemáš na nejbližší dny naplánovanou žádnou trasu.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {myUpcomingJobs.map(job => {
+              const areaNum = Number(job.area) || 0
+              const applicationHours = Math.max(1, Math.round((areaNum / 40) * 10) / 10)
+              const totalHours = 1 + 1.5 + applicationHours
 
-                return (
-                  <div key={job.id} className="bg-[#FEFEFA] rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
-                    <div className="bg-zinc-50 p-4 border-b border-zinc-200 flex justify-between items-center">
-                      <div>
-                        <div className="font-bold text-lg text-[#000000]">{job.customerName}</div>
-                        <div className="text-sm text-zinc-500">{job.city} • {job.materialName} ({job.area} m²)</div>
+              return (
+                <div key={job.id} className="bg-[#FEFEFA] rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
+                  <div className="bg-zinc-50 p-4 border-b border-zinc-200 flex justify-between items-center">
+                    <div>
+                      <div className="font-bold text-lg text-[#000000]">{job.customerName}</div>
+                      <div className="text-sm text-zinc-500">{job.city} • {job.materialName} ({job.area} m²)</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[#FF4F00] font-black text-lg">
+                        {job.scheduledDate ? new Date(job.scheduledDate).toLocaleDateString('cs-CZ') : 'Termín neurčen'}
                       </div>
-                      <div className="text-right">
-                        <div className="text-[#FF4F00] font-black text-lg">
-                          {job.scheduledDate ? new Date(job.scheduledDate).toLocaleDateString('cs-CZ') : 'Termín neurčen'}
-                        </div>
-                        <div className="text-xs font-bold text-zinc-400 uppercase">Odhad: ~{totalHours} hod.</div>
+                      <div className="text-xs font-bold text-zinc-400 uppercase">Odhad: ~{totalHours} hod.</div>
+                    </div>
+                  </div>
+                  <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0"><Truck size={18} /></div>
+                      <div>
+                        <p className="font-bold text-[#000000]">Doprava & Vykládka</p>
+                        <p className="text-zinc-500">cca 1 hodina</p>
                       </div>
                     </div>
-                    <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0"><Truck size={18} /></div>
-                        <div>
-                          <p className="font-bold text-[#000000]">Doprava & Vykládka</p>
-                          <p className="text-zinc-500">cca 1 hodina</p>
-                        </div>
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-amber-50 text-amber-600 rounded-lg shrink-0"><Flame size={18} /></div>
+                      <div>
+                        <p className="font-bold text-[#000000]">Příprava & Nahřátí</p>
+                        <p className="text-zinc-500">cca 1.5 hod.</p>
                       </div>
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-amber-50 text-amber-600 rounded-lg shrink-0"><Flame size={18} /></div>
-                        <div>
-                          <p className="font-bold text-[#000000]">Příprava & Nahřátí</p>
-                          <p className="text-zinc-500">cca 1.5 hod. (zakrytí, nahřátí materiálu)</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-green-50 text-green-600 rounded-lg shrink-0"><Clock size={18} /></div>
-                        <div>
-                          <p className="font-bold text-[#000000]">Aplikace pěny</p>
-                          <p className="text-zinc-500">cca {applicationHours} hod. (podle {job.area} m²)</p>
-                        </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-green-50 text-green-600 rounded-lg shrink-0"><Clock size={18} /></div>
+                      <div>
+                        <p className="font-bold text-[#000000]">Aplikace pěny</p>
+                        <p className="text-zinc-500">cca {applicationHours} hod.</p>
                       </div>
                     </div>
                   </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
-    )
-  }
+    </div>
+  )
+}
 
-  // ==========================================
-  // POHLED ADMINA / SUPERVIZORA (Globální data + Přehled dispečinku)
-  // ==========================================
+// ==========================================
+// POHLED ADMINA / SUPERVIZORA
+// ==========================================
+async function AdminView() {
   let materialsCount = 0, usersCount = 0, inquiriesCount = 0, ordersCount = 0, contractsCount = 0, completedCount = 0
   let upcomingDispatches: UpcomingDispatch[] = []
 
@@ -185,8 +218,8 @@ export default async function AdminDashboard({
         where: { status: { not: 'COMPLETED' }, scheduledDate: { not: null } },
         include: { responsibleUser: true },
         orderBy: { scheduledDate: 'asc' },
-        take: 5 // Ukáže 5 nejbližších
-      })
+        take: 5 
+      }) as unknown as Promise<UpcomingDispatch[]>
     ])
   } catch (error) {
     console.error("Chyba při načítání statistik:", error)
@@ -205,7 +238,6 @@ export default async function AdminDashboard({
         <div className="absolute right-0 top-0 -translate-y-12 translate-x-1/4 opacity-10 pointer-events-none text-[#FF4F00]"><Boxes size={300} /></div>
       </div>
 
-      {/* SOUHRN PŘEDANÝCH ZAKÁZEK PRO SUPERVIZORA */}
       {upcomingDispatches.length > 0 && (
         <div>
           <h2 className="text-xl font-bold text-[#000000] mb-4 flex items-center gap-2">
@@ -249,65 +281,52 @@ export default async function AdminDashboard({
         </div>
       )}
 
-      {/* 2. Stav zakázek (Business KPI) */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-4">Stav zakázek a procesů</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
           <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-blue-500 transition-colors">
             <div className="p-4 bg-blue-50 text-blue-600 rounded-xl"><FileText size={24} /></div>
             <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Poptávky</p><h3 className="text-2xl font-bold text-[#000000]">{inquiriesCount}</h3></div>
           </div>
-
           <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-amber-500 transition-colors">
             <div className="p-4 bg-amber-50 text-amber-600 rounded-xl"><ClipboardList size={24} /></div>
             <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Objednávky</p><h3 className="text-2xl font-bold text-[#000000]">{ordersCount}</h3></div>
           </div>
-
           <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-purple-500 transition-colors">
             <div className="p-4 bg-purple-50 text-purple-600 rounded-xl"><PenTool size={24} /></div>
             <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Smlouvy</p><h3 className="text-2xl font-bold text-[#000000]">{contractsCount}</h3></div>
           </div>
-
           <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-emerald-500 transition-colors">
             <div className="p-4 bg-emerald-50 text-emerald-600 rounded-xl"><CheckCircle2 size={24} /></div>
             <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Dokončeno</p><h3 className="text-2xl font-bold text-[#000000]">{completedCount}</h3></div>
           </div>
-
         </div>
       </div>
 
-      {/* 3. Systémové metriky  */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-4">Systémové metriky</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          
           <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-[#FF4F00] transition-colors">
             <div className="p-4 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl"><Boxes size={24} /></div>
             <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Evidované materiály</p><h3 className="text-2xl font-bold text-[#000000]">{materialsCount}</h3></div>
           </div>
-          
           <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-emerald-500 transition-colors">
             <div className="p-4 bg-emerald-50 text-emerald-600 rounded-xl"><Users size={24} /></div>
             <div><p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Aktivní pracovníci</p><h3 className="text-2xl font-bold text-[#000000]">{usersCount}</h3></div>
           </div>
-
           <div className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 hover:border-purple-500 transition-colors">
             <div className="p-4 bg-purple-50 text-purple-600 rounded-xl"><Database size={24} /></div>
             <div>
               <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Stav databáze</p>
-              <h3 className="text-lg font-bold text-emerald-600 text-lg mt-1">Připojeno</h3>
+              <h3 className="text-lg font-bold text-emerald-600 mt-1">Připojeno</h3>
             </div>
           </div>
-
         </div>
       </div>
 
-      {/* 4. Hlavní rozcestník - Rychlé akce */}
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-6">Rychlé akce</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          
           <DashboardCard
             title="Nová poptávka"
             value="Vytvořit"
@@ -317,7 +336,6 @@ export default async function AdminDashboard({
             colorClass="bg-[#FF4F00]/10"
             hoverClass="group-hover:border-[#FF4F00]"
           />
-
           <DashboardCard
             title="Kalkulátor"
             value="Spočítat"
@@ -327,7 +345,6 @@ export default async function AdminDashboard({
             colorClass="bg-zinc-100"
             hoverClass="group-hover:border-[#000000]"
           />
-
           <DashboardCard
             title="Evidence"
             value="Archiv prací"
@@ -337,7 +354,6 @@ export default async function AdminDashboard({
             colorClass="bg-[#0D1B3E]/10"
             hoverClass="group-hover:border-[#0D1B3E]"
           />
-          
           <DashboardCard
             title="Materiály"
             value="Správa pěn"
@@ -347,7 +363,6 @@ export default async function AdminDashboard({
             colorClass="bg-amber-50"
             hoverClass="group-hover:border-amber-500"
           />
-          
           <DashboardCard
             title="Nabídky"
             value="Seznam"
@@ -357,7 +372,6 @@ export default async function AdminDashboard({
             colorClass="bg-emerald-50"
             hoverClass="group-hover:border-emerald-500"
           />
-          
           <DashboardCard
             title="Systém"
             value="ARES Test"
@@ -367,14 +381,15 @@ export default async function AdminDashboard({
             colorClass="bg-purple-50"
             hoverClass="group-hover:border-purple-500"
           />
-
         </div>
       </div>
     </div>
   )
 }
 
-// 2. DEFINICE TYPŮ PRO KARTU
+// ==========================================
+// KARTA (UI Komponenta)
+// ==========================================
 interface DashboardCardProps {
   title: string;
   value: string;

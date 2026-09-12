@@ -40,13 +40,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
         
+        // --- 1. MĚŘENÍ: Čas potřebný k načtení dat z databáze Supabase ---
+        console.time("DB_DOTAZ")
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string }
         })
+        console.timeEnd("DB_DOTAZ")
         
         if (!user || !user.password) return null
         
+        // --- 2. MĚŘENÍ: Čas potřebný k dešifrování a porovnání hesla ---
+        console.time("BCRYPT_OVERENI")
         const isPasswordValid = await bcrypt.compare(credentials.password as string, user.password)
+        console.timeEnd("BCRYPT_OVERENI")
+        
         if (!isPasswordValid) return null
         
         return { 
