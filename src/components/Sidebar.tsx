@@ -6,12 +6,13 @@ import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Boxes, Calculator, FileText, Settings, LogOut, X, Users, ClipboardCheck, CalendarDays, Scan, ChevronLeft, ChevronRight } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import CompanyBadge from './CompanyBadge'
+import Logo from './Logo' // <-- Import nového loga
 
 interface SidebarProps {
   isOpen?: boolean
   setIsOpen?: (open: boolean) => void
-  isCollapsed?: boolean // Nová prop
-  setIsCollapsed?: (collapsed: boolean) => void // Nová prop
+  isCollapsed?: boolean 
+  setIsCollapsed?: (collapsed: boolean) => void 
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -51,7 +52,6 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed = false, setIsC
 
   return (
     <>
-      {/* Tmavé pozadí pro mobilní overlay */}
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
@@ -67,15 +67,12 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed = false, setIsC
         ${!isOpen && isCollapsed ? 'md:w-20' : 'md:w-64'}
       `}>
         
-        {/* HLAVIČKA A LOGO */}
-        <div className={`p-6 flex items-center shrink-0 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-          <div className={`flex flex-col ${isCollapsed ? 'items-center' : 'items-start'}`}>
-            <div className="flex items-center gap-2">
-              {!isCollapsed && <span className="text-xl font-extrabold text-white">IZOLACE</span>}
-              <span className="bg-[#FF4F00] px-2 py-1 rounded-lg text-sm font-black text-white tracking-wider">RS</span>
-            </div>
-            {!isCollapsed && <p className="text-xs text-zinc-500 mt-2 font-medium tracking-wide">INTERNÍ SYSTÉM</p>}
-          </div>
+        {/* HLAVIČKA S NOVÝM LOGEM */}
+        <div className={`p-6 pt-8 flex items-center shrink-0 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+          <Link href="/admin" onClick={() => setIsOpen?.(false)} className={`flex flex-col ${isCollapsed ? 'items-center' : 'items-start'} hover:opacity-90 transition-opacity`}>
+            <Logo collapsed={isCollapsed} className="h-10 w-auto" />
+            {!isCollapsed && <p className="text-[10px] text-zinc-500 mt-2 font-black tracking-widest pl-1 uppercase">Interní systém</p>}
+          </Link>
           
           <button 
             onClick={() => setIsOpen?.(false)}
@@ -85,7 +82,6 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed = false, setIsC
           </button>
         </div>
 
-        {/* Přepínač velikosti sidebaru (viditelný jen na PC) */}
         {setIsCollapsed && (
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -98,8 +94,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed = false, setIsC
 
         {!isCollapsed && <div className="px-6 pb-2 shrink-0"><CompanyBadge /></div>}
 
-        {/* NAVIGACE */}
-        <nav className="flex-1 overflow-y-auto px-4 space-y-1.5 pb-4 [&::-webkit-scrollbar]:hidden">
+        <nav className="flex-1 overflow-y-auto px-4 space-y-1.5 pb-4 [&::-webkit-scrollbar]:hidden pt-2">
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
             const Icon = item.icon
@@ -123,7 +118,6 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed = false, setIsC
           })}
         </nav>
 
-        {/* UŽIVATEL A ODHLÁŠENÍ */}
         <div className="p-4 border-t border-zinc-900 shrink-0">
           {isCollapsed ? (
             <button 
@@ -153,7 +147,6 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed = false, setIsC
             </div>
           )}
         </div>
-        
       </aside>
     </>
   )
