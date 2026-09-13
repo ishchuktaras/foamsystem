@@ -114,7 +114,6 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
         setZip(data.sidlo.psc ? data.sidlo.psc.toString() : '')
       }
     } catch (error: unknown) {
-      // FIX ZDE: Nahrazení `any` za `unknown` a bezpečné ověření chyby
       if (error instanceof Error) {
         setAresError(error.message)
       } else {
@@ -287,7 +286,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
         "3. Cena a platební podmínky",
         `Celková předběžná cena díla je stanovena na ${clientFinalPrice.toLocaleString('cs-CZ')} Kč. Objednatel uhradí zálohu ve výši 50 % před zahájením prací. Konečná částka bude vyúčtována dle skutečné spotřeby po předání díla.`,
         "4. Stavební připravenost a realizace",
-        "Objednatel se zavazuje zajistit volný přístup na staveniště, možnost připojení k elektrické síti (380 V, jistič min. 25 A, zásuvka 5-kolík) a přístup k vodě. Plochy, které nemají být zasaženy pěnou (okna, pohledové trámy), musí být předem řádně zakryty fólií.",
+        "Objednatel se zavazuje zajistit volný přístup na staveniště a možnost připojení k elektrické síti (380 V, jistič min. 25 A, zásuvka 5 kolík). V případě, že objednatel nemůže zajistit 380V elektrickou síť, bude na stavbě využit generátor a při předání díla budou doúčtovány reálné náklady za spotřebovanou naftu. Plochy, které nemají být zasaženy pěnou (okna, pohledové trámy), musí být předem řádně zakryty fólií; pokud nebudou ze strany objednatele řádně zakryty, budou doúčtovány prostředky za spotřebovanou balicí fólii a práce spojené s balením.",
         "5. Záruka a kvalita",
         "Zhotovitel poskytuje záruku na provedené práce v délce 60 měsíců. Životnost a tvarová stálost PUR pěny (nesesedá, neřídne) je garantována výrobcem po celou dobu životnosti stavby."
       ]

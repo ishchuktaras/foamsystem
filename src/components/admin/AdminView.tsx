@@ -4,9 +4,24 @@ import { db } from '@/lib/db'
 import { UpcomingDispatch } from '@/types/dashboard'
 import DashboardCard from './DashboardCard'
 
+// Přidání specifického typu místo zakázaného "any"
+type QuoteWithEvidence = {
+  status: string;
+  totalCost: string | null;
+  price: string | null;
+  cost: number | null;
+  evidence: {
+    heightsSurcharge: number | null;
+    difficultEnvSurcharge: number | null;
+    packingPriceRate: number | null;
+    packingHours: number | null;
+    finalInvoiceTotal: number | null;
+  } | null;
+}
+
 export default async function AdminView() {
   let materialsCount = 0, usersCount = 0, inquiriesCount = 0, ordersCount = 0, contractsCount = 0, completedCount = 0, dispatchedCount = 0
-  let allQuotes: any[] = []
+  let allQuotes: QuoteWithEvidence[] = []
   let upcomingDispatches: UpcomingDispatch[] = []
 
   try {
@@ -34,7 +49,7 @@ export default async function AdminView() {
     contractsCount = results[4]
     completedCount = results[5]
     dispatchedCount = results[6]
-    allQuotes = results[7]
+    allQuotes = results[7] as unknown as QuoteWithEvidence[]
     upcomingDispatches = results[8] as unknown as UpcomingDispatch[]
   } catch (error) {
     console.error("Chyba při načítání statistik:", error)
