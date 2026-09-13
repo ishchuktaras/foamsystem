@@ -6,10 +6,40 @@ import { Calculator, FileText, Save, FileDown, Loader2, CheckCircle2, AlertTrian
 import { saveBillingData } from '@/actions/evidence'
 import jsPDF from 'jspdf'
 
+// 1. Přesné definice typů místo "any"
+interface CompanyProfileData {
+  companyName?: string | null;
+  ico?: string | null;
+  bankAccount?: string | null;
+}
+
+interface QuoteData {
+  customerName: string;
+  ico?: string | null;
+  street?: string | null;
+  city?: string | null;
+  zip?: string | null;
+  materialName: string;
+  totalCost: string;
+}
+
+interface JobEvidenceData {
+  id: string;
+  pricePerKg: number | null;
+  machineCoefficient: number | null;
+  foilRolls: number;
+  packingHours: number;
+  generatorKwh: number | null;
+  heightsSurcharge: number | null;
+  difficultEnvSurcharge: number | null;
+  reactorStart: number;
+  reactorEnd: number;
+}
+
 type BillingPanelProps = {
-  quote: any; // Obsahuje zakázku
-  evidence: any; // Obsahuje technický deník z JobEvidence
-  companyProfile: any; // Firemní údaje pro fakturu
+  quote: QuoteData;
+  evidence: JobEvidenceData;
+  companyProfile: CompanyProfileData | null;
 }
 
 export default function BillingPanel({ quote, evidence, companyProfile }: BillingPanelProps) {
@@ -20,19 +50,19 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
   // Sazby pro vyúčtování (předvyplněno z DB nebo výchozí hodnoty)
   const [pricePerKg, setPricePerKg] = useState<number>(evidence.pricePerKg || 135)
   const [machineCoefficient, setMachineCoefficient] = useState<number>(evidence.machineCoefficient || 0.12)
-  const [foilRollPrice, setFoilRollPrice] = useState<number>(150) // Cena za 1 roli
-  const [packingHourRate, setPackingHourRate] = useState<number>(350) // Cena za 1 h práce
-  const [generatorKwRate, setGeneratorKwRate] = useState<number>(20) // Cena za 1 kWh agregátu
+  const [foilRollPrice, setFoilRollPrice] = useState<number>(150)
+  const [packingHourRate, setPackingHourRate] = useState<number>(350)
+  const [generatorKwRate, setGeneratorKwRate] = useState<number>(20)
   const [heightsSurcharge, setHeightsSurcharge] = useState<number>(evidence.heightsSurcharge || 0)
   const [difficultEnvSurcharge, setDifficultEnvSurcharge] = useState<number>(evidence.difficultEnvSurcharge || 0)
 
-  // Automatické výpočty z evidence
+  // Automatické výpočty z evidence (čisté a typově bezpečné)
   const strokes = evidence.reactorEnd - evidence.reactorStart
   const usedKg = strokes > 0 ? strokes * machineCoefficient : 0
   const materialCost = usedKg * pricePerKg
 
   const packingCost = (evidence.foilRolls * foilRollPrice) + (evidence.packingHours * packingHourRate)
-  const generatorCost = evidence.generatorKwh * generatorKwRate
+  const generatorCost = (evidence.generatorKwh || 0) * generatorKwRate
   
   const finalTotal = materialCost + packingCost + generatorCost + heightsSurcharge + difficultEnvSurcharge
 
@@ -58,7 +88,6 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
     try {
       const doc = new jsPDF()
       
-      // Načtení fontů (stejné jako u QuoteForm)
       const loadFont = async (url: string, name: string, style: string) => {
         try {
           const res = await fetch(url)
@@ -107,7 +136,7 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
       // Data
       const issueDate = new Date()
       const dueDate = new Date()
-      dueDate.setDate(dueDate.getDate() + 14) // Splatnost 14 dní
+      dueDate.setDate(dueDate.getDate() + 14) 
       const vs = issueDate.getFullYear().toString() + (issueDate.getMonth() + 1).toString().padStart(2, '0') + issueDate.getDate().toString().padStart(2, '0')
 
       doc.text(`Datum vystavení: ${issueDate.toLocaleDateString('cs-CZ')}`, 20, 85)
@@ -126,38 +155,34 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
       doc.setFont("Roboto", "normal")
       let y = 120
       
-      // 1. Materiál
       doc.text(`Aplikace PUR pěny (${quote.materialName}) - dle spotřeby: ${Math.round(usedKg)} kg`, 20, y)
       doc.text(`${Math.round(materialCost).toLocaleString('cs-CZ')} Kč`, 160, y)
       y += 10
 
-      // 2. Balení
       if (packingCost > 0) {
         doc.text(`Vícepráce: Zakrývání a fólie (${evidence.foilRolls} ks, ${evidence.packingHours} hod)`, 20, y)
         doc.text(`${Math.round(packingCost).toLocaleString('cs-CZ')} Kč`, 160, y)
         y += 10
       }
 
-      // 3. Generátor
       if (generatorCost > 0) {
-        doc.text(`Provoz vlastního agregátu (${evidence.generatorKwh} kWh/Mh)`, 20, y)
+        doc.text(`Provoz vlastního agregátu (${evidence.generatorKwh || 0} kWh/Mh)`, 20, y)
         doc.text(`${Math.round(generatorCost).toLocaleString('cs-CZ')} Kč`, 160, y)
         y += 10
       }
 
-      // 4. Příplatky
       if (heightsSurcharge > 0) {
         doc.text(`Příplatek: Práce ve výškách`, 20, y)
         doc.text(`${Math.round(heightsSurcharge).toLocaleString('cs-CZ')} Kč`, 160, y)
         y += 10
       }
+      
       if (difficultEnvSurcharge > 0) {
         doc.text(`Příplatek: Ztížené prostředí`, 20, y)
         doc.text(`${Math.round(difficultEnvSurcharge).toLocaleString('cs-CZ')} Kč`, 160, y)
         y += 10
       }
 
-      // Odkaz na uhrazenou zálohu
       const originalCostNum = Number(quote.totalCost) || 0
       const zaloha = Math.round(originalCostNum * 0.5)
       doc.setTextColor(150, 150, 150)
@@ -166,7 +191,6 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
       
       const kUhrade = finalTotal - zaloha
 
-      // Finanční součet
       doc.setFillColor(245, 245, 245)
       doc.rect(20, y + 15, 170, 45, 'F')
       
@@ -247,7 +271,7 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
             </div>
             <div className="flex justify-between items-center text-sm pt-2 border-t border-blue-200/50">
               <span className="text-blue-800">Aplikátor zadal:</span>
-              <span className="font-black text-blue-900">{evidence.generatorKwh} kWh/Mh</span>
+              <span className="font-black text-blue-900">{evidence.generatorKwh || 0} kWh/Mh</span>
             </div>
           </div>
           
@@ -310,7 +334,6 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
             {!saved && <p className="text-xs text-center text-zinc-500">Před generováním faktury uložte vyúčtování.</p>}
           </div>
         </div>
-
       </div>
     </div>
   )
