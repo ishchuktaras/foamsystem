@@ -46,7 +46,7 @@ export default function Footer() {
           
           <div className="text-xs text-zinc-600 flex flex-col items-center gap-1">
             <p>
-              Vývoj webu <a href="https://webnamiru.site" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-white transition-colors font-bold">Taras Ishchuk - OSVČ</a>, IČO: 23874694.
+              Vývoj webu <a href="https://www.webnamiru.site" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-white transition-colors font-bold">Taras Ishchuk - OSVČ</a>, IČO: 23874694.
             </p>
             <p>
               Zapsaný v živnostenském rejstříku vedeném u Magistrátu města Jihlavy.
@@ -56,7 +56,7 @@ export default function Footer() {
                 WhatsApp: +420 777 596 216
               </a>
               <span className="text-zinc-700">•</span>
-              <a href="https://webnamiru.site" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-blue-400 transition-colors">
+              <a href="https://www.webnamiru.site" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-blue-400 transition-colors">
                 webnamiru.site
               </a>
             </div>
