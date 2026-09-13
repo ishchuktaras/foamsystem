@@ -16,6 +16,8 @@ type QuoteWithEvidence = {
     packingPriceRate: number | null;
     packingHours: number | null;
     finalInvoiceTotal: number | null;
+    generatorKwh: number | null;
+    foilRolls: number | null;
   } | null;
 }
 
@@ -55,25 +57,33 @@ export default async function AdminView() {
     console.error("Chyba při načítání statistik:", error)
   }
 
-  // Výpočet obratu a reálných výdajů z materiálu + technické evidence (příplatky, výšky, doprava atd.)
+  // Výpočet obratu a reálných výdajů
   const activeQuotes = allQuotes.filter(q => q.status === 'COMPLETED' || q.status === 'ORDER' || q.status === 'CONTRACT')
 
-  const totalEarnings = activeQuotes.reduce((acc, q) => acc + (Number(q.totalCost) || Number(q.price) || 0), 0)
+  const totalEarnings = activeQuotes.reduce((acc, q) => {
+    const basePrice = Number(q.totalCost) || Number(q.price) || 0
+    const extraCharges = q.evidence ? (q.evidence.finalInvoiceTotal || 0) : 0
+    // Pokud je vyplněná koncová faktura, preferujeme ji, jinak bereme základní odhad
+    return acc + (extraCharges > 0 ? extraCharges : basePrice)
+  }, 0)
 
   const totalExpenses = activeQuotes.reduce((acc, q) => {
-    // 1. Základní náklad na materiál z poptávky/kalkulace
-    const baseMaterialCost = q.totalCost ? parseFloat(String(q.totalCost).replace(/\s+/g, '').replace(',', '.')) || 0 : 0
+    const basePrice = q.totalCost ? parseFloat(String(q.totalCost).replace(/\s+/g, '').replace(',', '.')) || 0 : 0
     
-    // 2. Příplatky a položky z technické evidence (JobEvidence)
-    const evidence = q.evidence
-    const evidenceSurcharges = evidence ? (
-      (evidence.heightsSurcharge || 0) +
-      (evidence.difficultEnvSurcharge || 0) +
-      (evidence.packingPriceRate || 0) * (evidence.packingHours || 0) +
-      (evidence.finalInvoiceTotal || 0)
-    ) : 0
+    if (q.evidence) {
+      // Reálné vícenáklady z evidence (fólie, agregát, výšky, ztížené prostředí)
+      const evidenceCosts = (
+        (q.evidence.heightsSurcharge || 0) +
+        (q.evidence.difficultEnvSurcharge || 0) +
+        (q.evidence.packingPriceRate || 0) +
+        ((q.evidence.generatorKwh || 0) * 20)
+      )
+      // Odhad nákupní ceny materiálu jako cca 45 % ze základní ceny zakázky + reálné příplatky
+      return acc + (basePrice * 0.45) + evidenceCosts
+    }
 
-    return acc + baseMaterialCost + evidenceSurcharges
+    // Pokud evidence ještě není, výdaje tvoří standardně cca 45 % nákladů na materiál
+    return acc + (basePrice * 0.45)
   }, 0)
 
   const netProfit = totalEarnings - totalExpenses
@@ -109,7 +119,7 @@ export default async function AdminView() {
             <div className="p-3 md:p-4 bg-red-50 text-red-600 rounded-xl shrink-0"><ArrowDownRight size={24} /></div>
             <div className="min-w-0 flex-1">
               <p className="text-xs md:text-sm font-semibold text-zinc-500 uppercase tracking-wider truncate">Celkové výdaje (Materiál + Evidence)</p>
-              <h3 className="text-xl md:text-2xl font-black text-[#000000] truncate">{totalExpenses.toLocaleString('cs-CZ')} Kč</h3>
+              <h3 className="text-xl md:text-2xl font-black text-[#000000] truncate">{Math.round(totalExpenses).toLocaleString('cs-CZ')} Kč</h3>
             </div>
           </div>
 
@@ -117,7 +127,7 @@ export default async function AdminView() {
             <div className="p-3 md:p-4 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl shrink-0"><Wallet size={24} /></div>
             <div className="min-w-0 flex-1">
               <p className="text-xs md:text-sm font-semibold text-zinc-500 uppercase tracking-wider truncate">Čistý zisk (Marže)</p>
-              <h3 className="text-xl md:text-2xl font-black text-[#FF4F00] truncate">{netProfit.toLocaleString('cs-CZ')} Kč</h3>
+              <h3 className="text-xl md:text-2xl font-black text-[#FF4F00] truncate">{Math.round(netProfit).toLocaleString('cs-CZ')} Kč</h3>
             </div>
           </div>
 
