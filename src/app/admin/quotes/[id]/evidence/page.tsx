@@ -9,7 +9,7 @@ export default async function EvidencePage({ params }: { params: Promise<{ id: s
   const resolvedParams = await params
   const { id } = resolvedParams
 
-  // Z databáze vytáhneme jen ta data, která aplikátor na stavbě reálně potřebuje
+  // Z databáze vytáhneme data potřebná pro aplikátora včetně naplánovaného data (scheduledDate)
   const quote = await db.quote.findUnique({ 
     where: { id },
     select: {
@@ -20,6 +20,7 @@ export default async function EvidencePage({ params }: { params: Promise<{ id: s
       zip: true,
       materialName: true,
       applicatorNotes: true,
+      scheduledDate: true, // PŘIDÁNO: Načtení termínu od supervizora
     }
   })
 
