@@ -2,7 +2,8 @@
 import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, CheckCircle2, Users, Database, ClipboardList, PenTool, ClipboardCheck, CalendarDays, Wallet, ArrowUpRight, ArrowDownRight, Briefcase, Truck } from 'lucide-react'
 import { db } from '@/lib/db'
 import { UpcomingDispatch } from '@/types/dashboard'
-import DashboardCard from './DashboardCard'
+import AnimatedCounter from './AnimatedCounter'
+import { BentoCard } from './BentoGrid'
 
 // Přidání specifického typu místo zakázaného "any"
 type QuoteWithEvidence = {
@@ -111,7 +112,9 @@ export default async function AdminView() {
             <div className="p-3 md:p-4 bg-emerald-50 text-emerald-600 rounded-xl shrink-0"><ArrowUpRight size={24} /></div>
             <div className="min-w-0 flex-1">
               <p className="text-xs md:text-sm font-semibold text-zinc-500 uppercase tracking-wider truncate">Celkový výdělek (Obrat)</p>
-              <h3 className="text-xl md:text-2xl font-black text-[#000000] truncate">{totalEarnings.toLocaleString('cs-CZ')} Kč</h3>
+              <h3 className="text-xl md:text-2xl font-black text-[#000000] truncate">
+                <AnimatedCounter value={totalEarnings} />
+              </h3>
             </div>
           </div>
 
@@ -119,7 +122,9 @@ export default async function AdminView() {
             <div className="p-3 md:p-4 bg-red-50 text-red-600 rounded-xl shrink-0"><ArrowDownRight size={24} /></div>
             <div className="min-w-0 flex-1">
               <p className="text-xs md:text-sm font-semibold text-zinc-500 uppercase tracking-wider truncate">Celkové výdaje (Materiál + Evidence)</p>
-              <h3 className="text-xl md:text-2xl font-black text-[#000000] truncate">{Math.round(totalExpenses).toLocaleString('cs-CZ')} Kč</h3>
+              <h3 className="text-xl md:text-2xl font-black text-[#000000] truncate">
+                <AnimatedCounter value={Math.round(totalExpenses)} />
+              </h3>
             </div>
           </div>
 
@@ -127,7 +132,9 @@ export default async function AdminView() {
             <div className="p-3 md:p-4 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl shrink-0"><Wallet size={24} /></div>
             <div className="min-w-0 flex-1">
               <p className="text-xs md:text-sm font-semibold text-zinc-500 uppercase tracking-wider truncate">Čistý zisk (Marže)</p>
-              <h3 className="text-xl md:text-2xl font-black text-[#FF4F00] truncate">{Math.round(netProfit).toLocaleString('cs-CZ')} Kč</h3>
+              <h3 className="text-xl md:text-2xl font-black text-[#FF4F00] truncate">
+                <AnimatedCounter value={Math.round(netProfit)} />
+              </h3>
             </div>
           </div>
 
@@ -250,59 +257,47 @@ export default async function AdminView() {
       <div>
         <h2 className="text-xl font-bold text-[#000000] mb-6">Rychlé akce</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <DashboardCard
+          <BentoCard
             title="Nová poptávka"
             value="Vytvořit"
             subtitle="s automatickým ARES"
             href="/admin/quotes/new"
-            icon={<FileText size={28} className="text-[#FF4F00]" />}
-            colorClass="bg-[#FF4F00]/10"
-            hoverClass="group-hover:border-[#FF4F00]"
+            icon={<FileText size={26} className="text-[#FF4F00]" />}
           />
-          <DashboardCard
+          <BentoCard
             title="Kalkulátor"
             value="Spočítat"
             subtitle="Spotřeba a cena"
             href="/admin/calculator"
-            icon={<Calculator size={28} className="text-[#000000]" />}
-            colorClass="bg-zinc-100"
-            hoverClass="group-hover:border-[#000000]"
+            icon={<Calculator size={26} className="text-[#000000]" />}
           />
-          <DashboardCard
+          <BentoCard
             title="Evidence"
             value="Archiv prací"
             subtitle="Technické parametry staveb"
             href="/admin/evidence"
-            icon={<ClipboardCheck size={28} className="text-[#0D1B3E]" />}
-            colorClass="bg-[#0D1B3E]/10"
-            hoverClass="group-hover:border-[#0D1B3E]"
+            icon={<ClipboardCheck size={26} className="text-[#0D1B3E]" />}
           />
-          <DashboardCard
+          <BentoCard
             title="Materiály"
             value="Správa pěn"
             subtitle="Úprava cen a parametrů"
             href="/admin/materials"
-            icon={<Boxes size={28} className="text-amber-600" />}
-            colorClass="bg-amber-50"
-            hoverClass="group-hover:border-amber-500"
+            icon={<Boxes size={26} className="text-amber-600" />}
           />
-          <DashboardCard
+          <BentoCard
             title="Nabídky"
             value="Seznam"
             subtitle="Historie a stav poptávek"
             href="/admin/quotes"
-            icon={<TrendingUp size={28} className="text-emerald-600" />}
-            colorClass="bg-emerald-50"
-            hoverClass="group-hover:border-emerald-500"
+            icon={<TrendingUp size={26} className="text-emerald-600" />}
           />
-          <DashboardCard
+          <BentoCard
             title="Systém"
             value="ARES Test"
             subtitle="Ověření spojení s API"
             href="/admin/ares-test"
-            icon={<ShieldCheck size={28} className="text-purple-600" />}
-            colorClass="bg-purple-50"
-            hoverClass="group-hover:border-purple-600"
+            icon={<ShieldCheck size={26} className="text-purple-600" />}
           />
         </div>
       </div>
