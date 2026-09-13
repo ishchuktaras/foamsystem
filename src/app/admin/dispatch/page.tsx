@@ -7,8 +7,29 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
+// Pomocná funkce pro získání formátovaného čísla zakázky (YYYYMM-XXX)
+async function getFormattedQuoteNumber(quoteId: string, createdAt: Date) {
+  const date = new Date(createdAt)
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1
+  
+  const quotesInMonth = await db.quote.findMany({
+    where: {
+      createdAt: {
+        gte: new Date(year, month - 1, 1),
+        lt: new Date(year, month, 1)
+      }
+    },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true }
+  })
+
+  const orderNumber = quotesInMonth.findIndex(q => q.id === quoteId) + 1
+  return `${year}${month.toString().padStart(2, '0')}-${orderNumber.toString().padStart(3, '0')}`
+}
+
 export default async function DispatchPage() {
-  const [activeQuotes, completedQuotes, applicators] = await Promise.all([
+  const [activeQuotesRaw, completedQuotesRaw, applicators] = await Promise.all([
     db.quote.findMany({
       where: { status: { not: 'COMPLETED' } },
       include: { responsibleUser: true },
@@ -26,6 +47,17 @@ export default async function DispatchPage() {
       select: { id: true, name: true, email: true, role: true }
     })
   ])
+
+  // Paralelní výpočet formátovaných čísel pro všechny zobrazené zakázky
+  const activeQuotes = await Promise.all(activeQuotesRaw.map(async (q) => ({
+    ...q,
+    formattedId: await getFormattedQuoteNumber(q.id, q.createdAt)
+  })))
+
+  const completedQuotes = await Promise.all(completedQuotesRaw.map(async (q) => ({
+    ...q,
+    formattedId: await getFormattedQuoteNumber(q.id, q.createdAt)
+  })))
 
   return (
     <div className="space-y-8 p-4 md:p-8 animate-in fade-in duration-500 w-full min-w-0 pb-16">
@@ -69,7 +101,10 @@ export default async function DispatchPage() {
                   <div key={quote.id} className="w-full bg-[#FEFEFA] p-5 rounded-2xl shadow-sm border border-zinc-200 flex flex-col gap-4">
                     <div className="flex justify-between items-start border-b border-zinc-100 pb-3">
                       <div className="pr-2">
-                        <div className="font-bold text-[#000000] text-lg leading-tight">{quote.customerName}</div>
+                        <div className="font-bold text-[#000000] text-lg leading-tight flex flex-col gap-1">
+                          <span className="text-xs font-mono text-zinc-400 font-normal">{quote.formattedId}</span>
+                          {quote.customerName}
+                        </div>
                         <div className="text-sm text-zinc-500 mt-1 flex items-center gap-1">
                           <MapPin size={12} className="text-[#FF4F00]" /> {quote.city}
                         </div>
@@ -114,7 +149,7 @@ export default async function DispatchPage() {
                 <table className="w-full text-left border-collapse min-w-[900px]">
                   <thead>
                     <tr className="bg-[#000000] text-[#FEFEFA] text-xs uppercase tracking-wider">
-                      <th className="py-4 px-6 font-semibold">Zákazník / Lokalita</th>
+                      <th className="py-4 px-6 font-semibold">Číslo / Zákazník / Lokalita</th>
                       <th className="py-4 px-6 font-semibold">Materiál & Rozsah</th>
                       <th className="py-4 px-6 font-semibold">Stav</th>
                       <th className="py-4 px-6 font-semibold text-right">Plán a přiřazení</th>
@@ -129,6 +164,7 @@ export default async function DispatchPage() {
                       return (
                         <tr key={quote.id} className="hover:bg-zinc-50 transition-colors">
                           <td className="py-4 px-6">
+                            <div className="text-[10px] font-mono text-zinc-400 mb-0.5">{quote.formattedId}</div>
                             <div className="font-bold text-[#000000] text-base">{quote.customerName}</div>
                             <div className="text-xs text-zinc-500 mt-0.5 flex items-center gap-1">
                               <MapPin size={12} className="text-[#FF4F00]" /> {quote.city}
@@ -194,7 +230,8 @@ export default async function DispatchPage() {
                         <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
                           Dokončeno
                         </span>
-                        <span className="text-xs text-zinc-400">ID: {quote.id.slice(0, 8)}</span>
+                        {/* ZMĚNA: Tady už se používá vygenerované pořadové číslo zakázky */}
+                        <span className="text-xs text-zinc-400 font-mono tracking-widest">{quote.formattedId}</span>
                       </div>
                       <h3 className="font-extrabold text-xl text-[#000000]">{quote.customerName}</h3>
                       <p className="text-sm text-zinc-500">{quote.street || ''}, {quote.city} • {quote.area} m² / {quote.thickness} cm ({quote.materialName})</p>

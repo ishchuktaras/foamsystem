@@ -46,26 +46,25 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
   const [isGenerating, setIsGenerating] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  // Výchozí výpočet zdvihů z evidence
   const strokes = evidence.reactorEnd - evidence.reactorStart
   const initialCoefficient = evidence.machineCoefficient || 0.12
 
-  // Stav pro uživatelské úpravy
   const [machineCoefficient, setMachineCoefficient] = useState<number>(initialCoefficient)
-  
-  // Reálná spotřeba v kg - předvyplní se výpočtem, ale jde přepsat ručně
   const [usedKg, setUsedKg] = useState<number>(strokes > 0 ? Math.round(strokes * initialCoefficient * 10) / 10 : 0)
-  
-  // Prodejní cena za 1 kg pro klienta
   const [pricePerKg, setPricePerKg] = useState<number>(evidence.pricePerKg || 350) 
-
   const [foilRollPrice, setFoilRollPrice] = useState<number>(150) 
   const [packingHourRate, setPackingHourRate] = useState<number>(350) 
   const [generatorKwRate, setGeneratorKwRate] = useState<number>(20) 
   const [heightsSurcharge, setHeightsSurcharge] = useState<number>(evidence.heightsSurcharge || 0)
   const [difficultEnvSurcharge, setDifficultEnvSurcharge] = useState<number>(evidence.difficultEnvSurcharge || 0)
 
-  // Sledování změn pro synchronizaci bez useEffectu (zabraňuje kaskádovým renderům)
+  // Vypočtená (defaultní) záloha
+  const originalCostNum = Number(quote.totalCost) || 0
+  const defaultZaloha = Math.round(originalCostNum * 0.5)
+  
+  // NOVĚ: Stav pro uhrazenou zálohu, který může supervizor ručně upravit
+  const [zalohaAmount, setZalohaAmount] = useState<number>(defaultZaloha)
+
   const [prevStrokes, setPrevStrokes] = useState(strokes)
   const [prevCoefficient, setPrevCoefficient] = useState(machineCoefficient)
 
@@ -75,19 +74,10 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
     setUsedKg(Math.round(strokes * machineCoefficient * 10) / 10)
   }
 
-  // Výpočty cen
   const materialCost = usedKg * pricePerKg
   const packingCost = (evidence.foilRolls * foilRollPrice) + (evidence.packingHours * packingHourRate)
   const generatorCost = (evidence.generatorKwh || 0) * generatorKwRate
-  
-  // Finální celková cena díla
   const finalTotal = materialCost + packingCost + generatorCost + heightsSurcharge + difficultEnvSurcharge
-
-  // Vypočtená záloha z původního odhadu
-  const originalCostNum = Number(quote.totalCost) || 0
-  const zalohaAmount = Math.round(originalCostNum * 0.5)
-
-  // Skutečná částka zbývající k úhradě
   const kUhradeAmount = finalTotal - zalohaAmount
 
   const handleSave = async () => {
@@ -133,7 +123,6 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
       await loadFont('/fonts/Roboto-Bold.ttf', 'Roboto', 'bold')
       doc.setFont('Roboto', 'normal') 
 
-      // Hlavička
       doc.setFont("Roboto", "bold")
       doc.setFontSize(22)
       doc.setTextColor(0, 0, 0)
@@ -205,11 +194,11 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
         y += 10
       }
 
-      // OPRAVA VÝPOČTŮ A ZOBRAZENÍ ZÁLOHY V PDF
       doc.setFont("Roboto", "bold")
       doc.text(`Celková cena díla:`, 20, y + 5)
       doc.text(`${Math.round(finalTotal).toLocaleString('cs-CZ')} Kč`, 160, y + 5)
 
+      // POUŽITÍ NOVÉ ZÁLOHY UPRAVENÉ UŽIVATELEM
       doc.setFont("Roboto", "normal")
       doc.setTextColor(150, 150, 150)
       doc.text(`Odečet uhrazené zálohy:`, 20, y + 15)
@@ -223,7 +212,6 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
       doc.text('K ÚHRADĚ CELKEM:', 25, y + 38)
       doc.setFontSize(22)
       doc.setFont("Roboto", "bold")
-      // V případě, že byla záloha větší než konečná cena, zobrazí se nula a řeší se to přeplatkem
       doc.text(`${Math.max(0, Math.round(kUhradeAmount)).toLocaleString('cs-CZ')} Kč`, 130, y + 40)
 
       doc.setFontSize(12)
@@ -369,15 +357,28 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
               </div>
             </div>
 
-            {/* UPRAVENÝ ZOBRAZOVACÍ BLOK S ROZPISEM ZÁLOHY */}
             <div className="space-y-3 border-t border-zinc-700 pt-4">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center mb-2">
                 <span className="text-zinc-300">Celková cena díla:</span>
                 <span className="text-lg font-bold text-white">{Math.round(finalTotal).toLocaleString('cs-CZ')} Kč</span>
               </div>
-              <div className="flex justify-between items-center text-zinc-500 pb-4 border-b border-zinc-800">
-                <span>Odečet uhrazené zálohy (50%):</span>
-                <span>-{zalohaAmount.toLocaleString('cs-CZ')} Kč</span>
+              
+              {/* EDITOVATELNÁ ZÁLOHA V UI */}
+              <div className="flex justify-between items-center text-zinc-400 pb-4 border-b border-zinc-800">
+                <div className="flex flex-col">
+                  <span>Odečet uhrazené zálohy:</span>
+                  <span className="text-[10px] text-zinc-500">Lze ručně upravit podle reality</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span>-</span>
+                  <input 
+                    type="number" 
+                    value={zalohaAmount}
+                    onChange={e => setZalohaAmount(Number(e.target.value))}
+                    className="w-24 p-1.5 text-right bg-zinc-800 border border-zinc-600 rounded-lg text-white font-bold focus:ring-1 focus:ring-[#FF4F00] outline-none"
+                  />
+                  <span>Kč</span>
+                </div>
               </div>
               
               <div className="flex justify-between items-end pt-2">
