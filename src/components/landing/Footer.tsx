@@ -30,9 +30,9 @@ export default function Footer() {
         <div>
           <h4 className="text-white font-bold mb-4">Právní dokumenty</h4>
           <ul className="space-y-2 text-sm">
-            <li><Link href="#" className="hover:text-white transition-colors">Obchodní podmínky</Link></li>
-            <li><Link href="#" className="hover:text-white transition-colors">Ochrana osobních údajů (GDPR)</Link></li>
-            <li><Link href="#" className="hover:text-white transition-colors">Nastavení Cookies</Link></li>
+            <li><Link href="/obchodni-podminky" className="hover:text-white transition-colors">Obchodní podmínky</Link></li>
+            <li><Link href="/ochrana-osobnich-udaju" className="hover:text-[#FF4F00] transition-colors">Ochrana osobních údajů (GDPR)</Link></li>
+            <li><Link href="/cookies" className="hover:text-white transition-colors">Nastavení Cookies</Link></li>
           </ul>
         </div>
       </div>

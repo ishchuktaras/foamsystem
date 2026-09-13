@@ -8,6 +8,7 @@ import { createQuote } from '@/actions/quote'
 export default function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formSuccess, setFormSuccess] = useState(false)
+  const [gdprConsent, setGdprConsent] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -20,6 +21,7 @@ export default function ContactForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!gdprConsent) return
     setIsSubmitting(true)
     
     const result = await createQuote({
@@ -36,6 +38,7 @@ export default function ContactForm() {
     if (result.success) {
       setFormSuccess(true)
       setFormData({ name: '', phone: '', email: '', city: '', type: 'Šikmá střecha / Podkroví', area: '', thickness: '' })
+      setGdprConsent(false)
     } else {
       alert('Něco se pokazilo. Zkuste to prosím znovu.')
     }
@@ -93,13 +96,32 @@ export default function ContactForm() {
         </div>
       </div>
 
-      <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-[#FF4F00] hover:bg-[#E64700] text-white font-black text-lg rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer">
-        {isSubmitting ? <Loader2 size={24} className="animate-spin" /> : <Send size={24} />}
-        Odeslat nezávaznou poptávku
-      </button>
-      <p className="text-center text-xs text-zinc-400 mt-4">
-        Odesláním souhlasíte se zpracováním osobních údajů.
-      </p>
+      {/* GDPR SOUHLAS A ODESLÁNÍ */}
+      <div className="space-y-5 pt-4 mt-6 border-t border-zinc-100">
+        <label className="flex items-start gap-3 cursor-pointer group">
+          <div className="relative flex items-center pt-0.5 shrink-0">
+            <input 
+              type="checkbox" 
+              required
+              checked={gdprConsent}
+              onChange={(e) => setGdprConsent(e.target.checked)}
+              className="w-5 h-5 rounded border-zinc-300 text-[#FF4F00] focus:ring-[#FF4F00] transition-colors cursor-pointer accent-[#FF4F00]"
+            />
+          </div>
+          <span className="text-sm text-zinc-500 leading-snug">
+            Odesláním souhlasíte se sdílením a <a href="/ochrana-osobnich-udaju" target="_blank" rel="noopener noreferrer" className="font-bold text-[#FF4F00] hover:underline transition-colors">zpracováním osobních údajů</a> (pouze pro účely přípravy smlouvy, faktury a naší účetní evidence v souladu s legislativou).
+          </span>
+        </label>
+
+        <button 
+          type="submit" 
+          disabled={!gdprConsent || isSubmitting}
+          className="w-full py-4 bg-[#FF4F00] hover:bg-[#E64700] text-white font-black text-lg rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 hover:scale-[1.02] cursor-pointer"
+        >
+          {isSubmitting ? <Loader2 size={24} className="animate-spin" /> : <Send size={24} />}
+          Odeslat nezávaznou poptávku
+        </button>
+      </div>
     </form>
   )
 }
