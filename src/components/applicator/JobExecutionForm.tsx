@@ -3,7 +3,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Phone, ThermometerSnowflake, CheckCircle2, Zap, PackageOpen, Loader2, Info, ArrowLeft, Wind } from 'lucide-react'
+import { MapPin, Phone, ThermometerSnowflake, CheckCircle2, Zap, PackageOpen, Loader2, Info, ArrowLeft, Wind, CalendarDays, Clock } from 'lucide-react'
 import { submitJobEvidence } from '@/actions/evidence'
 
 type QuoteForApplicator = {
@@ -14,6 +14,7 @@ type QuoteForApplicator = {
   zip: string | null;
   materialName: string;
   applicatorNotes: string | null;
+  scheduledDate?: Date | string | null; // Přidáno do typu pro termín od supervizora
 }
 
 export default function JobExecutionForm({ quote }: { quote: QuoteForApplicator }) {
@@ -22,9 +23,13 @@ export default function JobExecutionForm({ quote }: { quote: QuoteForApplicator 
   const [isSuccess, setIsSuccess] = useState(false)
   const [step, setStep] = useState(1)
 
-  // Úkoly
+  // Úkoly a časy
   const [calledCustomer, setCalledCustomer] = useState(false)
   const [siteInspected, setSiteInspected] = useState(false)
+  
+  // Nová pole pro datum a čas začátku/konce
+  const [actualStartTime, setActualStartTime] = useState<string>('')
+  const [actualEndTime, setActualEndTime] = useState<string>('')
 
   // Technická data
   const [ambientTemp, setAmbientTemp] = useState<string>('')
@@ -61,6 +66,8 @@ export default function JobExecutionForm({ quote }: { quote: QuoteForApplicator 
       foilRolls: parseInt(foilRolls) || 0,
       packingHours: parseFloat(packingHours) || 0,
       generatorKwh: parseFloat(generatorKwh) || 0,
+      actualStartTime: actualStartTime || null, // Připraveno pro backend
+      actualEndTime: actualEndTime || null,     // Připraveno pro backend
     })
 
     setIsSubmitting(false)
@@ -71,6 +78,11 @@ export default function JobExecutionForm({ quote }: { quote: QuoteForApplicator 
       alert(result.error)
     }
   }
+
+  // Formátování plánovaného data pro zobrazení
+  const formattedScheduledDate = quote.scheduledDate 
+    ? new Date(quote.scheduledDate).toLocaleDateString('cs-CZ') 
+    : 'Termín neurčen'
 
   if (isSuccess) {
     return (
@@ -101,6 +113,12 @@ export default function JobExecutionForm({ quote }: { quote: QuoteForApplicator 
         <h1 className="text-2xl font-black mb-4">{quote.customerName}</h1>
         
         <div className="space-y-3">
+          {/* Zobrazení termínu naplánovaného od supervizora */}
+          <div className="flex items-center gap-3 bg-zinc-800 p-3 rounded-xl text-sm font-bold border border-zinc-700">
+            <CalendarDays size={20} className="text-amber-500" />
+            <span className="text-zinc-200">Naplánováno na: {formattedScheduledDate}</span>
+          </div>
+
           <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-zinc-800 hover:bg-zinc-700 p-3 rounded-xl transition-colors text-sm font-bold">
             <MapPin size={20} className="text-[#FF4F00]" />
             <span className="truncate">{mapQuery}</span>
@@ -134,26 +152,56 @@ export default function JobExecutionForm({ quote }: { quote: QuoteForApplicator 
         {/* KROK 1: Příjezd a kontrola */}
         {step === 1 && (
           <div className="bg-[#FEFEFA] p-5 rounded-2xl shadow-sm border border-zinc-200 animate-in slide-in-from-right-4">
-            <h3 className="font-black text-[#000000] text-lg mb-4">1. Kontrola na místě</h3>
+            <h3 className="font-black text-[#000000] text-lg mb-4">1. Kontrola na místě a reálný čas</h3>
             
-            <div className="space-y-3">
-              <label className="flex items-center gap-4 p-4 rounded-xl border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors">
-                <input type="checkbox" checked={calledCustomer} onChange={e => setCalledCustomer(e.target.checked)} className="w-6 h-6 rounded border-zinc-300 text-[#FF4F00] focus:ring-[#FF4F00] accent-[#FF4F00]" />
-                <span className="font-bold text-sm text-zinc-700">Zákazník kontaktován, souhlasí s příjezdem</span>
-              </label>
-
-              <label className="flex items-center gap-4 p-4 rounded-xl border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors">
-                <input type="checkbox" checked={siteInspected} onChange={e => setSiteInspected(e.target.checked)} className="w-6 h-6 rounded border-zinc-300 text-[#FF4F00] focus:ring-[#FF4F00] accent-[#FF4F00]" />
-                <div className="flex-1">
-                  <span className="font-bold text-sm text-zinc-700 block">Obhlídka stavby hotová</span>
-                  <span className="text-xs text-zinc-500">Ověření oken, trámů a čistoty podkladu. Pokud není zakryto fólií, bude provedeno naúčtováno v kroku 3!</span>
+            <div className="space-y-5">
+              {/* Sekce pro zadání reálného času začátku a konce práce */}
+              <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200 space-y-3">
+                <h4 className="flex items-center gap-2 font-bold text-sm text-zinc-800">
+                  <Clock size={16} className="text-[#FF4F00]"/> Reálný čas na stavbě
+                </h4>
+                <div className="grid grid-cols-1 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Začátek práce</label>
+                    <input 
+                      type="datetime-local" 
+                      value={actualStartTime} 
+                      onChange={e => setActualStartTime(e.target.value)} 
+                      className="w-full p-3 bg-white border border-zinc-200 rounded-lg font-bold text-[#000000] focus:ring-2 focus:ring-[#FF4F00] outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Konec práce (odhad nebo přesně)</label>
+                    <input 
+                      type="datetime-local" 
+                      value={actualEndTime} 
+                      onChange={e => setActualEndTime(e.target.value)} 
+                      className="w-full p-3 bg-white border border-zinc-200 rounded-lg font-bold text-[#000000] focus:ring-2 focus:ring-[#FF4F00] outline-none" 
+                    />
+                  </div>
                 </div>
-              </label>
+              </div>
+
+              {/* Původní checkboxy */}
+              <div className="space-y-3">
+                <label className="flex items-center gap-4 p-4 rounded-xl border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors">
+                  <input type="checkbox" checked={calledCustomer} onChange={e => setCalledCustomer(e.target.checked)} className="w-6 h-6 rounded border-zinc-300 text-[#FF4F00] focus:ring-[#FF4F00] accent-[#FF4F00]" />
+                  <span className="font-bold text-sm text-zinc-700">Zákazník kontaktován, souhlasí s příjezdem</span>
+                </label>
+
+                <label className="flex items-center gap-4 p-4 rounded-xl border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors">
+                  <input type="checkbox" checked={siteInspected} onChange={e => setSiteInspected(e.target.checked)} className="w-6 h-6 rounded border-zinc-300 text-[#FF4F00] focus:ring-[#FF4F00] accent-[#FF4F00]" />
+                  <div className="flex-1">
+                    <span className="font-bold text-sm text-zinc-700 block">Obhlídka stavby hotová</span>
+                    <span className="text-xs text-zinc-500">Ověření oken, trámů a čistoty podkladu. Pokud není zakryto fólií, bude provedeno naúčtováno v kroku 3!</span>
+                  </div>
+                </label>
+              </div>
             </div>
 
             <button 
               onClick={() => setStep(2)} 
-              disabled={!calledCustomer || !siteInspected}
+              disabled={!calledCustomer || !siteInspected || !actualStartTime}
               className="w-full mt-6 py-4 bg-[#000000] text-white font-bold rounded-xl disabled:opacity-50 transition-all"
             >
               Pokračovat (Teploty a Stroj)

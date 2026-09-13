@@ -17,6 +17,8 @@ export async function submitJobEvidence(formData: {
   foilRolls: number;
   packingHours: number;
   generatorKwh: number;
+  actualStartTime?: string | null; // Přidáno pro reálný čas
+  actualEndTime?: string | null;   // Přidáno pro reálný čas
 }) {
   try {
     // Ověření autorizace (zda je uživatel přihlášen)
@@ -24,6 +26,10 @@ export async function submitJobEvidence(formData: {
     if (!session?.user) {
       return { success: false, error: 'Pro odeslání musíte být přihlášeni jako aplikátor.' }
     }
+
+    // Převedení textových časů z formuláře na databázové objekty Date
+    const startTimeParsed = formData.actualStartTime ? new Date(formData.actualStartTime) : null;
+    const endTimeParsed = formData.actualEndTime ? new Date(formData.actualEndTime) : null;
 
     // Bezpečný zápis / aktualizace technického deníku (Upsert = Update nebo Insert)
     await db.$transaction([
@@ -39,6 +45,8 @@ export async function submitJobEvidence(formData: {
           foilRolls: formData.foilRolls,
           packingHours: formData.packingHours,
           generatorKwh: formData.generatorKwh,
+          actualStartTime: startTimeParsed, // Přidáno
+          actualEndTime: endTimeParsed,     // Přidáno
         },
         create: {
           quoteId: formData.quoteId,
@@ -51,6 +59,8 @@ export async function submitJobEvidence(formData: {
           foilRolls: formData.foilRolls,
           packingHours: formData.packingHours,
           generatorKwh: formData.generatorKwh,
+          actualStartTime: startTimeParsed, // Přidáno
+          actualEndTime: endTimeParsed,     // Přidáno
         }
       }),
       // Přepnutí zakázky do stavu "Dokončeno"

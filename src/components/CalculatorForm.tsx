@@ -18,6 +18,14 @@ type Material = {
   lambda?: string | null; 
 }
 
+// Přidán typ pro existující poptávky
+type QuoteOption = {
+  id: string;
+  customerName: string;
+  city: string | null;
+  status: string;
+}
+
 type CalculatorResult = {
   materialName: string;
   areaSqm: number;
@@ -40,12 +48,21 @@ type CalculatorResult = {
   yieldPerSetM3: number;
 }
 
-export default function CalculatorForm({ materials }: { materials: Material[] }) {
+export default function CalculatorForm({ 
+  materials,
+  existingQuotes = []
+}: { 
+  materials: Material[],
+  existingQuotes?: QuoteOption[] 
+}) {
   const router = useRouter()
   
   const [selectedMaterialId, setSelectedMaterialId] = useState(materials[0]?.id || '')
   const [area, setArea] = useState<number | ''>('')
   const [thickness, setThickness] = useState<number | ''>('')
+  
+  // Stav pro cílovou zakázku
+  const [targetQuoteId, setTargetQuoteId] = useState<string>('new')
   
   const [result, setResult] = useState<CalculatorResult | null>(null)
 
@@ -80,7 +97,6 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
     })
   }
 
-  // PDF Export s podporou české diakritiky (Roboto font)
   const handleExportPDF = async () => {
     if (!result) return
     setIsExportingPDF(true)
@@ -94,7 +110,6 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       const totalWeightKg = result.yieldPerSetM3 * result.density
       const pricePerKg = totalWeightKg > 0 ? pricePerSet / totalWeightKg : 0
 
-      // Načtení českého fontu Roboto pro správné diakritické znaky
       const loadFont = async (url: string, name: string, style: string) => {
         try {
           const res = await fetch(url)
@@ -116,7 +131,6 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       await loadFont('/fonts/Roboto-Bold.ttf', 'Roboto', 'bold')
       doc.setFont('Roboto', 'normal')
 
-      // Hlavička v černé
       doc.setFontSize(22)
       doc.setTextColor(0, 0, 0) 
       doc.text('Kalkulace spotřeby materiálu', 20, 20)
@@ -125,7 +139,6 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       doc.setTextColor(100, 100, 100)
       doc.text(`Vygenerováno systémem Izolace RS dne: ${date}`, 20, 28)
 
-      // Oranžová dělící čára
       doc.setDrawColor(255, 79, 0) 
       doc.setLineWidth(0.5)
       doc.line(20, 32, 190, 32)
@@ -139,7 +152,6 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       doc.text(`Zadaná plocha: ${result.areaSqm} m²`, 20, 50)
       doc.text(`Požadovaná tloušťka: ${result.thicknessCm} cm`, 20, 58)
       
-      // Jednotkové ceny materiálu
       doc.text(`Jednotková cena / m³: ${Math.round(pricePerM3).toLocaleString('cs-CZ')} Kč`, 20, 70)
       doc.text(`Jednotková cena / kg: ${Math.round(pricePerKg).toLocaleString('cs-CZ')} Kč`, 20, 78)
 
@@ -153,7 +165,6 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
         doc.setTextColor(0, 0, 0)
       }
 
-      // Finanční box v černé
       doc.setFillColor(0, 0, 0) 
       doc.rect(20, 126, 170, 30, 'F')
       
@@ -216,6 +227,7 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
     }
   }
 
+  // Upravená funkce pro přesměrování podle výběru zakázky
   const handleAttachToInquiry = () => {
     if (!result) return
     setIsRedirecting(true)
@@ -227,7 +239,12 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       cost: result.totalCost.toString(),
       sets: result.totalSets.toString()
     })
-    router.push(`/admin/quotes/new?${params.toString()}`)
+
+    if (targetQuoteId === 'new') {
+      router.push(`/admin/quotes/new?${params.toString()}`)
+    } else {
+      router.push(`/admin/quotes/${targetQuoteId}/edit?${params.toString()}`)
+    }
   }
 
   const pricePerSet = result ? result.buyPricePerSet : 0
@@ -417,11 +434,33 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
                   </div>
                 </button>
 
-                <button onClick={handleAttachToInquiry} disabled={isRedirecting} className="flex flex-col border border-[#FF4F00]/30 bg-[#FF4F00]/5 rounded-xl p-5 hover:border-[#FF4F00] transition-all group text-left cursor-pointer">
-                  <div className="flex items-center gap-2 font-bold text-[#000000] group-hover:text-[#FF4F00] mb-2">
-                    {isRedirecting ? <Loader2 size={22} className="animate-spin text-[#FF4F00]" /> : <ClipboardSignature size={22} className="text-[#FF4F00]" />} Vložit do nabídky
+                {/* Rozšířené tlačítko pro výběr existující zakázky */}
+                <div className="flex flex-col border border-[#FF4F00]/30 bg-[#FF4F00]/5 rounded-xl p-5 transition-all group">
+                  <div className="flex items-center gap-2 font-bold text-[#000000] mb-3">
+                    <ClipboardSignature size={22} className="text-[#FF4F00]" /> Vložit do nabídky
                   </div>
-                </button>
+                  
+                  <select 
+                    value={targetQuoteId}
+                    onChange={e => setTargetQuoteId(e.target.value)}
+                    className="w-full p-2 mb-3 bg-white border border-[#FF4F00]/20 rounded-lg text-sm font-medium text-zinc-800 focus:outline-none focus:ring-2 focus:ring-[#FF4F00]"
+                  >
+                    <option value="new">➕ Nová poptávka / nabídka</option>
+                    {existingQuotes.map(q => (
+                      <option key={q.id} value={q.id}>
+                        📁 {q.customerName} ({q.city || 'bez lokace'})
+                      </option>
+                    ))}
+                  </select>
+
+                  <button 
+                    onClick={handleAttachToInquiry} 
+                    disabled={isRedirecting}
+                    className="w-full py-2.5 bg-[#FF4F00] hover:bg-orange-600 text-white font-bold text-sm rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-auto"
+                  >
+                    {isRedirecting ? <Loader2 size={16} className="animate-spin" /> : 'Pokračovat'}
+                  </button>
+                </div>
 
               </div>
             </div>

@@ -242,5 +242,9 @@ model JobEvidence {
   difficultEnvSurcharge Float?
   finalInvoiceTotal     Float?
   
+  // --- Reálný čas práce na stavbě ---
+  actualStartTime       DateTime?
+  actualEndTime         DateTime?
+  
   createdAt        DateTime @default(now())
 }

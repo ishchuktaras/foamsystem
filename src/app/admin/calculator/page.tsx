@@ -3,11 +3,20 @@
 import { getAllMaterialsAdmin } from '@/actions/material'
 import CalculatorForm from '@/components/CalculatorForm'
 import { Info } from 'lucide-react'
+import { db } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
 export default async function CalculatorPage() {
-  const materials = await getAllMaterialsAdmin()
+  // Načteme materiály a zároveň existující aktivní zakázky
+  const [materials, existingQuotes] = await Promise.all([
+    getAllMaterialsAdmin(),
+    db.quote.findMany({
+      where: { status: { not: 'COMPLETED' } },
+      select: { id: true, customerName: true, city: true, status: true },
+      orderBy: { createdAt: 'desc' }
+    })
+  ])
 
   return (
     <div className="min-h-screen bg-[#FEFEFA] p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -21,7 +30,7 @@ export default async function CalculatorPage() {
           </p>
         </div>
 
-        {/* Informační panel s vysvětlením metodiky - kompletně bez modré */}
+        {/* Informační panel s vysvětlením metodiky */}
         <div className="bg-zinc-100 border border-zinc-200 rounded-2xl p-6 flex gap-4 shadow-sm">
           <div className="mt-1 shrink-0">
             <Info className="text-[#FF4F00]" size={24} />
@@ -45,8 +54,8 @@ export default async function CalculatorPage() {
           </div>
         </div>
         
-        {/* Samotné UI kalkulačky */}
-        <CalculatorForm materials={materials} />
+        {/* Předáme zakázky do formuláře */}
+        <CalculatorForm materials={materials} existingQuotes={existingQuotes} />
       </div>
     </div>
   )
