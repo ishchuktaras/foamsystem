@@ -26,7 +26,7 @@ export default function TermsPage() {
               1. Úvodní ustanovení
             </h2>
             <p>
-              Tyto obchodní podmínky upravují vzájemná práva a povinnosti mezi zhotovitelem (<strong>Taras Ishchuk, IČO: 23874694, se sídlem Rantířovská 123/36, Jihlava</strong>, vystupující pod značkou IZOLACE RS) a zákazníkem (dále jen "Objednatel") při aplikaci stříkaných polyuretanových (PUR) izolačních pěn.
+              Tyto obchodní podmínky upravují vzájemná práva a povinnosti mezi zhotovitelem (<strong>Taras Ishchuk, IČO: 23874694, se sídlem Rantířovská 123/36, Jihlava</strong>, vystupující pod značkou IZOLACE RS) a zákazníkem (dále jen &quot;Objednatel&quot;) při aplikaci stříkaných polyuretanových (PUR) izolačních pěn.
             </p>
 
             <h2 className="text-xl font-bold text-[#000000] mt-10 mb-4 border-b border-zinc-100 pb-2">

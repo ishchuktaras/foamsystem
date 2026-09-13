@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  
+  // url      = env("DATABASE_URL") // Ujisti se, že tu máš napojení na env, pokud jej používáš
 }
 
 // Výčet všech povolených rolí ve firmě
@@ -80,14 +80,13 @@ model User {
   role          Role      @default(APLIKATOR) 
   isArchived    Boolean   @default(false)
 
-// Vazby na zakázky
+  // Vazby na zakázky
   responsibleForQuotes Quote[] @relation("ResponsibleQuote")
   assignedQuotes       Quote[] @relation("AssignedQuotes")
 
   accounts      Account[]
   sessions      Session[]
-
- }
+}
 
 model Account {
   id                 String  @id @default(cuid())
@@ -140,8 +139,6 @@ model CompanyProfile {
 
   updatedAt   DateTime @updatedAt
 }
-
-
 
 model Quote {
   id               String       @id @default(cuid())
@@ -234,7 +231,10 @@ model JobEvidence {
   workingAtHeights Boolean @default(false)
   ventilationUsed  Boolean @default(false)
 
-  // --- NOVÉ FINANCE A SUPERVIZE ---
+  // --- NOVÉ FINANCE, SUPERVIZE A AGREGÁT ---
+  generatorKwh          Float?   // Zapsané kW/h nebo motohodiny
+  generatorSurcharge    Float?   // Vypočtená částka k doúčtování za agregát
+  
   pricePerKg            Float?
   machineCoefficient    Float?
   packingPriceRate      Float?
