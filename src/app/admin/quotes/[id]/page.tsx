@@ -5,6 +5,14 @@ import Link from 'next/link'
 import { ArrowLeft, Building2, MapPin, CalendarDays, User, Thermometer, Wind } from 'lucide-react'
 import BillingPanel from '@/components/admin/BillingPanel'
 
+// Překlad databázových stavů do češtiny včetně barev
+const STATUS_MAP: Record<string, { label: string; color: string }> = {
+  INQUIRY: { label: 'Poptávka', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  ORDER: { label: 'Objednávka', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  CONTRACT: { label: 'Smlouva', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  COMPLETED: { label: 'Dokončeno', color: 'bg-green-50 text-green-700 border-green-200' },
+}
+
 export default async function QuoteDetail({ params }: { params: Promise<{ id: string }> | { id: string } }) {
   const resolvedParams = await params
   const quoteId = resolvedParams.id
@@ -17,6 +25,9 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
   if (!quote) return notFound()
 
   const companyProfile = await db.companyProfile.findFirst()
+
+  // Získáme český popisek a barvu podle aktuálního stavu z databáze
+  const statusBadge = STATUS_MAP[quote.status] || { label: quote.status, color: 'bg-zinc-100 text-zinc-700 border-zinc-200' }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
@@ -31,6 +42,7 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* INFO PANEL (Zákazník a plánování) */}
         <div className="lg:col-span-2 bg-[#FEFEFA] rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
           <div className="p-6 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
             <div className="flex items-center gap-4">
@@ -42,11 +54,12 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
                 <p className="text-sm text-zinc-500 font-medium mt-0.5">IČO: {quote.ico || 'Neprovedeno'}</p>
               </div>
             </div>
-            <span className={`px-4 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider ${
-              quote.status === 'COMPLETED' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-amber-100 text-amber-700 border border-amber-200'
-            }`}>
-              {quote.status}
+            
+            {/* Vykreslení přeloženého stavu */}
+            <span className={`px-4 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider border ${statusBadge.color}`}>
+              {statusBadge.label}
             </span>
+
           </div>
           
           <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -77,6 +90,7 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
+        {/* TECHNICKÁ DATA PANEL (Původní odhad) */}
         <div className="bg-gradient-to-br from-[#000000] to-zinc-900 rounded-2xl shadow-lg border border-zinc-800 p-6 text-white flex flex-col justify-between">
           <div>
             <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-5">Technická specifikace</p>
@@ -150,6 +164,7 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
         </div>
       )}
 
+      {/* ODSTRANĚNÉ "as any", PŘEDÁVÁ SE ČISTÝ OBJEKT */}
       {quote.status === 'COMPLETED' && quote.evidence && (
         <BillingPanel 
           quote={quote} 

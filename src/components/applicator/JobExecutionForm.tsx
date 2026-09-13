@@ -83,7 +83,7 @@ export default function JobExecutionForm({ quote }: { quote: QuoteForApplicator 
           Stavba pro zákazníka <strong>{quote.customerName}</strong> byla úspěšně označena jako dokončená. Data o spotřebě a vícepracích byla předána supervizorovi k fakturaci.
         </p>
         <button 
-          onClick={() => router.push('/admin')}
+          onClick={() => router.push('/admin/quotes')}
           className="mt-8 px-8 py-4 bg-[#000000] text-white font-bold rounded-xl shadow-lg w-full flex items-center justify-center gap-2"
         >
           <ArrowLeft size={20} /> Zpět na dispečink
@@ -170,11 +170,11 @@ export default function JobExecutionForm({ quote }: { quote: QuoteForApplicator 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Venkovní °C</label>
-                  <input type="number" value={ambientTemp} onChange={e => setAmbientTemp(e.target.value)} className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-lg font-bold text-lg focus:ring-2 focus:ring-[#FF4F00] outline-none" />
+                  <input type="number" value={ambientTemp} onChange={e => setAmbientTemp(e.target.value)} placeholder="0" className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-lg font-bold text-lg text-[#000000] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#FF4F00] outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Vnitřní °C</label>
-                  <input type="number" value={internalTemp} onChange={e => setInternalTemp(e.target.value)} className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-lg font-bold text-lg focus:ring-2 focus:ring-[#FF4F00] outline-none" />
+                  <input type="number" value={internalTemp} onChange={e => setInternalTemp(e.target.value)} placeholder="0" className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-lg font-bold text-lg text-[#000000] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#FF4F00] outline-none" />
                 </div>
               </div>
 
@@ -191,22 +191,22 @@ export default function JobExecutionForm({ quote }: { quote: QuoteForApplicator 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Teplota podkladu °C</label>
-                  <input type="number" value={surfaceTemp} onChange={e => setSurfaceTemp(e.target.value)} className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-lg font-bold text-lg focus:ring-2 focus:ring-[#FF4F00] outline-none" />
+                  <input type="number" value={surfaceTemp} onChange={e => setSurfaceTemp(e.target.value)} placeholder="0" className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-lg font-bold text-lg text-[#000000] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#FF4F00] outline-none" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Typ podkladu</label>
-                  <select value={surfaceType} onChange={e => setSurfaceType(e.target.value)} className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-lg font-bold text-sm focus:ring-2 focus:ring-[#FF4F00] outline-none">
-                    <option>Dřevo (Fólie)</option>
-                    <option>Zdivo</option>
-                    <option>Beton</option>
-                    <option>Plech</option>
+                  <select value={surfaceType} onChange={e => setSurfaceType(e.target.value)} className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-lg font-bold text-sm text-[#000000] focus:ring-2 focus:ring-[#FF4F00] outline-none">
+                    <option value="Dřevo (Fólie)">Dřevo (Fólie)</option>
+                    <option value="Zdivo">Zdivo</option>
+                    <option value="Beton">Beton</option>
+                    <option value="Plech">Plech</option>
                   </select>
                 </div>
               </div>
 
               <div className="border-t border-zinc-100 pt-4">
                 <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Počítadlo reaktoru: START</label>
-                <input type="number" value={reactorStart} onChange={e => setReactorStart(e.target.value)} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl font-bold text-lg focus:ring-2 focus:ring-[#FF4F00] outline-none" placeholder="Hodnota ze stroje" />
+                <input type="number" value={reactorStart} onChange={e => setReactorStart(e.target.value)} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl font-bold text-lg text-[#000000] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#FF4F00] outline-none" placeholder="Např. 12500" />
               </div>
             </div>
 
@@ -231,11 +231,11 @@ export default function JobExecutionForm({ quote }: { quote: QuoteForApplicator 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Spotřebováno rolí</label>
-                    <input type="number" value={foilRolls} onChange={e => setFoilRolls(e.target.value)} className="w-full p-3 bg-white border border-zinc-200 rounded-lg font-bold" />
+                    <input type="number" value={foilRolls} onChange={e => setFoilRolls(e.target.value)} className="w-full p-3 bg-white border border-zinc-200 rounded-lg font-bold text-[#000000] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#FF4F00] outline-none" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Hodin práce</label>
-                    <input type="number" value={packingHours} onChange={e => setPackingHours(e.target.value)} className="w-full p-3 bg-white border border-zinc-200 rounded-lg font-bold" />
+                    <input type="number" value={packingHours} onChange={e => setPackingHours(e.target.value)} className="w-full p-3 bg-white border border-zinc-200 rounded-lg font-bold text-[#000000] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#FF4F00] outline-none" />
                   </div>
                 </div>
               </div>
@@ -246,13 +246,13 @@ export default function JobExecutionForm({ quote }: { quote: QuoteForApplicator 
                 </h4>
                 <div>
                   <label className="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Použití agregátu (Motohodiny / kW)</label>
-                  <input type="number" value={generatorKwh} onChange={e => setGeneratorKwh(e.target.value)} className="w-full p-3 bg-white border border-zinc-200 rounded-lg font-bold" />
+                  <input type="number" value={generatorKwh} onChange={e => setGeneratorKwh(e.target.value)} className="w-full p-3 bg-white border border-zinc-200 rounded-lg font-bold text-[#000000] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#FF4F00] outline-none" />
                 </div>
               </div>
 
               <div className="border-t border-zinc-200 pt-4">
                 <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Počítadlo reaktoru: KONEC</label>
-                <input type="number" value={reactorEnd} onChange={e => setReactorEnd(e.target.value)} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl font-bold text-lg focus:ring-2 focus:ring-[#FF4F00] outline-none" placeholder="Hodnota ze stroje" />
+                <input type="number" value={reactorEnd} onChange={e => setReactorEnd(e.target.value)} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl font-bold text-lg text-[#000000] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#FF4F00] outline-none" placeholder="Např. 13200" />
               </div>
             </div>
 
