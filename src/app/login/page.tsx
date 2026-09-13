@@ -5,7 +5,8 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, MessageCircle, Loader2 } from 'lucide-react'
-import Logo from '@/components/Logo' 
+import Logo from '@/components/Logo'
+
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
@@ -51,8 +52,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-[#FEFEFA] border border-zinc-200 rounded-3xl shadow-xl p-8 space-y-6">
         
         <div className="text-center space-y-3 flex flex-col items-center justify-center">
-          {/* ZMĚNĚNO: Použití komponenty Logo místo čistého textu */}
-          <Logo className="h-10 w-auto mb-2" />
+          {/* PŘIDÁNO: text-[#000000] zajistí, že část IZOLACE (využívající currentColor) bude černá */}
+          <Logo className="h-10 w-auto mb-2 text-[#000000]" />
           <p className="text-sm font-semibold text-zinc-500">Přihlášení do interní administrace</p>
         </div>
 
