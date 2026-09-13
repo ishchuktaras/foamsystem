@@ -1,5 +1,4 @@
 // src/components/CalculatorForm.tsx
-
 'use client'
 
 import { useState } from 'react'
@@ -36,7 +35,6 @@ type CalculatorResult = {
   costPerM3: number;
   exactMaterialCost: number;
   thermalResistance: number | null;
-  // Přidány parametry materiálu pro výpočet jednotkových cen za kg a m³
   buyPricePerSet: number;
   density: number;
   yieldPerSetM3: number;
@@ -82,7 +80,7 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
     })
   }
 
-  // PDF Export obohacený o jednotkové ceny za kg a m³
+  // PDF Export s podporou české diakritiky (Roboto font)
   const handleExportPDF = async () => {
     if (!result) return
     setIsExportingPDF(true)
@@ -96,6 +94,28 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       const totalWeightKg = result.yieldPerSetM3 * result.density
       const pricePerKg = totalWeightKg > 0 ? pricePerSet / totalWeightKg : 0
 
+      // Načtení českého fontu Roboto pro správné diakritické znaky
+      const loadFont = async (url: string, name: string, style: string) => {
+        try {
+          const res = await fetch(url)
+          if (!res.ok) return 
+          const blob = await res.blob()
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader()
+            reader.onloadend = () => resolve((reader.result as string).split(',')[1])
+            reader.readAsDataURL(blob)
+          })
+          doc.addFileToVFS(`${name}-${style}.ttf`, base64)
+          doc.addFont(`${name}-${style}.ttf`, name, style)
+        } catch (e) {
+          console.warn(`Font ${url} nelze načíst.`)
+        }
+      }
+
+      await loadFont('/fonts/Roboto-Regular.ttf', 'Roboto', 'normal')
+      await loadFont('/fonts/Roboto-Bold.ttf', 'Roboto', 'bold')
+      doc.setFont('Roboto', 'normal')
+
       // Hlavička v černé
       doc.setFontSize(22)
       doc.setTextColor(0, 0, 0) 
@@ -103,17 +123,19 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       
       doc.setFontSize(10)
       doc.setTextColor(100, 100, 100)
-      doc.text(`Vygenerováno systémem FoamSystem dne: ${date}`, 20, 28)
+      doc.text(`Vygenerováno systémem Izolace RS dne: ${date}`, 20, 28)
 
       // Oranžová dělící čára
       doc.setDrawColor(255, 79, 0) 
       doc.setLineWidth(0.5)
       doc.line(20, 32, 190, 32)
 
-      doc.setFontSize(12)
+      doc.setFontSize(11)
       doc.setTextColor(0, 0, 0)
+      doc.setFont("Roboto", "bold")
       
       doc.text(`Materiál: ${result.materialName}`, 20, 42)
+      doc.setFont("Roboto", "normal")
       doc.text(`Zadaná plocha: ${result.areaSqm} m²`, 20, 50)
       doc.text(`Požadovaná tloušťka: ${result.thicknessCm} cm`, 20, 58)
       
@@ -135,9 +157,9 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
       doc.setFillColor(0, 0, 0) 
       doc.rect(20, 126, 170, 30, 'F')
       
-      doc.setFontSize(14)
+      doc.setFontSize(13)
       doc.setTextColor(255, 255, 255)
-      doc.setFont("helvetica", "bold")
+      doc.setFont("Roboto", "bold")
       doc.text(`Potřebný počet sad: ${result.totalSets} ks`, 25, 136)
       doc.text(`Celkový náklad na materiál: ${result.totalCost.toLocaleString('cs-CZ')} Kč`, 25, 146)
 
@@ -150,7 +172,49 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
     }
   }
 
-  const handleExportDOC = () => { /* DOC logika */ }
+  const handleExportDOC = () => {
+    setIsExportingDOC(true)
+    try {
+      if (!result) return
+      const htmlContent = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+        <head><meta charset="utf-8"><title>Kalkulace spotřeby</title></head>
+        <body style="font-family: Arial, sans-serif; color: #000; line-height: 1.6;">
+          <h1 style="color: #FF4F00; border-bottom: 2px solid #FF4F00; padding-bottom: 10px;">Kalkulace spotřeby materiálu - Izolace RS</h1>
+          <p><strong>Datum:</strong> ${new Date().toLocaleDateString('cs-CZ')}</p>
+          <hr/>
+          <h3>Zadané parametry:</h3>
+          <ul>
+            <li><strong>Materiál:</strong> ${result.materialName}</li>
+            <li><strong>Plocha:</strong> ${result.areaSqm} m²</li>
+            <li><strong>Tloušťka:</strong> ${result.thicknessCm} cm</li>
+          </ul>
+          <h3>Výsledek kalkulace:</h3>
+          <ul>
+            <li><strong>Čistý objem:</strong> ${result.pureVolumeM3} m³</li>
+            <li><strong>Objem vč. ztrát:</strong> ${result.totalVolumeM3} m³</li>
+            <li><strong>Celková hmotnost:</strong> ${result.totalMassKg} kg</li>
+            <li><strong>Potřebné sady:</strong> ${result.totalSets} ks</li>
+            <li><strong>Celkový náklad na materiál:</strong> ${result.totalCost.toLocaleString('cs-CZ')} Kč</li>
+          </ul>
+        </body>
+        </html>
+      `
+      const blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `kalkulace-${result.materialName.replace(/\s+/g, '-').toLowerCase()}.doc`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      alert('Chyba při generování DOC.')
+    } finally {
+      setIsExportingDOC(false)
+    }
+  }
 
   const handleAttachToInquiry = () => {
     if (!result) return
@@ -166,7 +230,6 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
     router.push(`/admin/quotes/new?${params.toString()}`)
   }
 
-  // Výpočet jednotkových cen pro zobrazení v UI
   const pricePerSet = result ? result.buyPricePerSet : 0
   const yieldM3 = result ? result.yieldPerSetM3 : 0
   const density = result ? result.density : 0
@@ -293,7 +356,6 @@ export default function CalculatorForm({ materials }: { materials: Material[] })
                     <p className="text-2xl font-extrabold text-[#000000]">{result.costPerM2.toLocaleString('cs-CZ')} <span className="text-sm font-semibold">Kč</span></p>
                   </div>
                   
-                  {/* Nově doplněné jednotkové ceny za m³ a kg materiálu */}
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     <div>
                       <p className="text-xs text-zinc-500 font-medium">Cena / m³</p>
