@@ -1,138 +1,133 @@
 // src/app/login/page.tsx
-"use client";
+'use client'
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { Eye, EyeOff, MessageCircle, Loader2 } from "lucide-react";
-
+import { useState } from 'react'
+import { signIn } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { Eye, EyeOff, MessageCircle, Loader2 } from 'lucide-react'
+import Logo from '@/components/Logo' 
 export default function LoginPage() {
-  const router = useRouter();
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
-  // Aktualizovaná zpráva pro WhatsApp s názvem systému Izolace RS
-  const whatsappMessage = encodeURIComponent("Dobrý den, nemám přístupové údaje do systému Izolace RS (interní systém), nebo mám jiný problém s přístupem. Prosím o technickou podporu.");
-  const whatsappUrl = `https://wa.me/420777596216?text=${whatsappMessage}`;
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setErrorMessage('')
 
     try {
-      const formData = new FormData(e.currentTarget);
-      const email = formData.get("email");
-      const password = formData.get("password");
-
-      const res = await signIn("credentials", {
+      const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
-      });
+      })
 
-      if (res?.error) {
-        setError("Neplatný e-mail nebo heslo.");
-        setLoading(false);
+      if (result?.error) {
+        setErrorMessage('Nesprávný e-mail nebo heslo.')
+        setIsLoading(false)
       } else {
-        router.push("/admin");
-        router.refresh();
+        router.push('/admin')
+        router.refresh()
       }
-    } catch (err) {
-      console.error("Chyba při přihlášení:", err);
-      setError("Došlo k neočekávané chybě připojení.");
-      setLoading(false);
+    } catch (error) {
+      console.error('Chyba při přihlášení:', error)
+      setErrorMessage('Došlo k neočekávané chybě připojení.')
+      setIsLoading(false)
     }
-  };
+  }
+
+  // WhatsApp zpráva s aktualizovaným názvem systému
+  const whatsappMessage = encodeURIComponent(
+    'Dobrý den, nemám přístupové údaje do systému Izolace RS (interní systém), nebo mám jiný problém s přístupem. Prosím o technickou podporu.'
+  )
+  const whatsappUrl = `https://wa.me/420777596216?text=${whatsappMessage}`
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50 px-4">
-      <div className="max-w-md w-full space-y-8 bg-[#FEFEFA] p-8 rounded-3xl shadow-xl border border-zinc-200">
-        <div>
-          <h2 className="text-center text-3xl font-black text-[#000000]">
-            IZOLACE <span className="text-[#FF4F00]">RS</span>
-          </h2>
-          <p className="mt-2 text-center text-sm font-semibold text-zinc-500">
-            Přihlášení do interní administrace
-          </p>
-        </div>
+    <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md bg-[#FEFEFA] border border-zinc-200 rounded-3xl shadow-xl p-8 space-y-6">
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 p-3.5 rounded-xl text-sm text-center font-bold">
-              {error}
-            </div>
-          )}
-          
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-xs font-bold text-zinc-600 uppercase tracking-wider mb-1.5">
-                E-mail
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                className="mt-1 block w-full px-3.5 py-3 border border-zinc-200 rounded-xl shadow-sm bg-zinc-50 text-[#000000] font-bold focus:outline-none focus:ring-2 focus:ring-[#FF4F00] sm:text-sm transition-colors"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-xs font-bold text-zinc-600 uppercase tracking-wider mb-1.5">
-                Heslo
-              </label>
-              <div className="relative mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  className="block w-full px-3.5 py-3 pr-12 border border-zinc-200 rounded-xl shadow-sm bg-zinc-50 text-[#000000] font-bold focus:outline-none focus:ring-2 focus:ring-[#FF4F00] sm:text-sm transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-400 hover:text-[#FF4F00] transition-colors cursor-pointer"
-                  title={showPassword ? "Skrýt heslo" : "Zobrazit heslo"}
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
+        <div className="text-center space-y-3 flex flex-col items-center justify-center">
+          {/* ZMĚNĚNO: Použití komponenty Logo místo čistého textu */}
+          <Logo className="h-10 w-auto mb-2" />
+          <p className="text-sm font-semibold text-zinc-500">Přihlášení do interní administrace</p>
+        </div>
+
+        {errorMessage && (
+          <div className="bg-red-50 border border-red-200 text-red-600 text-sm font-bold p-3.5 rounded-xl text-center">
+            {errorMessage}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-zinc-600 uppercase tracking-wider mb-1.5">E-mail</label>
+            <input 
+              type="email" 
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="vas@email.cz"
+              className="w-full p-3.5 bg-zinc-50 border border-zinc-200 rounded-xl font-bold text-[#000000] focus:ring-2 focus:ring-[#FF4F00] outline-none transition-all"
+            />
           </div>
 
           <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-sm font-extrabold text-white bg-[#FF4F00] hover:bg-orange-600 focus:outline-none disabled:opacity-50 transition-colors cursor-pointer"
-            >
-              {loading ? <Loader2 size={20} className="animate-spin" /> : "Přihlásit se"}
-            </button>
+            <label className="block text-xs font-bold text-zinc-600 uppercase tracking-wider mb-1.5">Heslo</label>
+            <div className="relative">
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                required
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full p-3.5 pr-12 bg-zinc-50 border border-zinc-200 rounded-xl font-bold text-[#000000] focus:ring-2 focus:ring-[#FF4F00] outline-none transition-all"
+              />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 cursor-pointer"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
+
+          <button 
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-4 bg-[#FF4F00] hover:bg-orange-600 text-white font-extrabold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            {isLoading ? <Loader2 size={20} className="animate-spin" /> : 'Přihlásit se'}
+          </button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-zinc-100 text-center">
-          <p className="text-xs text-zinc-500 mb-4 px-2 leading-relaxed">
+        <div className="border-t border-zinc-100 pt-6 space-y-4 text-center">
+          <p className="text-xs text-zinc-500 leading-relaxed">
             Nemáte přístupové údaje uživatele nebo máte jiný problém s přístupem?
           </p>
+          
           <a 
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2.5 w-full px-4 py-3.5 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-bold rounded-xl transition-colors border border-emerald-200 text-sm"
+            className="w-full py-3.5 px-4 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold rounded-xl transition-all flex items-center justify-center gap-2.5 text-sm cursor-pointer"
           >
             <MessageCircle size={18} className="text-emerald-600" />
             Neváhejte se obrátit na technickou podporu
           </a>
-
-          <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-zinc-400 font-medium">
-            <span>Taras Ishchuk - OSVČ</span>
-            <MessageCircle size={14} className="text-emerald-500" />
-          </div>
         </div>
+
+        <div className="text-center pt-2">
+          <span className="text-xs text-zinc-400 font-medium flex items-center justify-center gap-1.5">
+            Taras Ishchuk - OSVČ <MessageCircle size={12} className="text-emerald-500" />
+          </span>
+        </div>
+
       </div>
     </div>
-  );
+  )
 }
