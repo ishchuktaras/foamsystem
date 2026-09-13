@@ -9,7 +9,7 @@ import { calculateFoamProject, parseLambda } from '@/lib/calculations'
 export default async function NewQuotePage({
   searchParams,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }> | { [key: string]: string | string[] | undefined }
 }) {
   const resolvedParams = await searchParams
   const materialId = (resolvedParams.materialId as string) || ''
@@ -57,7 +57,7 @@ export default async function NewQuotePage({
     <div className="space-y-4 md:space-y-6 p-2 sm:p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-full overflow-hidden">
       
       {/* Prémiový Banner */}
-      <div className="relative overflow-hidden rounded-xl md:rounded-2xl bg-linear-to-r from-[#000000] to-[#1a1a1a] p-5 sm:p-8 md:p-10 text-[#FEFEFA] shadow-xl border border-zinc-800">
+      <div className="relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] p-5 sm:p-8 md:p-10 text-[#FEFEFA] shadow-xl border border-zinc-800">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight mb-2 md:mb-3">
             Nová poptávka / nabídka

@@ -9,7 +9,7 @@ import { redirect } from 'next/navigation'
 export default async function EditQuotePage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }> | { id: string }
 }) {
   const resolvedParams = await params
   
@@ -25,6 +25,7 @@ export default async function EditQuotePage({
     where: { isArchived: false },
     orderBy: { name: 'asc' }
   })
+  
   const companyProfile = await getCompanyProfile()
 
   const selectedMaterial = materials.find(m => m.name === quote.materialName)
@@ -39,17 +40,18 @@ export default async function EditQuotePage({
     street: quote.street || '',
     city: quote.city || '',
     zip: quote.zip || '',
-    totalCost: quote.totalCost
+    totalCost: quote.totalCost,
+    applicatorNotes: quote.applicatorNotes || ''
   }
 
   return (
     <div className="space-y-4 md:space-y-6 p-2 sm:p-4 md:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-full overflow-hidden">
       
       {/* Banner */}
-      <div className="relative overflow-hidden rounded-xl md:rounded-2xl bg-linear-to-r from-[#000000] to-[#1a1a1a] p-5 sm:p-8 md:p-10 text-[#FEFEFA] shadow-xl border border-zinc-800">
+      <div className="relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] p-5 sm:p-8 md:p-10 text-[#FEFEFA] shadow-xl border border-zinc-800">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight mb-2 md:mb-3">
-            Úprava nabídky
+            Úprava zakázky
           </h1>
           <p className="text-zinc-400 text-sm md:text-lg leading-relaxed">
             Aktualizujte údaje o zákazníkovi, změňte parametry zakázky nebo upravte obchodní marži pro zákazníka: <strong className="text-white">{quote.customerName}</strong>.
