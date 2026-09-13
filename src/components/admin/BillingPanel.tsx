@@ -2,11 +2,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Calculator, FileText, Save, FileDown, Loader2, CheckCircle2, AlertTriangle, Zap, PackageOpen } from 'lucide-react'
+import { Calculator, FileText, Save, FileDown, Loader2, CheckCircle2, Zap, PackageOpen } from 'lucide-react'
 import { saveBillingData } from '@/actions/evidence'
 import jsPDF from 'jspdf'
 
-// 1. Přesné definice typů místo "any"
 interface CompanyProfileData {
   companyName?: string | null;
   ico?: string | null;
@@ -47,20 +46,36 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
   const [isGenerating, setIsGenerating] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  // Sazby pro vyúčtování (předvyplněno z DB nebo výchozí hodnoty)
-  const [pricePerKg, setPricePerKg] = useState<number>(evidence.pricePerKg || 135)
-  const [machineCoefficient, setMachineCoefficient] = useState<number>(evidence.machineCoefficient || 0.12)
-  const [foilRollPrice, setFoilRollPrice] = useState<number>(150)
-  const [packingHourRate, setPackingHourRate] = useState<number>(350)
-  const [generatorKwRate, setGeneratorKwRate] = useState<number>(20)
+  // Výchozí výpočet zdvihů z evidence
+  const strokes = evidence.reactorEnd - evidence.reactorStart
+  const initialCoefficient = evidence.machineCoefficient || 0.12
+
+  // Stav pro uživatelské úpravy
+  const [machineCoefficient, setMachineCoefficient] = useState<number>(initialCoefficient)
+  
+  // Reálná spotřeba v kg - předvyplní se výpočtem, ale jde přepsat ručně
+  const [usedKg, setUsedKg] = useState<number>(strokes > 0 ? Math.round(strokes * initialCoefficient * 10) / 10 : 0)
+  
+  // Prodejní cena za 1 kg pro klienta
+  const [pricePerKg, setPricePerKg] = useState<number>(evidence.pricePerKg || 350) 
+
+  const [foilRollPrice, setFoilRollPrice] = useState<number>(150) 
+  const [packingHourRate, setPackingHourRate] = useState<number>(350) 
+  const [generatorKwRate, setGeneratorKwRate] = useState<number>(20) 
   const [heightsSurcharge, setHeightsSurcharge] = useState<number>(evidence.heightsSurcharge || 0)
   const [difficultEnvSurcharge, setDifficultEnvSurcharge] = useState<number>(evidence.difficultEnvSurcharge || 0)
 
-  // Automatické výpočty z evidence (čisté a typově bezpečné)
-  const strokes = evidence.reactorEnd - evidence.reactorStart
-  const usedKg = strokes > 0 ? strokes * machineCoefficient : 0
-  const materialCost = usedKg * pricePerKg
+  // Sledování změn pro synchronizaci bez useEffectu (zabraňuje kaskádovým renderům)
+  const [prevStrokes, setPrevStrokes] = useState(strokes)
+  const [prevCoefficient, setPrevCoefficient] = useState(machineCoefficient)
 
+  if (strokes !== prevStrokes || machineCoefficient !== prevCoefficient) {
+    setPrevStrokes(strokes)
+    setPrevCoefficient(machineCoefficient)
+    setUsedKg(Math.round(strokes * machineCoefficient * 10) / 10)
+  }
+
+  const materialCost = usedKg * pricePerKg
   const packingCost = (evidence.foilRolls * foilRollPrice) + (evidence.packingHours * packingHourRate)
   const generatorCost = (evidence.generatorKwh || 0) * generatorKwRate
   
@@ -133,7 +148,6 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
       doc.setLineWidth(0.5)
       doc.line(20, 70, 190, 70)
 
-      // Data
       const issueDate = new Date()
       const dueDate = new Date()
       dueDate.setDate(dueDate.getDate() + 14) 
@@ -145,7 +159,6 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
       doc.text(`Datum splatnosti: ${dueDate.toLocaleDateString('cs-CZ')}`, 120, 85)
       doc.setTextColor(0, 0, 0)
 
-      // Položky
       doc.setFont("Roboto", "bold")
       doc.text('Položka', 20, 105)
       doc.text('Cena s DPH', 160, 105)
@@ -155,7 +168,7 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
       doc.setFont("Roboto", "normal")
       let y = 120
       
-      doc.text(`Aplikace PUR pěny (${quote.materialName}) - dle spotřeby: ${Math.round(usedKg)} kg`, 20, y)
+      doc.text(`Aplikace PUR pěny (${quote.materialName}): ${usedKg} kg`, 20, y)
       doc.text(`${Math.round(materialCost).toLocaleString('cs-CZ')} Kč`, 160, y)
       y += 10
 
@@ -166,7 +179,7 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
       }
 
       if (generatorCost > 0) {
-        doc.text(`Provoz vlastního agregátu (${evidence.generatorKwh || 0} kWh/Mh)`, 20, y)
+        doc.text(`Provoz vlastního agregátu (${evidence.generatorKwh || 0} kWh)`, 20, y)
         doc.text(`${Math.round(generatorCost).toLocaleString('cs-CZ')} Kč`, 160, y)
         y += 10
       }
@@ -225,23 +238,52 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         
-        {/* LEVÝ SLOUPEC: SAZBY A DATA */}
+        {/* LEVÝ SLOUPEC: SPOTŘEBA A SAZBY */}
         <div className="space-y-6">
           <div className="bg-zinc-50 p-5 rounded-xl border border-zinc-200 space-y-4">
             <h3 className="font-bold text-zinc-800 text-sm uppercase tracking-wide">Základní materiál (PUR pěna)</h3>
+            
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-zinc-500 mb-1">Koeficient stroje</label>
-                <input type="number" step="0.01" value={machineCoefficient} onChange={e => setMachineCoefficient(Number(e.target.value))} className="w-full p-2.5 bg-white border border-zinc-200 rounded-lg font-bold" />
+                <label className="block text-xs font-bold text-zinc-600 mb-1">
+                  Reálná spotřeba (kg)
+                </label>
+                <input 
+                  type="number" 
+                  step="0.1"
+                  value={usedKg} 
+                  onChange={e => setUsedKg(Number(e.target.value))} 
+                  className="w-full p-2.5 bg-white border border-zinc-300 rounded-lg font-bold text-[#000000]" 
+                />
+                <span className="text-[10px] text-zinc-500 mt-0.5 block">Lze upravit ručně</span>
               </div>
+
               <div>
-                <label className="block text-xs font-bold text-zinc-500 mb-1">Sazba za 1 kg (Kč)</label>
-                <input type="number" value={pricePerKg} onChange={e => setPricePerKg(Number(e.target.value))} className="w-full p-2.5 bg-white border border-zinc-200 rounded-lg font-bold" />
+                <label className="block text-xs font-bold text-zinc-600 mb-1">
+                  Prodejní cena / 1 kg (Kč)
+                </label>
+                <input 
+                  type="number" 
+                  value={pricePerKg} 
+                  onChange={e => setPricePerKg(Number(e.target.value))} 
+                  className="w-full p-2.5 bg-white border border-zinc-300 rounded-lg font-bold text-[#000000]" 
+                />
+                <span className="text-[10px] text-zinc-500 mt-0.5 block">Cena pro zákazníka</span>
               </div>
             </div>
-            <div className="flex justify-between items-center text-sm pt-2 border-t border-zinc-200">
-              <span className="text-zinc-600">Reálná spotřeba:</span>
-              <span className="font-black text-[#000000]">{Math.round(usedKg)} kg ({strokes} zdvihů)</span>
+
+            <div className="pt-3 border-t border-zinc-200 flex justify-between items-center text-xs text-zinc-500">
+              <span>Zapsáno aplikátorem: <b>{strokes} zdvihů</b></span>
+              <div className="flex items-center gap-1">
+                <span>Koeficient:</span>
+                <input 
+                  type="number" 
+                  step="0.01" 
+                  value={machineCoefficient} 
+                  onChange={e => setMachineCoefficient(Number(e.target.value))} 
+                  className="w-16 p-1 text-center bg-white border border-zinc-200 rounded text-xs font-bold" 
+                />
+              </div>
             </div>
           </div>
 
@@ -250,11 +292,11 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-amber-700 mb-1">Cena za 1 roli (Kč)</label>
-                <input type="number" value={foilRollPrice} onChange={e => setFoilRollPrice(Number(e.target.value))} className="w-full p-2.5 bg-white border border-amber-300 rounded-lg font-bold" />
+                <input type="number" value={foilRollPrice} onChange={e => setFoilRollPrice(Number(e.target.value))} className="w-full p-2.5 bg-white border border-amber-300 rounded-lg font-bold text-[#000000]" />
               </div>
               <div>
                 <label className="block text-xs font-bold text-amber-700 mb-1">Sazba balení/hod (Kč)</label>
-                <input type="number" value={packingHourRate} onChange={e => setPackingHourRate(Number(e.target.value))} className="w-full p-2.5 bg-white border border-amber-300 rounded-lg font-bold" />
+                <input type="number" value={packingHourRate} onChange={e => setPackingHourRate(Number(e.target.value))} className="w-full p-2.5 bg-white border border-amber-300 rounded-lg font-bold text-[#000000]" />
               </div>
             </div>
             <div className="flex justify-between items-center text-sm pt-2 border-t border-amber-200/50">
@@ -266,23 +308,23 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
           <div className="bg-blue-50 p-5 rounded-xl border border-blue-200 space-y-4">
             <h3 className="font-bold text-blue-800 text-sm uppercase tracking-wide flex items-center gap-2"><Zap size={16}/> Vícepráce: Agregát</h3>
             <div>
-              <label className="block text-xs font-bold text-blue-700 mb-1">Sazba za 1 kWh/Motohodinu (Kč)</label>
-              <input type="number" value={generatorKwRate} onChange={e => setGeneratorKwRate(Number(e.target.value))} className="w-full p-2.5 bg-white border border-blue-300 rounded-lg font-bold" />
+              <label className="block text-xs font-bold text-blue-700 mb-1">Sazba za 1 kWh (Kč)</label>
+              <input type="number" value={generatorKwRate} onChange={e => setGeneratorKwRate(Number(e.target.value))} className="w-full p-2.5 bg-white border border-blue-300 rounded-lg font-bold text-[#000000]" />
             </div>
             <div className="flex justify-between items-center text-sm pt-2 border-t border-blue-200/50">
               <span className="text-blue-800">Aplikátor zadal:</span>
-              <span className="font-black text-blue-900">{evidence.generatorKwh || 0} kWh/Mh</span>
+              <span className="font-black text-blue-900">{evidence.generatorKwh || 0} kWh</span>
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-zinc-500 mb-1">Příplatek: Výšky (Kč)</label>
-              <input type="number" value={heightsSurcharge} onChange={e => setHeightsSurcharge(Number(e.target.value))} className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-xl font-bold" />
+              <label className="block text-xs font-bold text-zinc-600 mb-1">Příplatek: Výšky (Kč)</label>
+              <input type="number" value={heightsSurcharge} onChange={e => setHeightsSurcharge(Number(e.target.value))} className="w-full p-3 bg-zinc-50 border border-zinc-300 rounded-xl font-bold text-[#000000]" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-zinc-500 mb-1">Příplatek: Ztíž. prostředí</label>
-              <input type="number" value={difficultEnvSurcharge} onChange={e => setDifficultEnvSurcharge(Number(e.target.value))} className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded-xl font-bold" />
+              <label className="block text-xs font-bold text-zinc-600 mb-1">Příplatek: Ztíž. prostředí</label>
+              <input type="number" value={difficultEnvSurcharge} onChange={e => setDifficultEnvSurcharge(Number(e.target.value))} className="w-full p-3 bg-zinc-50 border border-zinc-300 rounded-xl font-bold text-[#000000]" />
             </div>
           </div>
         </div>
@@ -298,7 +340,7 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
                 <span className="text-zinc-500 line-through">{Number(quote.totalCost).toLocaleString('cs-CZ')} Kč</span>
               </div>
               <div className="flex justify-between items-center text-zinc-300">
-                <span>Materiál (Reálná spotřeba):</span>
+                <span>Materiál ({usedKg} kg × {pricePerKg} Kč):</span>
                 <span>{Math.round(materialCost).toLocaleString('cs-CZ')} Kč</span>
               </div>
               <div className="flex justify-between items-center text-amber-400">
@@ -322,18 +364,19 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
           </div>
 
           <div className="space-y-3">
-            <button onClick={handleSave} disabled={isSaving} className="w-full py-4 bg-zinc-100 hover:bg-zinc-200 text-[#000000] font-bold rounded-xl transition-all flex items-center justify-center gap-2">
+            <button onClick={handleSave} disabled={isSaving} className="w-full py-4 bg-zinc-100 hover:bg-zinc-200 text-[#000000] font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer">
               {isSaving ? <Loader2 size={20} className="animate-spin" /> : (saved ? <CheckCircle2 size={20} className="text-emerald-500" /> : <Save size={20} />)}
               {saved ? 'Uloženo do databáze' : 'Uložit vyúčtování'}
             </button>
 
-            <button onClick={generateInvoicePDF} disabled={isGenerating || !saved} className="w-full py-4 bg-[#FF4F00] hover:bg-[#E64700] text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <button onClick={generateInvoicePDF} disabled={isGenerating || !saved} className="w-full py-4 bg-[#FF4F00] hover:bg-orange-600 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
               {isGenerating ? <Loader2 size={20} className="animate-spin" /> : <FileDown size={20} />}
               Vystavit konečnou fakturu (PDF)
             </button>
             {!saved && <p className="text-xs text-center text-zinc-500">Před generováním faktury uložte vyúčtování.</p>}
           </div>
         </div>
+
       </div>
     </div>
   )
