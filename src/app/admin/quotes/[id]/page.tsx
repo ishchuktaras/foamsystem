@@ -24,10 +24,37 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
 
   if (!quote) return notFound()
 
+  // VÝPOČET LIDSKY ČITELNÉHO ČÍSLA ZAKÁZKY (např. 202609-001)
+  const date = new Date(quote.createdAt)
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1
+  
+  // Získáme všechny zakázky z daného měsíce, seřazené podle data vytvoření
+  const quotesInMonth = await db.quote.findMany({
+    where: {
+      createdAt: {
+        gte: new Date(year, month - 1, 1),
+        lt: new Date(year, month, 1)
+      }
+    },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true }
+  })
+
+  // Najdeme index naší zakázky a přidáme 1, abychom získali pořadové číslo
+  const orderNumber = quotesInMonth.findIndex(q => q.id === quote.id) + 1
+  
+  // Formátování: YYYYMM-XXX
+  const formattedQuoteNumber = `${year}${month.toString().padStart(2, '0')}-${orderNumber.toString().padStart(3, '0')}`
+
   const companyProfile = await db.companyProfile.findFirst()
 
-  // Získáme český popisek a barvu podle aktuálního stavu z databáze
   const statusBadge = STATUS_MAP[quote.status] || { label: quote.status, color: 'bg-zinc-100 text-zinc-700 border-zinc-200' }
+
+  // CHYTRÁ LOGIKA PRO ZOBRAZENÍ VÝŠEK A ZTÍŽENÉHO PROSTŘEDÍ
+  // (Bere v potaz buď zaškrtnutí aplikátorem NEBO částku zadanou supervizorem)
+  const isWorkingAtHeights = quote.evidence?.workingAtHeights || (quote.evidence?.heightsSurcharge && quote.evidence.heightsSurcharge > 0)
+  const isDifficultEnv = quote.evidence?.difficultEnv || (quote.evidence?.difficultEnvSurcharge && quote.evidence.difficultEnvSurcharge > 0)
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
@@ -37,7 +64,8 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
         </Link>
         <div>
           <h1 className="text-2xl font-extrabold text-[#000000]">Detail zakázky</h1>
-          <p className="text-zinc-500 text-sm">{quote.id}</p>
+          {/* Tady už se ukáže hezké číslo místo technického ID */}
+          <p className="text-zinc-500 text-sm font-mono tracking-widest">{formattedQuoteNumber}</p>
         </div>
       </div>
 
@@ -55,7 +83,6 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
               </div>
             </div>
             
-            {/* Vykreslení přeloženého stavu */}
             <span className={`px-4 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider border ${statusBadge.color}`}>
               {statusBadge.label}
             </span>
@@ -90,7 +117,7 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
-        {/* TECHNICKÁ DATA PANEL (Původní odhad) */}
+        {/* TECHNICKÁ DATA PANEL */}
         <div className="bg-gradient-to-br from-[#000000] to-zinc-900 rounded-2xl shadow-lg border border-zinc-800 p-6 text-white flex flex-col justify-between">
           <div>
             <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-5">Technická specifikace</p>
@@ -152,11 +179,13 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
               <div className="space-y-1">
                 <p className="font-bold text-zinc-800 flex justify-between">
                   <span>Práce ve výškách:</span> 
-                  <span className={quote.evidence.workingAtHeights ? 'text-red-500' : 'text-zinc-400'}>{quote.evidence.workingAtHeights ? 'Ano' : 'Ne'}</span>
+                  {/* POUŽITÍ NOVÉ CHYTRÉ LOGIKY */}
+                  <span className={isWorkingAtHeights ? 'text-red-500' : 'text-zinc-400'}>{isWorkingAtHeights ? 'Ano' : 'Ne'}</span>
                 </p>
                 <p className="font-bold text-zinc-800 flex justify-between">
                   <span>Ztížené prostředí:</span> 
-                  <span className={quote.evidence.difficultEnv ? 'text-red-500' : 'text-zinc-400'}>{quote.evidence.difficultEnv ? 'Ano' : 'Ne'}</span>
+                  {/* POUŽITÍ NOVÉ CHYTRÉ LOGIKY */}
+                  <span className={isDifficultEnv ? 'text-red-500' : 'text-zinc-400'}>{isDifficultEnv ? 'Ano' : 'Ne'}</span>
                 </p>
               </div>
             </div>
@@ -164,7 +193,6 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* ODSTRANĚNÉ "as any", PŘEDÁVÁ SE ČISTÝ OBJEKT */}
       {quote.status === 'COMPLETED' && quote.evidence && (
         <BillingPanel 
           quote={quote} 
