@@ -38,31 +38,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null
-        
-        // --- 1. MĚŘENÍ: Čas potřebný k načtení dat z databáze Supabase ---
-        console.time("DB_DOTAZ")
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string }
-        })
-        console.timeEnd("DB_DOTAZ")
-        
-        if (!user || !user.password) return null
-        
-        // --- 2. MĚŘENÍ: Čas potřebný k dešifrování a porovnání hesla ---
-        console.time("BCRYPT_OVERENI")
-        const isPasswordValid = await bcrypt.compare(credentials.password as string, user.password)
-        console.timeEnd("BCRYPT_OVERENI")
-        
-        if (!isPasswordValid) return null
-        
-        return { 
-          id: user.id, 
-          email: user.email, 
-          name: user.name, 
-          role: user.role 
-        }
-      }
+  if (!credentials?.email || !credentials?.password) return null
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: credentials.email as string }
+    })
+
+    if (!user || !user.password) return null
+
+    const isPasswordValid = await bcrypt.compare(credentials.password as string, user.password)
+    if (!isPasswordValid) return null
+
+    return { 
+      id: user.id, 
+      email: user.email, 
+      name: user.name, 
+      role: user.role 
+    }
+  } catch (error) {
+    console.error("Chyba při DB dotazu v autorizaci:", error)
+    return null
+  }
+}
     })
   ],
   callbacks: {
