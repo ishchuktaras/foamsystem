@@ -75,11 +75,20 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
     setUsedKg(Math.round(strokes * machineCoefficient * 10) / 10)
   }
 
+  // Výpočty cen
   const materialCost = usedKg * pricePerKg
   const packingCost = (evidence.foilRolls * foilRollPrice) + (evidence.packingHours * packingHourRate)
   const generatorCost = (evidence.generatorKwh || 0) * generatorKwRate
   
+  // Finální celková cena díla
   const finalTotal = materialCost + packingCost + generatorCost + heightsSurcharge + difficultEnvSurcharge
+
+  // Vypočtená záloha z původního odhadu
+  const originalCostNum = Number(quote.totalCost) || 0
+  const zalohaAmount = Math.round(originalCostNum * 0.5)
+
+  // Skutečná částka zbývající k úhradě
+  const kUhradeAmount = finalTotal - zalohaAmount
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -196,27 +205,30 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
         y += 10
       }
 
-      const originalCostNum = Number(quote.totalCost) || 0
-      const zaloha = Math.round(originalCostNum * 0.5)
+      // OPRAVA VÝPOČTŮ A ZOBRAZENÍ ZÁLOHY V PDF
+      doc.setFont("Roboto", "bold")
+      doc.text(`Celková cena díla:`, 20, y + 5)
+      doc.text(`${Math.round(finalTotal).toLocaleString('cs-CZ')} Kč`, 160, y + 5)
+
+      doc.setFont("Roboto", "normal")
       doc.setTextColor(150, 150, 150)
-      doc.text(`Odečet uhrazené zálohy:`, 20, y + 5)
-      doc.text(`-${zaloha.toLocaleString('cs-CZ')} Kč`, 160, y + 5)
-      
-      const kUhrade = finalTotal - zaloha
+      doc.text(`Odečet uhrazené zálohy:`, 20, y + 15)
+      doc.text(`-${zalohaAmount.toLocaleString('cs-CZ')} Kč`, 160, y + 15)
 
       doc.setFillColor(245, 245, 245)
-      doc.rect(20, y + 15, 170, 45, 'F')
+      doc.rect(20, y + 25, 170, 45, 'F')
       
       doc.setTextColor(0, 0, 0)
       doc.setFontSize(12)
-      doc.text('K ÚHRADĚ CELKEM:', 25, y + 28)
+      doc.text('K ÚHRADĚ CELKEM:', 25, y + 38)
       doc.setFontSize(22)
       doc.setFont("Roboto", "bold")
-      doc.text(`${Math.max(0, Math.round(kUhrade)).toLocaleString('cs-CZ')} Kč`, 130, y + 30)
+      // V případě, že byla záloha větší než konečná cena, zobrazí se nula a řeší se to přeplatkem
+      doc.text(`${Math.max(0, Math.round(kUhradeAmount)).toLocaleString('cs-CZ')} Kč`, 130, y + 40)
 
       doc.setFontSize(12)
-      doc.text(`Číslo účtu: ${companyProfile?.bankAccount || 'DOPLŇTE V NASTAVENÍ'}`, 25, y + 45)
-      doc.text(`Variabilní symbol: ${vs}`, 25, y + 52)
+      doc.text(`Číslo účtu: ${companyProfile?.bankAccount || 'DOPLŇTE V NASTAVENÍ'}`, 25, y + 55)
+      doc.text(`Variabilní symbol: ${vs}`, 25, y + 62)
 
       doc.save(`Faktura-Konecna-${quote.customerName.replace(/\s+/g, '-').toLowerCase()}.pdf`)
     } catch (error) {
@@ -334,7 +346,7 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
           <div className="bg-gradient-to-br from-[#000000] to-zinc-900 p-6 rounded-2xl text-white shadow-lg mb-6 flex-1">
             <h3 className="text-zinc-400 text-sm uppercase tracking-wider font-bold mb-6">Konečná kalkulace</h3>
             
-            <div className="space-y-3 text-sm font-medium mb-8">
+            <div className="space-y-3 text-sm font-medium mb-6">
               <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
                 <span className="text-zinc-300">Původní odhad:</span>
                 <span className="text-zinc-500 line-through">{Number(quote.totalCost).toLocaleString('cs-CZ')} Kč</span>
@@ -357,10 +369,23 @@ export default function BillingPanel({ quote, evidence, companyProfile }: Billin
               </div>
             </div>
 
-            <div className="flex justify-between items-end">
-              <span className="text-zinc-400 font-bold">Konečná cena díla:</span>
-              <span className="text-4xl font-black text-[#FF4F00]">{Math.round(finalTotal).toLocaleString('cs-CZ')} <span className="text-xl">Kč</span></span>
+            {/* UPRAVENÝ ZOBRAZOVACÍ BLOK S ROZPISEM ZÁLOHY */}
+            <div className="space-y-3 border-t border-zinc-700 pt-4">
+              <div className="flex justify-between items-center">
+                <span className="text-zinc-300">Celková cena díla:</span>
+                <span className="text-lg font-bold text-white">{Math.round(finalTotal).toLocaleString('cs-CZ')} Kč</span>
+              </div>
+              <div className="flex justify-between items-center text-zinc-500 pb-4 border-b border-zinc-800">
+                <span>Odečet uhrazené zálohy (50%):</span>
+                <span>-{zalohaAmount.toLocaleString('cs-CZ')} Kč</span>
+              </div>
+              
+              <div className="flex justify-between items-end pt-2">
+                <span className="text-zinc-400 font-bold">K úhradě (doplatek):</span>
+                <span className="text-4xl font-black text-[#FF4F00]">{Math.max(0, Math.round(kUhradeAmount)).toLocaleString('cs-CZ')} <span className="text-xl">Kč</span></span>
+              </div>
             </div>
+
           </div>
 
           <div className="space-y-3">
