@@ -1,5 +1,3 @@
-// src/
-
 import { ShieldCheck, ThermometerSun, Zap, Clock } from 'lucide-react'
 
 export default function Benefits() {
@@ -17,8 +15,8 @@ export default function Benefits() {
             { icon: ShieldCheck, title: 'Nemění tvar', desc: 'Na rozdíl od vaty pěna nesesedá, neřídne a zachovává si vlastnosti po desítky let.' },
             { icon: Zap, title: 'Ochrana proti škůdcům', desc: 'Struktura PUR pěny neláká hlodavce ani hmyz, navíc výborně akusticky izoluje.' }
           ].map((item, i) => (
-            <div key={i} className="bg-white p-8 rounded-2xl shadow-sm border border-zinc-200 hover:border-[#FF4F00] transition-colors group">
-              <div className="w-14 h-14 bg-orange-50 rounded-xl flex items-center justify-center text-[#FF4F00] mb-6 group-hover:scale-110 transition-transform">
+            <div key={i} className="bg-white p-8 rounded-2xl shadow-sm border border-zinc-200 hover:border-[#FF4F00]/50 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 ease-out group cursor-pointer">
+              <div className="w-14 h-14 bg-orange-50 rounded-xl flex items-center justify-center text-[#FF4F00] mb-6 group-hover:scale-110 transition-transform duration-300">
                 <item.icon size={28} />
               </div>
               <h3 className="text-xl font-bold text-[#000000] mb-3">{item.title}</h3>

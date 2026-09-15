@@ -14,7 +14,7 @@ export default function FaqReviews() {
                 { q: 'Je PUR pěna hořlavá?', a: 'Používáme certifikované pěny se samozhášivou přísadou, které splňují přísné protipožární normy (třída reakce na oheň E).' },
                 { q: 'Pustí se do pěny myši nebo kuny?', a: 'Ne. PUR pěna pro hlodavce nepředstavuje potravu ani vhodné prostředí pro hnízdění.' }
               ].map((faq, i) => (
-                <div key={i} className="bg-white p-6 rounded-2xl border border-zinc-200">
+                <div key={i} className="bg-white p-6 rounded-2xl border border-zinc-200 hover:-translate-y-1 hover:shadow-md hover:border-zinc-300 transition-all duration-300">
                   <h4 className="font-bold text-[#000000] mb-2">{faq.q}</h4>
                   <p className="text-zinc-600 text-sm leading-relaxed">{faq.a}</p>
                 </div>
@@ -30,7 +30,7 @@ export default function FaqReviews() {
                 { text: 'Blesková realizace. Ráno přijeli, odpoledne bylo hotovo. Už první zimu jsme poznali rozdíl na účtech.', author: 'Martin D., Jihlava' },
                 { text: 'Všude se dostali, perfektně zakryli okna a po sobě uklidili. Určitě doporučuji.', author: 'Jana K., Havlíčkův Brod' }
               ].map((review, i) => (
-                <div key={i} className="bg-[#000000] text-white p-6 rounded-2xl relative">
+                <div key={i} className="bg-[#000000] text-white p-6 rounded-2xl relative hover:-translate-y-1 hover:shadow-xl hover:shadow-[#FF4F00]/10 transition-all duration-300">
                   <QuoteIcon className="absolute top-6 right-6 text-zinc-800" size={32} />
                   <p className="text-zinc-300 italic mb-4 relative z-10">{review.text}</p>
                   <div className="font-bold text-[#FF4F00]">{review.author}</div>

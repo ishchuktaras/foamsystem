@@ -14,12 +14,12 @@ export default function Process() {
                 { num: '03', title: 'Realizace', desc: 'Náš tým přijede v dohodnutý termín. Samotná aplikace trvá většinou 1 den.' },
                 { num: '04', title: 'Předání a úspora', desc: 'Předáme vám dílo, uklidíme po sobě a vy začínáte okamžitě šetřit.' }
               ].map((step, i) => (
-                <div key={i} className="flex gap-4">
+                <div key={i} className="flex gap-4 group cursor-default">
                   <div className="flex flex-col items-center">
-                    <div className="w-10 h-10 rounded-full bg-[#000000] text-[#FF4F00] flex items-center justify-center font-black text-sm">{step.num}</div>
+                    <div className="w-10 h-10 rounded-full bg-[#000000] text-[#FF4F00] flex items-center justify-center font-black text-sm group-hover:scale-110 group-hover:bg-zinc-800 transition-all duration-300">{step.num}</div>
                     {i !== 3 && <div className="w-0.5 h-full bg-zinc-200 mt-2"></div>}
                   </div>
-                  <div className="pb-8">
+                  <div className="pb-8 group-hover:translate-x-1 transition-transform duration-300">
                     <h4 className="text-xl font-bold text-[#000000] mb-2">{step.title}</h4>
                     <p className="text-zinc-600">{step.desc}</p>
                   </div>
@@ -27,7 +27,7 @@ export default function Process() {
               ))}
             </div>
           </div>
-          <div className="md:w-1/2 w-full bg-[#F9FAFB] border border-zinc-200 rounded-3xl p-8 relative overflow-hidden">
+          <div className="md:w-1/2 w-full bg-[#F9FAFB] border border-zinc-200 rounded-3xl p-8 relative overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-500">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF4F00] opacity-10 rounded-bl-full"></div>
             <h3 className="text-2xl font-black text-[#000000] mb-6">Máte specifický projekt?</h3>
             <ul className="space-y-4 mb-8">
@@ -37,7 +37,7 @@ export default function Process() {
                 </li>
               ))}
             </ul>
-            <a href="#poptavka" className="w-full py-4 bg-[#000000] hover:bg-zinc-800 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2">
+            <a href="#poptavka" className="w-full py-4 bg-[#000000] hover:bg-zinc-800 text-white font-bold rounded-xl transition-all hover:scale-105 active:scale-95 hover:shadow-xl flex items-center justify-center gap-2">
               Konzultovat projekt <ChevronRight size={18} />
             </a>
           </div>
