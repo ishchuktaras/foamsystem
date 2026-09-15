@@ -14,7 +14,7 @@ export default function ContactForm() {
     phone: '',
     email: '',
     city: '',
-    type: 'Šikmá střecha / Podkroví',
+    type: '',
     area: '',
     thickness: ''
   })
@@ -37,7 +37,7 @@ export default function ContactForm() {
     setIsSubmitting(false)
     if (result.success) {
       setFormSuccess(true)
-      setFormData({ name: '', phone: '', email: '', city: '', type: 'Šikmá střecha / Podkroví', area: '', thickness: '' })
+      setFormData({ name: '', phone: '', email: '', city: '', type: '', area: '', thickness: '' })
       setGdprConsent(false)
     } else {
       alert('Něco se pokazilo. Zkuste to prosím znovu.')
