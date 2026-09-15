@@ -1,26 +1,70 @@
+// src/components/landing/Hero.tsx
+'use client'
+
 import { Zap, ArrowRight } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 export default function Hero() {
   return (
     <section className="relative bg-[#000000] text-white overflow-hidden py-24 lg:py-32">
-      <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-[#FF4F00] rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-[#FF4F00] rounded-full blur-[100px]"></div>
+      {/* Dynamické dýchající světelné efekty na pozadí */}
+      <div className="absolute top-0 left-0 w-full h-full opacity-15 pointer-events-none">
+        <motion.div 
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-[#FF4F00] rounded-full blur-[120px]"
+        />
+        <motion.div 
+          animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.4, 0.2] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-[#FF4F00] rounded-full blur-[100px]"
+        />
       </div>
+
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-[#FF4F00] text-sm font-bold mb-8">
+        
+        {/* Badge */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-[#FF4F00] text-sm font-bold mb-8 shadow-inner"
+        >
           <Zap size={16} /> Nejuniverzálnější zateplení na trhu
-        </div>
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6 leading-tight">
+        </motion.div>
+
+        {/* Hlavní nadpis */}
+        <motion.h1 
+          initial={{ opacity: 0, y: 25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.15 }}
+          className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6 leading-tight"
+        >
           Izolace, která šetří <br className="hidden md:block" />
           <span className="text-[#FF4F00]">až 50 % nákladů</span> na vytápění
-        </h1>
-        <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mb-10 font-medium">
+        </motion.h1>
+
+        {/* Popis */}
+        <motion.p 
+          initial={{ opacity: 0, y: 25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="text-lg md:text-xl text-zinc-400 max-w-2xl mb-10 font-medium"
+        >
           Zateplení střech, podkroví a fasád stříkanou PUR pěnou. Dokonalé utěsnění bez tepelných mostů s garancí životnosti po celou dobu stavby.
-        </p>
-        <a href="#poptavka" className="px-8 py-4 bg-[#FF4F00] hover:bg-[#E64700] text-white text-lg font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(255,79,0,0.4)] flex items-center justify-center gap-2">
-          Spočítat nezávazně <ArrowRight size={20} />
-        </a>
+        </motion.p>
+
+        {/* CTA Tlačítko */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.45 }}
+        >
+          <a href="#poptavka" className="px-8 py-4 bg-[#FF4F00] hover:bg-[#E64700] text-white text-lg font-bold rounded-xl transition-all shadow-[0_0_25px_rgba(255,79,0,0.5)] hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
+            Spočítat nezávazně <ArrowRight size={20} />
+          </a>
+        </motion.div>
+
       </div>
     </section>
   )

@@ -1,3 +1,5 @@
+// src/
+
 import { ShieldCheck, ThermometerSun, Zap, Clock } from 'lucide-react'
 
 export default function Benefits() {
