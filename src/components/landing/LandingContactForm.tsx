@@ -2,7 +2,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Send, Loader2, CheckCircle2 } from 'lucide-react'
+import { Send, Loader2, CheckCircle2, Phone, MapPin, Globe, Building2 } from 'lucide-react'
 import { createQuote } from '@/actions/quote'
 
 export default function ContactForm() {
@@ -56,6 +56,42 @@ export default function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit} className="bg-white text-[#000000] p-8 md:p-10 rounded-3xl shadow-2xl">
+      
+      {/* KONTAKTNÍ A FIREMNÍ INFO */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 p-4 bg-zinc-50 rounded-2xl border border-zinc-100 text-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl shrink-0"><Phone size={16} /></div>
+          <div>
+            <span className="block font-bold text-zinc-400 uppercase text-[10px]">Telefon</span>
+            <a href="tel:+420734617462" className="font-extrabold text-[#000000] hover:text-[#FF4F00] transition-colors">+420 734 617 462</a>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 bg-zinc-200/60 text-zinc-700 rounded-xl shrink-0"><MapPin size={16} /></div>
+          <div>
+            <span className="block font-bold text-zinc-400 uppercase text-[10px]">Sídlo</span>
+            <span className="font-extrabold text-zinc-800">Jihlava</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 bg-zinc-200/60 text-zinc-700 rounded-xl shrink-0"><Globe size={16} /></div>
+          <div>
+            <span className="block font-bold text-zinc-400 uppercase text-[10px]">Působnost</span>
+            <span className="font-extrabold text-zinc-800">Celá ČR</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 bg-zinc-200/60 text-zinc-700 rounded-xl shrink-0"><Building2 size={16} /></div>
+          <div>
+            <span className="block font-bold text-zinc-400 uppercase text-[10px]">IČO</span>
+            <span className="font-extrabold text-zinc-800">1234567</span>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="space-y-2">
           <label className="font-bold text-sm text-zinc-600">Jméno a příjmení *</label>
