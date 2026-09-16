@@ -92,7 +92,7 @@ export default function Footer() {
           </div>
 
           <p>
-            Vytvořil <a href="https://webnamiru.site" target="_blank" rel="noopener noreferrer" className="text-[#FF4F00] font-bold hover:underline">Taras Ishchuk - webnamiru.site</a>
+            Vytvořil <a href="https://www.webnamiru.site" target="_blank" rel="noopener noreferrer" className="text-[#FF4F00] font-bold hover:underline">Taras Ishchuk - webnamiru.site</a>
           </p>
         </div>
       </div>
