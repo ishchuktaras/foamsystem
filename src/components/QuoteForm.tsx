@@ -288,7 +288,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
         "4. Stavební připravenost a realizace",
         "Objednatel se zavazuje zajistit volný přístup na staveniště a možnost připojení k elektrické síti (380 V, jistič min. 25 A, zásuvka 5 kolík). V případě, že objednatel nemůže zajistit 380V elektrickou síť, bude na stavbě využit generátor a při předání díla budou doúčtovány reálné náklady za spotřebovanou naftu. Plochy, které nemají být zasaženy pěnou (okna, pohledové trámy), musí být předem řádně zakryty fólií; pokud nebudou ze strany objednatele řádně zakryty, budou doúčtovány prostředky za spotřebovanou balicí fólii a práce spojené s balením.",
         "5. Záruka a kvalita",
-        "Zhotovitel poskytuje záruku na provedené práce v délce 60 měsíců. Životnost a tvarová stálost PUR pěny (nesesedá, neřídne) je garantována výrobcem po celou dobu životnosti stavby."
+        "Zhotovitel poskytuje záruku na provedené práce v délce 24 měsíců. Životnost a tvarová stálost PUR pěny (nesesedá, neřídne) je garantována výrobcem po celou dobu životnosti stavby."
       ]
 
       let y = 135
