@@ -8,7 +8,7 @@ export default function Hero() {
   return (
     <section 
       className="relative text-white overflow-hidden py-24 lg:py-32 bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: "url('/images/hero-bg.jpeg')" }}
+      style={{ backgroundImage: "url('/images/hero-bg1.jpeg')" }}
     >
       {/* Silnější tmavý gradientní překryv pro maximální kontrast a čitelnost */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/85 to-black/95 z-0"></div>

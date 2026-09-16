@@ -53,7 +53,7 @@ export default function LoginPage() {
         
         <div className="text-center space-y-3 flex flex-col items-center justify-center">
           {/* PŘIDÁNO: text-[#000000] zajistí, že část IZOLACE (využívající currentColor) bude černá */}
-          <Logo className="h-10 w-auto mb-2 text-[#000000]" />
+          <Logo className="h-36 w-auto mb-2 text-[#000000]" />
           <p className="text-sm font-semibold text-zinc-500">Přihlášení do interní administrace</p>
         </div>
 
