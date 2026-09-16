@@ -133,12 +133,18 @@ export default async function EvidencePage() {
                       <p className="text-sm text-zinc-500">{quote.street || ''}, {quote.city} • {quote.area} m² / {quote.thickness} cm ({quote.materialName})</p>
                     </div>
 
-                    <div>
+                    <div className="flex items-center gap-2">
                       <Link 
                         href={`/admin/quotes/${quote.id}/evidence`}
                         className="px-4 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 justify-center"
                       >
                         <Wrench size={14} /> Detail a úprava deníku
+                      </Link>
+                      <Link 
+                        href={`/admin/quotes/${quote.id}`}
+                        className="px-4 py-2.5 bg-[#FF4F00] hover:bg-orange-600 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 justify-center"
+                      >
+                        Přejít k vyúčtování
                       </Link>
                     </div>
                   </div>

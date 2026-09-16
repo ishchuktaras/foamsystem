@@ -40,7 +40,8 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed = false, setIsC
     { name: 'Přehled', href: '/admin', icon: LayoutDashboard, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR', 'TECHNIK', 'APLIKATOR'] },
     { name: 'Dispečink', href: '/admin/dispatch', icon: CalendarDays, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR'] },
     { name: 'Pracovníci', href: '/admin/users', icon: Users, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR'] },
-    { name: 'Správa materiálů', href: '/admin/materials', icon: Boxes, roles: ['ADMIN', 'JEDNATEL', 'TECHNIK'] },
+    // ZDE PŘIDÁN SUPERVIZOR DO SPRÁVY MATERIÁLŮ
+    { name: 'Správa materiálů', href: '/admin/materials', icon: Boxes, roles: ['ADMIN', 'JEDNATEL', 'TECHNIK', 'SUPERVIZOR'] },
     { name: 'Kalkulátor spotřeby', href: '/admin/calculator', icon: Calculator, roles: ['ADMIN', 'JEDNATEL', 'TECHNIK', 'SUPERVIZOR'] },
     { name: 'Nabídky a poptávky', href: '/admin/quotes', icon: FileText, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR', 'TECHNIK', 'APLIKATOR'] },
     { name: 'Evidence práce', href: '/admin/evidence', icon: ClipboardCheck, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR', 'APLIKATOR'] },
