@@ -6,7 +6,8 @@ import Hero from '@/components/landing/Hero'
 import Benefits from '@/components/landing/Benefits'
 import Process from '@/components/landing/Process'
 import FaqReviews from '@/components/landing/FaqReviews'
-import ScrollReveal from '@/components/landing/ScrollReveal' // <--- 1. Import animačního obalu
+import ScrollReveal from '@/components/landing/ScrollReveal' 
+import Services from '@/components/landing/Services'
 
 export default function LandingPage() {
   return (
@@ -20,6 +21,9 @@ export default function LandingPage() {
         {/* 2. Obalení sekcí pro plynulý nástup při scrollování */}
         <ScrollReveal>
           <Benefits />
+        </ScrollReveal>
+<ScrollReveal>
+          <Services />
         </ScrollReveal>
 
         <ScrollReveal delay={0.1}>
