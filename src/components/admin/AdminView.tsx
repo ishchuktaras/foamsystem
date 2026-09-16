@@ -1,9 +1,10 @@
 // src/components/admin/AdminView.tsx
-import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, CheckCircle2, Users, Database, ClipboardList, PenTool, ClipboardCheck, CalendarDays, Wallet, ArrowUpRight, ArrowDownRight, Briefcase, Truck } from 'lucide-react'
+import { FileText, Boxes, ShieldCheck, TrendingUp, Calculator, CheckCircle2, Users, Database, ClipboardList, PenTool, ClipboardCheck, CalendarDays, Wallet, ArrowUpRight, ArrowDownRight, Briefcase, Truck, ClipboardEdit } from 'lucide-react'
 import { db } from '@/lib/db'
 import { UpcomingDispatch } from '@/types/dashboard'
 import AnimatedCounter from './AnimatedCounter'
 import { BentoCard } from './BentoGrid'
+import Link from 'next/link'
 
 // Přidání specifického typu místo zakázaného "any"
 type QuoteWithEvidence = {
@@ -203,6 +204,7 @@ export default async function AdminView() {
                     <th className="px-6 py-3 font-semibold">Datum realizace</th>
                     <th className="px-6 py-3 font-semibold">Zákazník a lokalita</th>
                     <th className="px-6 py-3 font-semibold">Přiřazený aplikátor</th>
+                    <th className="px-6 py-3 font-semibold text-right">Akce</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
@@ -223,6 +225,16 @@ export default async function AdminView() {
                         ) : (
                           <span className="text-red-500 text-xs font-bold italic">Nepřiřazeno!</span>
                         )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        {/* NOVÉ TLAČÍTKO - RYCHLÉ ZADÁNÍ REALIZACE */}
+                        <Link 
+                          href={`/admin/quotes/${quote.id}/evidence`} 
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-100 hover:bg-[#FF4F00] hover:text-white text-zinc-700 font-bold rounded-lg transition-all text-xs border border-zinc-200 hover:border-[#FF4F00]"
+                        >
+                          <ClipboardEdit size={14} />
+                          Zadat realizaci
+                        </Link>
                       </td>
                     </tr>
                   ))}
