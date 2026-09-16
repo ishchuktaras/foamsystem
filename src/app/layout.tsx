@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import Providers from '@/components/Providers'
+import CookieBanner from '@/components/CookieBanner' // <--- Nový import Cookie lišty
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -70,6 +71,8 @@ export default function RootLayout({
       >
         <Providers>
           {children}
+          {/* Zde je vykreslena naše nová Cookie lišta napříč všemi stránkami */}
+          <CookieBanner />
         </Providers>
       </body>
     </html>

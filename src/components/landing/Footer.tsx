@@ -1,62 +1,92 @@
+// src/components/landing/Footer.tsx
 import Link from 'next/link'
 import Logo from '@/components/Logo'
+import { Phone, Mail, MapPin, Building2, ChevronRight } from 'lucide-react'
 
 export default function Footer() {
+  const currentYear = new Date().getFullYear()
+
   return (
-    <footer className="bg-[#111111] text-zinc-400 py-12 border-t border-zinc-900">
+    <footer className="bg-zinc-950 text-zinc-300 py-16 border-t border-zinc-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
-            <div className="mb-6 text-white inline-block hover:scale-105 transition-transform duration-300">
-              <Logo className="h-18 w-auto" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12 border-b border-zinc-800 pb-12">
+          
+          {/* Značka a Logo */}
+          <div className="space-y-6">
+            <div className="bg-white/5 inline-block p-4 rounded-2xl">
+              <Logo className="h-12 w-auto" />
             </div>
-            <p className="text-sm leading-relaxed mb-4">Profesionální aplikace stříkané PUR izolace s důrazem na kvalitu, rychlost a čistotu práce.</p>
+            <p className="text-zinc-500 text-sm leading-relaxed pr-4">
+              Profesionální aplikace stříkané PUR izolace na Vysočině i po celé ČR. Nejuniverzálnější zateplení na trhu s garancí 24 měsíců.
+            </p>
           </div>
+
+          {/* Rychlé odkazy */}
           <div>
-            <h4 className="text-white font-bold mb-4">Rychlé odkazy</h4>
-            <ul className="space-y-2 text-sm flex flex-col">
-              <li><a href="#vyhody" className="inline-block hover:text-[#FF4F00] hover:translate-x-1 transition-all duration-200">Výhody pěny</a></li>
-              <li><a href="#proces" className="inline-block hover:text-[#FF4F00] hover:translate-x-1 transition-all duration-200">Průběh spolupráce</a></li>
-              <li><a href="#faq" className="inline-block hover:text-[#FF4F00] hover:translate-x-1 transition-all duration-200">Časté dotazy</a></li>
-              
-              <li className="pt-2 mt-2 border-t border-zinc-800 w-fit">
-                <Link href="/admin" className="inline-block text-zinc-500 hover:text-[#FF4F00] hover:translate-x-1 transition-all duration-200">
-                  Klientská zóna
+            <h3 className="text-white font-bold mb-6 text-lg">Rychlé odkazy</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link href="#sluzby" className="text-zinc-400 hover:text-[#FF4F00] transition-colors flex items-center gap-2 text-sm">
+                  <ChevronRight size={14} /> Naše služby
+                </Link>
+              </li>
+              <li>
+                <Link href="#faq" className="text-zinc-400 hover:text-[#FF4F00] transition-colors flex items-center gap-2 text-sm">
+                  <ChevronRight size={14} /> Časté dotazy
+                </Link>
+              </li>
+              <li>
+                <Link href="#kontakt" className="text-zinc-400 hover:text-[#FF4F00] transition-colors flex items-center gap-2 text-sm">
+                  <ChevronRight size={14} /> Nezávazná kalkulace
                 </Link>
               </li>
             </ul>
           </div>
+
+          {/* Kontakty */}
           <div>
-            <h4 className="text-white font-bold mb-4">Právní dokumenty</h4>
-            <ul className="space-y-2 text-sm flex flex-col">
-              <li><Link href="/obchodni-podminky" className="inline-block hover:text-white hover:translate-x-1 transition-all duration-200">Obchodní podmínky</Link></li>
-              <li><Link href="/ochrana-osobnich-udaju" className="inline-block hover:text-[#FF4F00] hover:translate-x-1 transition-all duration-200">Ochrana osobních údajů (GDPR)</Link></li>
-              <li><Link href="/cookies" className="inline-block hover:text-white hover:translate-x-1 transition-all duration-200">Nastavení Cookies</Link></li>
+            <h3 className="text-white font-bold mb-6 text-lg">Kontakt</h3>
+            <ul className="space-y-4">
+              <li className="flex items-start gap-3">
+                <Phone className="text-[#FF4F00] shrink-0 mt-0.5" size={18} />
+                <a href="tel:+420734617462" className="text-zinc-400 hover:text-[#FF4F00] transition-colors text-sm">+420 734 617 462</a>
+              </li>
+              <li className="flex items-start gap-3">
+                <Mail className="text-[#FF4F00] shrink-0 mt-0.5" size={18} />
+                <div className="flex flex-col space-y-1">
+                  <a href="mailto:info@izolacers.cz" className="text-zinc-400 hover:text-[#FF4F00] transition-colors text-sm">info@izolacers.cz</a>
+                  <a href="mailto:poptavky@izolacers.cz" className="text-zinc-400 hover:text-[#FF4F00] transition-colors text-sm">poptavky@izolacers.cz</a>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <MapPin className="text-[#FF4F00] shrink-0 mt-0.5" size={18} />
+                <span className="text-zinc-400 text-sm">Jihlava, Kraj Vysočina<br/>(Působíme po celé ČR)</span>
+              </li>
             </ul>
           </div>
+
+          {/* Firemní údaje */}
+          <div>
+            <h3 className="text-white font-bold mb-6 text-lg">Firemní údaje</h3>
+            <ul className="space-y-4">
+              <li className="flex items-center gap-3">
+                <Building2 className="text-[#FF4F00] shrink-0" size={18} />
+                <div>
+                  <span className="block text-zinc-400 text-sm">IČO: 88707351</span>
+                  <span className="block text-zinc-400 text-sm">DIČ: CZ308068889</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
         </div>
 
-        <div className="mt-12 pt-8 border-t border-zinc-800/80 flex flex-col items-center justify-center gap-3 text-center">
-          <p className="text-sm text-zinc-500 font-medium">
-            © {new Date().getFullYear()} IZOLACE RS. Všechna práva vyhrazena.
-          </p>
-          
-          <div className="text-xs text-zinc-600 flex flex-col items-center gap-1">
-            <p>
-              Vývoj webu <a href="https://www.webnamiru.site" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-white transition-colors font-bold">Taras Ishchuk - OSVČ</a>, IČO: 23874694.
-            </p>
-            <p>
-              Zapsaný v živnostenském rejstříku vedeném u Magistrátu města Jihlavy.
-            </p>
-            <div className="flex items-center gap-3 mt-1.5 font-medium">
-              <a href="https://wa.me/420777596216" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-emerald-400 transition-colors">
-                WhatsApp: +420 777 596 216
-              </a>
-              <span className="text-zinc-700">•</span>
-              <a href="https://www.webnamiru.site" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-blue-400 transition-colors">
-                webnamiru.site
-              </a>
-            </div>
+        {/* Spodní lišta - Copyright a Legální odkazy */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-zinc-600">
+          <p>© {currentYear} IZOLACE RS. Všechna práva vyhrazena.</p>
+          <div className="flex items-center gap-6">
+            <Link href="/ochrana-osobnich-udaju" className="hover:text-zinc-300 transition-colors">Ochrana osobních údajů</Link>
+            <Link href="/cookies" className="hover:text-zinc-300 transition-colors">Nastavení Cookies</Link>
           </div>
         </div>
       </div>
