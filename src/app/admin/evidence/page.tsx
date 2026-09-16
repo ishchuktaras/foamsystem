@@ -1,165 +1,182 @@
 // src/app/admin/evidence/page.tsx
-
 import { db } from '@/lib/db'
-import { ClipboardCheck, Thermometer, Cog, Package, HardHat } from 'lucide-react'
-import { auth } from '@/auth'
-import SupervisorBillingForm from '@/components/SupervisorBillingForm'
+import Link from 'next/link'
+import { CalendarDays, MapPin, CheckCircle2, Clock, ArrowRight, Wrench, Thermometer, User, Wind } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export default async function EvidenceListPage() {
-  const session = await auth()
-  const currentUser = session?.user as { id?: string; role?: string } | undefined
-  const role = currentUser?.role ? String(currentUser.role).toUpperCase() : ''
-  const userId = currentUser?.id
-
-  const isApplicator = role === 'APLIKATOR'
-  // Zjistíme, zda má uživatel právo vidět finance
-  const hasBillingAccess = role === 'SUPERVIZOR' || role === 'JEDNATEL' || role === 'ADMIN'
-
-  // Pro evidenci nás zajímají POUZE dokončené zakázky. Aplikátor navíc vidí jen ty své.
-  const whereClause = isApplicator 
-    ? {
-        status: 'COMPLETED' as const,
-        OR: [
-          { responsibleUserId: userId },
-          { assignedUsers: { some: { id: userId } } }
-        ]
-      }
-    : { status: 'COMPLETED' as const }
-
-  const completedQuotes = await db.quote.findMany({
-    where: whereClause,
-    include: { 
-      evidence: true,
-      responsibleUser: true
+export default async function EvidencePage() {
+  // 1. ZAKÁZKY ČEKAJÍCÍ NA REALIZACI (mají termín, ale nejsou COMPLETED)
+  const pendingQuotes = await db.quote.findMany({
+    where: {
+      scheduledDate: { not: null },
+      status: { not: 'COMPLETED' }
     },
+    include: { responsibleUser: true },
+    orderBy: { scheduledDate: 'asc' }
+  })
+
+  // 2. ARCHIV DOKONČENÝCH STAVEB (mají vyplněnou evidenci)
+  const completedQuotes = await db.quote.findMany({
+    where: {
+      status: 'COMPLETED',
+      evidence: { isNot: null }
+    },
+    include: { evidence: true, responsibleUser: true },
     orderBy: { updatedAt: 'desc' }
   })
 
   return (
-    <div className="space-y-6 p-4 md:p-8 animate-in fade-in duration-500 max-w-full overflow-hidden">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full pb-16">
       
-      <div className="relative overflow-hidden rounded-2xl bg-[#000000] border border-zinc-800 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
+      {/* BANNER PRO SUPERVIZORA */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-6 md:p-10 text-[#FEFEFA] shadow-xl">
         <div className="relative z-10 max-w-2xl">
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
-            {isApplicator ? 'Moje odevzdaná práce' : 'Evidence práce'}
-          </h1>
-          <p className="text-zinc-400 text-lg leading-relaxed">
-            Archiv dokončených realizací. Technické parametry, klimatické podmínky a záznamy o spotřebě materiálu na stavbě.
+          <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3">Evidence práce (Zástup)</h1>
+          <p className="text-zinc-400 text-sm md:text-lg leading-relaxed">
+            Centrální správa technických deníků. Zde můžete jako supervizor rovnou odklikat a zadat realizaci za aplikátora, nebo si prohlížet historii již odevzdaných staveb.
           </p>
         </div>
         <div className="absolute right-0 top-0 -translate-y-12 translate-x-1/4 opacity-10 pointer-events-none text-[#FF4F00]">
-          <ClipboardCheck size={300} />
+          <Wind size={300} />
         </div>
       </div>
 
-      {completedQuotes.length === 0 ? (
-        <div className="bg-[#FEFEFA] p-12 rounded-2xl border border-zinc-200 text-center shadow-sm">
-          <ClipboardCheck size={48} className="mx-auto text-zinc-300 mb-4" />
-          <h3 className="text-xl font-bold text-[#000000]">Zatím žádná odevzdaná stavba</h3>
-          <p className="text-zinc-500 mt-2">
-            {isApplicator 
-              ? 'Až dokončíte a odevzdáte nějakou zakázku, objeví se v tomto archivu.'
-              : 'Až u některé nabídky vyplníš technickou evidenci, objeví se zde.'
-            }
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-6">
-          {completedQuotes.map((quote) => (
-            <div key={quote.id} className="bg-[#FEFEFA] text-[#000000] rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col">
-              
-              <div className="flex flex-col md:flex-row w-full">
-                <div className="p-6 md:w-1/3 bg-zinc-50 border-b md:border-b-0 md:border-r border-zinc-200 flex flex-col justify-between">
+      {/* SEKCE 1: KARTY K ODKLIKÁNÍ (STEJNÉ JAKO MÁ APLIKÁTOR) */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-[#000000] flex items-center gap-2">
+          <Clock size={22} className="text-[#FF4F00]" /> Čeká na zadání realizace ({pendingQuotes.length})
+        </h2>
+
+        {pendingQuotes.length === 0 ? (
+          <div className="bg-[#FEFEFA] p-8 rounded-2xl border border-zinc-200 text-center text-zinc-500 shadow-sm font-medium">
+            Paráda! Aktuálně nemáte žádné zakázky, které by čekaly na vyplnění deníku.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {pendingQuotes.map((quote) => {
+              const dateValue = quote.scheduledDate 
+                ? new Date(quote.scheduledDate).toLocaleDateString('cs-CZ') 
+                : 'Termín neurčen'
+
+              return (
+                <div key={quote.id} className="bg-[#FEFEFA] p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-between hover:border-[#FF4F00]/50 transition-all">
                   <div>
-                    <div className="text-sm font-bold text-[#FF4F00] uppercase tracking-wider mb-1">Zákazník</div>
-                    <h3 className="text-xl font-black text-[#000000] mb-2">{quote.customerName}</h3>
-                    <div className="text-sm text-zinc-600 mb-4">{quote.city}</div>
-                  </div>
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-zinc-500">Materiál:</span>
-                      <span className="font-bold text-[#000000]">{quote.materialName}</span>
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
+                        {quote.status}
+                      </span>
+                      <span className="text-xs font-bold text-[#FF4F00] flex items-center gap-1">
+                        <CalendarDays size={14} /> {dateValue}
+                      </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-zinc-500">Rozsah:</span>
-                      <span className="font-bold text-[#000000]">{quote.area} m² / {quote.thickness} cm</span>
-                    </div>
+
+                    <h3 className="font-extrabold text-lg text-[#000000] mb-1">{quote.customerName}</h3>
                     
-                    <div className="flex justify-between mt-2 pt-2 border-t border-zinc-200">
-                      <span className="text-zinc-500 flex items-center gap-1">
-                        <HardHat size={14} className="text-[#FF4F00]" /> Aplikátor:
-                      </span>
-                      <span className="font-bold text-[#000000]">
-                        {quote.responsibleUser?.name || quote.responsibleUser?.email || 'Nepřiřazeno'}
-                      </span>
+                    <p className="text-xs text-zinc-500 flex items-center gap-1 mb-1">
+                      <MapPin size={14} className="text-[#FF4F00]" /> {quote.street || ''}, {quote.city}
+                    </p>
+                    <p className="text-xs font-bold text-zinc-600 flex items-center gap-1 mb-3">
+                      <User size={14} className="text-zinc-400" /> Přiřazeno: {quote.responsibleUser?.name || 'Nepřiřazeno'}
+                    </p>
+
+                    <div className="text-xs font-semibold text-zinc-700 bg-zinc-50 p-2.5 rounded-xl border border-zinc-100 mb-4">
+                      {quote.materialName} ({quote.area} m² / {quote.thickness} cm)
                     </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-zinc-100 flex items-center justify-between">
+                    <span className="text-xs text-zinc-400 font-medium">Odeslat jako supervizor</span>
+                    <Link 
+                      href={`/admin/quotes/${quote.id}/evidence`} 
+                      className="px-4 py-2 bg-[#FF4F00] hover:bg-orange-600 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+                    >
+                      Zadat deník <ArrowRight size={14} />
+                    </Link>
                   </div>
                 </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
-                <div className="p-6 md:w-2/3 grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  {quote.evidence ? (
-                    <>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-[#000000] font-bold border-b border-zinc-100 pb-2">
-                          <Thermometer size={16} className="text-[#FF4F00]" /> Teploty
-                        </div>
-                        <div className="text-sm space-y-1">
-                          <div className="flex justify-between"><span className="text-zinc-500">Venkovní:</span> <strong className="text-[#000000]">{quote.evidence.ambientTemp} °C</strong></div>
-                          <div className="flex justify-between"><span className="text-zinc-500">Vnitřní:</span> <strong className="text-[#000000]">{quote.evidence.internalTemp} °C</strong></div>
-                          <div className="flex justify-between"><span className="text-zinc-500">Povrch:</span> <strong className="text-[#000000]">{quote.evidence.surfaceTemp} °C</strong></div>
-                          <div className="flex justify-between mt-2 pt-2 border-t border-zinc-100"><span className="text-zinc-500">Podklad:</span> <strong className="uppercase text-[#000000]">{quote.evidence.surfaceType}</strong></div>
-                        </div>
+      {/* SEKCE 2: ARCHIV ODEVZDANÝCH STAVEB */}
+      <div className="pt-8 border-t border-zinc-200 space-y-4">
+        <h2 className="text-xl font-bold text-[#000000] flex items-center gap-2">
+          <CheckCircle2 size={22} className="text-emerald-600" /> Archiv odevzdaných staveb ({completedQuotes.length})
+        </h2>
+
+        {completedQuotes.length === 0 ? (
+          <div className="bg-[#FEFEFA] p-10 rounded-2xl border border-zinc-200 text-center flex flex-col items-center justify-center shadow-sm">
+            <CheckCircle2 size={40} className="text-zinc-300 mb-3" />
+            <p className="text-zinc-500 font-medium text-lg">Zatím žádná odevzdaná stavba.</p>
+            <p className="text-zinc-400 text-sm mt-1">Až u některé zakázky nahoře vyplníte evidenci, přesune se sem do archivu.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {completedQuotes.map((quote) => {
+              const ev = quote.evidence
+              const strokes = ev ? (ev.reactorEnd - ev.reactorStart) : 0
+
+              return (
+                <div key={quote.id} className="bg-[#FEFEFA] p-6 rounded-2xl border border-zinc-200 shadow-sm">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-zinc-100">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
+                          Dokončeno
+                        </span>
+                        <span className="text-xs text-zinc-400">Aplikátor: {quote.responsibleUser?.name || 'Neznámý'}</span>
+                      </div>
+                      <h3 className="font-extrabold text-xl text-[#000000]">{quote.customerName}</h3>
+                      <p className="text-sm text-zinc-500">{quote.street || ''}, {quote.city} • {quote.area} m² / {quote.thickness} cm ({quote.materialName})</p>
+                    </div>
+
+                    <div>
+                      <Link 
+                        href={`/admin/quotes/${quote.id}/evidence`}
+                        className="px-4 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 justify-center"
+                      >
+                        <Wrench size={14} /> Detail a úprava deníku
+                      </Link>
+                    </div>
+                  </div>
+
+                  {ev && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 text-sm">
+                      <div className="bg-zinc-50 p-3.5 rounded-xl border border-zinc-100">
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                          <Thermometer size={12}/> Teploty (Ven / In / Podklad)
+                        </p>
+                        <p className="font-bold text-zinc-800">
+                          {ev.ambientTemp}°C / {ev.internalTemp}°C / {ev.surfaceTemp}°C
+                        </p>
                       </div>
 
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-[#000000] font-bold border-b border-zinc-100 pb-2">
-                          <Cog size={16} className="text-[#FF4F00]" /> Reaktory
-                        </div>
-                        <div className="text-sm space-y-1">
-                          <div className="flex justify-between"><span className="text-zinc-500">Start:</span> <strong className="text-[#000000]">{quote.evidence.reactorStart}</strong></div>
-                          <div className="flex justify-between"><span className="text-zinc-500">Konec:</span> <strong className="text-[#000000]">{quote.evidence.reactorEnd}</strong></div>
-                          <div className="flex justify-between mt-2 pt-2 border-t border-zinc-100"><span className="text-zinc-500">Zdvihy celkem:</span> <strong className="text-[#FF4F00]">{quote.evidence.reactorEnd - quote.evidence.reactorStart}</strong></div>
-                        </div>
+                      <div className="bg-orange-50/50 p-3.5 rounded-xl border border-orange-100">
+                        <p className="text-[10px] font-bold text-orange-600 uppercase tracking-wider mb-1">Zdvihy reaktoru</p>
+                        <p className="font-black text-[#FF4F00]">
+                          {strokes} zdvihů <span className="text-xs font-normal text-zinc-600">({ev.reactorStart} → {ev.reactorEnd})</span>
+                        </p>
                       </div>
 
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-[#000000] font-bold border-b border-zinc-100 pb-2">
-                          <Package size={16} className="text-[#FF4F00]" /> Provoz
-                        </div>
-                        <div className="text-sm space-y-1">
-                          <div className="flex justify-between"><span className="text-zinc-500">Balení (role):</span> <strong className="text-[#000000]">{quote.evidence.foilRolls} ks</strong></div>
-                          <div className="flex justify-between"><span className="text-zinc-500">Čas balení:</span> <strong className="text-[#000000]">{quote.evidence.packingHours} h</strong></div>
-                          
-                          {(quote.evidence.workingAtHeights || quote.evidence.ventilationUsed || quote.evidence.difficultEnv) && (
-                            <div className="mt-2 pt-2 border-t border-zinc-100 flex flex-wrap gap-1">
-                              {quote.evidence.workingAtHeights && <span className="bg-red-50 text-red-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Výšky</span>}
-                              {quote.evidence.ventilationUsed && <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Odvětrávání</span>}
-                              {quote.evidence.difficultEnv && <span className="bg-amber-50 text-amber-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Ztížené podm.</span>}
-                            </div>
-                          )}
-                        </div>
+                      <div className="bg-zinc-50 p-3.5 rounded-xl border border-zinc-100">
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Vícepráce</p>
+                        <p className="font-bold text-zinc-800 text-xs">
+                          Fólie: {ev.foilRolls} rolí ({ev.packingHours}h)<br/>
+                          Agregát: {ev.generatorKwh || 0} kWh
+                        </p>
                       </div>
-                    </>
-                  ) : (
-                    <div className="col-span-3 text-center text-zinc-400 py-8 italic">Data evidence chybí</div>
+                    </div>
                   )}
                 </div>
-              </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
-              {/* TADY SE ZOBRAZÍ NOVÝ PANEL PRO SUPERVIZORA */}
-              {hasBillingAccess && quote.evidence && (
-                <div className="px-6 pb-6">
-                  <SupervisorBillingForm evidence={quote.evidence} quote={quote} />
-                </div>
-              )}
-              
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
