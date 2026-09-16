@@ -67,11 +67,13 @@ export default function ContactForm() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl shrink-0"><Mail size={16} /></div>
+        {/* NOVÉ E-MAILY */}
+        <div className="flex items-start gap-2.5">
+          <div className="p-2 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl shrink-0 mt-0.5"><Mail size={16} /></div>
           <div>
-            <span className="block font-bold text-zinc-400 uppercase text-[10px]">E-mail</span>
-            <a href="mailto:rilum@seznam.cz" className="font-extrabold text-[#000000] hover:text-[#FF4F00] transition-colors truncate block max-w-[140px]" title="rilum@seznam.cz">rilum@seznam.cz</a>
+            <span className="block font-bold text-zinc-400 uppercase text-[10px] mb-1">E-maily</span>
+            <a href="mailto:info@izolacers.cz" className="font-extrabold text-[#000000] hover:text-[#FF4F00] transition-colors block mb-0.5">info@izolacers.cz</a>
+            <a href="mailto:poptavky@izolacers.cz" className="font-extrabold text-[#000000] hover:text-[#FF4F00] transition-colors block">poptavky@izolacers.cz</a>
           </div>
         </div>
 
