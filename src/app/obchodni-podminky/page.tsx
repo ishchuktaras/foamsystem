@@ -56,7 +56,7 @@ export default function TermsPage() {
               5. Záruka
             </h2>
             <p>
-              Na aplikaci izolační pěny je poskytována standardní záruka v délce 60 měsíců, pakliže Smlouva o dílo nestanoví jinak. Tvarová stálost a životnost samotné PUR pěny je garantována výrobcem po celou dobu životnosti stavby.
+              Na aplikaci izolační pěny je poskytována standardní záruka v délce 24 měsíců, pakliže Smlouva o dílo nestanoví jinak. Tvarová stálost a životnost samotné PUR pěny je garantována výrobcem po celou dobu životnosti stavby.
             </p>
 
           </div>

@@ -6,9 +6,15 @@ import { motion } from 'framer-motion'
 
 export default function Hero() {
   return (
-    <section className="relative bg-[#000000] text-white overflow-hidden py-24 lg:py-32">
-      {/* Dynamické dýchající světelné efekty na pozadí */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-15 pointer-events-none">
+    <section 
+      className="relative text-white overflow-hidden py-24 lg:py-32 bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/images/hero-bg.jpeg')" }}
+    >
+      {/* Tmavý překryv, aby byl text na fotce perfektně čitelný */}
+      <div className="absolute inset-0 bg-black/75 z-0"></div>
+
+      {/* Dynamické dýchající světelné efekty na pozadí (necháme, ale pod textem) */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
         <motion.div 
           animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
@@ -21,7 +27,7 @@ export default function Hero() {
         />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center">
         
         {/* Badge */}
         <motion.div 
@@ -38,10 +44,10 @@ export default function Hero() {
           initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.15 }}
-          className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6 leading-tight"
+          className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6 leading-tight drop-shadow-lg"
         >
           Izolace, která šetří <br className="hidden md:block" />
-          <span className="text-[#FF4F00]">až 50 % nákladů</span> na vytápění
+          <span className="text-[#FF4F00]">až 70 % nákladů</span> na vytápění
         </motion.h1>
 
         {/* Popis */}
@@ -49,7 +55,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-lg md:text-xl text-zinc-400 max-w-2xl mb-10 font-medium"
+          className="text-lg md:text-xl text-zinc-300 max-w-2xl mb-10 font-medium drop-shadow-md"
         >
           Zateplení střech, podkroví a fasád stříkanou PUR pěnou. Dokonalé utěsnění bez tepelných mostů s garancí životnosti po celou dobu stavby.
         </motion.p>
