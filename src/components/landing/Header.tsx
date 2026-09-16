@@ -18,7 +18,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         
         <Link href="/" className="flex items-center text-black hover:opacity-90 transition-opacity">
-          <Logo className="h-10 w-auto" />
+          <Logo className="h-18 w-auto" />
         </Link>
 
         {/* Desktop Navigace */}

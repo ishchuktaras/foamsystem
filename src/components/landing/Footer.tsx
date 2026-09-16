@@ -8,7 +8,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <div className="mb-6 text-white inline-block hover:scale-105 transition-transform duration-300">
-              <Logo className="h-10 w-auto" />
+              <Logo className="h-18 w-auto" />
             </div>
             <p className="text-sm leading-relaxed mb-4">Profesionální aplikace stříkané PUR izolace s důrazem na kvalitu, rychlost a čistotu práce.</p>
           </div>
