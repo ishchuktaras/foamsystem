@@ -8,6 +8,7 @@ import Process from '@/components/landing/Process'
 import FaqReviews from '@/components/landing/FaqReviews'
 import ScrollReveal from '@/components/landing/ScrollReveal' 
 import Services from '@/components/landing/Services'
+import ServiceAreas from '@/components/landing/ServiceAreas'
 
 export default function LandingPage() {
   return (
@@ -45,6 +46,10 @@ export default function LandingPage() {
             <ContactForm />
           </ScrollReveal>
         </section>
+
+        <ScrollReveal>
+          <ServiceAreas />
+        </ScrollReveal>
 
       </main>
 
