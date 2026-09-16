@@ -2,10 +2,9 @@
 import { db } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Building2, MapPin, CalendarDays, User, Thermometer, Wind } from 'lucide-react'
+import { ArrowLeft, Building2, MapPin, CalendarDays, User, Thermometer, Wind, ClipboardEdit } from 'lucide-react'
 import BillingPanel from '@/components/admin/BillingPanel'
 
-// Překlad databázových stavů do češtiny včetně barev
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   INQUIRY: { label: 'Poptávka', color: 'bg-blue-50 text-blue-700 border-blue-200' },
   ORDER: { label: 'Objednávka', color: 'bg-amber-50 text-amber-700 border-amber-200' },
@@ -24,12 +23,11 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
 
   if (!quote) return notFound()
 
-  // VÝPOČET LIDSKY ČITELNÉHO ČÍSLA ZAKÁZKY (např. 202609-001)
+  // VÝPOČET LIDSKY ČITELNÉHO ČÍSLA ZAKÁZKY
   const date = new Date(quote.createdAt)
   const year = date.getFullYear()
   const month = date.getMonth() + 1
   
-  // Získáme všechny zakázky z daného měsíce, seřazené podle data vytvoření
   const quotesInMonth = await db.quote.findMany({
     where: {
       createdAt: {
@@ -41,36 +39,45 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
     select: { id: true }
   })
 
-  // Najdeme index naší zakázky a přidáme 1, abychom získali pořadové číslo
   const orderNumber = quotesInMonth.findIndex(q => q.id === quote.id) + 1
-  
-  // Formátování: YYYYMM-XXX
   const formattedQuoteNumber = `${year}${month.toString().padStart(2, '0')}-${orderNumber.toString().padStart(3, '0')}`
 
   const companyProfile = await db.companyProfile.findFirst()
 
   const statusBadge = STATUS_MAP[quote.status] || { label: quote.status, color: 'bg-zinc-100 text-zinc-700 border-zinc-200' }
 
-  // CHYTRÁ LOGIKA PRO ZOBRAZENÍ VÝŠEK A ZTÍŽENÉHO PROSTŘEDÍ
-  // (Bere v potaz buď zaškrtnutí aplikátorem NEBO částku zadanou supervizorem)
   const isWorkingAtHeights = quote.evidence?.workingAtHeights || (quote.evidence?.heightsSurcharge && quote.evidence.heightsSurcharge > 0)
   const isDifficultEnv = quote.evidence?.difficultEnv || (quote.evidence?.difficultEnvSurcharge && quote.evidence.difficultEnvSurcharge > 0)
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-      <div className="flex items-center gap-4 mb-8">
-        <Link href="/admin/quotes" className="p-2 bg-white border border-zinc-200 rounded-xl hover:bg-zinc-50 transition-colors text-zinc-600 shadow-sm">
-          <ArrowLeft size={20} />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-extrabold text-[#000000]">Detail zakázky</h1>
-          {/* Tady už se ukáže hezké číslo místo technického ID */}
-          <p className="text-zinc-500 text-sm font-mono tracking-widest">{formattedQuoteNumber}</p>
+      {/* HLAVIČKA S TLAČÍTKY */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-4">
+          <Link href="/admin/quotes" className="p-2 bg-white border border-zinc-200 rounded-xl hover:bg-zinc-50 transition-colors text-zinc-600 shadow-sm">
+            <ArrowLeft size={20} />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-extrabold text-[#000000]">Detail zakázky</h1>
+            <p className="text-zinc-500 text-sm font-mono tracking-widest">{formattedQuoteNumber}</p>
+          </div>
         </div>
+
+        {/* NOVÉ TLAČÍTKO PRO SUPERVIZORA - Zadat evidenci */}
+        {!quote.evidence && quote.status !== 'COMPLETED' && (
+          <Link 
+            href={`/admin/quotes/${quote.id}/evidence`} 
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#FF4F00] hover:bg-[#E64700] text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg"
+          >
+            <ClipboardEdit size={18} />
+            <span className="hidden sm:inline">Zadat realizaci (Zástup)</span>
+            <span className="sm:hidden">Realizace</span>
+          </Link>
+        )}
       </div>
 
+      {/* INFO PANEL */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* INFO PANEL (Zákazník a plánování) */}
         <div className="lg:col-span-2 bg-[#FEFEFA] rounded-2xl shadow-sm border border-zinc-200 overflow-hidden">
           <div className="p-6 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
             <div className="flex items-center gap-4">
@@ -145,6 +152,7 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
+      {/* TECHNICKÝ DENÍK */}
       {quote.evidence && (
         <div className="bg-[#FEFEFA] p-6 md:p-8 rounded-2xl shadow-sm border border-zinc-200 mt-6">
           <div className="flex items-center gap-3 mb-6">
@@ -179,12 +187,10 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
               <div className="space-y-1">
                 <p className="font-bold text-zinc-800 flex justify-between">
                   <span>Práce ve výškách:</span> 
-                  {/* POUŽITÍ NOVÉ CHYTRÉ LOGIKY */}
                   <span className={isWorkingAtHeights ? 'text-red-500' : 'text-zinc-400'}>{isWorkingAtHeights ? 'Ano' : 'Ne'}</span>
                 </p>
                 <p className="font-bold text-zinc-800 flex justify-between">
                   <span>Ztížené prostředí:</span> 
-                  {/* POUŽITÍ NOVÉ CHYTRÉ LOGIKY */}
                   <span className={isDifficultEnv ? 'text-red-500' : 'text-zinc-400'}>{isDifficultEnv ? 'Ano' : 'Ne'}</span>
                 </p>
               </div>
@@ -193,6 +199,7 @@ export default async function QuoteDetail({ params }: { params: Promise<{ id: st
         </div>
       )}
 
+      {/* VYÚČTOVÁNÍ */}
       {quote.status === 'COMPLETED' && quote.evidence && (
         <BillingPanel 
           quote={quote} 
