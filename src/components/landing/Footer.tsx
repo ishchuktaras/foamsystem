@@ -36,7 +36,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="#kontakt" className="text-zinc-400 hover:text-[#FF4F00] transition-colors flex items-center gap-2 text-sm">
+                <Link href="#poptavka" className="text-zinc-400 hover:text-[#FF4F00] transition-colors flex items-center gap-2 text-sm">
                   <ChevronRight size={14} /> Nezávazná kalkulace
                 </Link>
               </li>
@@ -81,13 +81,19 @@ export default function Footer() {
 
         </div>
 
-        {/* Spodní lišta - Copyright a Legální odkazy */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-zinc-600">
+        {/* Spodní lišta - Copyright, Legální odkazy a Vývojář */}
+        <div className="flex flex-col lg:flex-row justify-between items-center gap-4 text-xs text-zinc-500">
           <p>© {currentYear} IZOLACE RS. Všechna práva vyhrazena.</p>
-          <div className="flex items-center gap-6">
+          
+          <div className="flex flex-wrap items-center justify-center gap-6">
+            <Link href="/obchodni-podminky" className="hover:text-zinc-300 transition-colors">Obchodní podmínky</Link>
             <Link href="/ochrana-osobnich-udaju" className="hover:text-zinc-300 transition-colors">Ochrana osobních údajů</Link>
             <Link href="/cookies" className="hover:text-zinc-300 transition-colors">Nastavení Cookies</Link>
           </div>
+
+          <p>
+            Vytvořil <a href="https://webnamiru.site" target="_blank" rel="noopener noreferrer" className="text-[#FF4F00] font-bold hover:underline">Taras Ishchuk - webnamiru.site</a>
+          </p>
         </div>
       </div>
     </footer>
