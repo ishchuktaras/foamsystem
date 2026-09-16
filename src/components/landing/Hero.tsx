@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 export default function Hero() {
   return (
     <section 
-      className="relative text-white overflow-hidden py-24 lg:py-32 bg-cover bg-center bg-no-repeat"
+      className="relative text-white overflow-hidden min-h-[calc(100vh-5rem)] flex items-center justify-center bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('/images/hero-bg1.jpeg')" }}
     >
       {/* Silnější tmavý gradientní překryv pro maximální kontrast a čitelnost */}
@@ -27,7 +27,7 @@ export default function Hero() {
         />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center py-12">
         
         {/* Badge */}
         <motion.div 
@@ -67,7 +67,7 @@ export default function Hero() {
           transition={{ duration: 0.5, delay: 0.45 }}
         >
           <a href="#poptavka" className="px-8 py-4 bg-[#FF4F00] hover:bg-[#E64700] text-white text-lg font-bold rounded-xl transition-all shadow-[0_0_25px_rgba(255,79,0,0.5)] hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer">
-            Spočítat nezávazně <ArrowRight size= {20} />
+            Spočítat nezávazně <ArrowRight size={20} />
           </a>
         </motion.div>
 
