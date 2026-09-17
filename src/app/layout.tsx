@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://izolacers.cz'), // Nezbytné pro absolutní cesty OG obrázků
   title: 'IZOLACE RS | Stříkané izolace Jihlava a Vysočina',
   description: 'Profesionální zateplení střech, podkroví a fasád stříkanou PUR pěnou. Nejuniverzálnější zateplení na trhu s garancí 24 měsíců. Působíme v Jihlavě, na Vysočině i po celé ČR.',
   keywords: ['IZOLACE RS', 'stříkaná izolace', 'PUR pěna', 'zateplení', 'Jihlava', 'Vysočina', 'izolace střech'],
@@ -25,6 +26,29 @@ export const metadata: Metadata = {
     'geo.placename': 'Jihlava',
     'geo.position': '49.3961;15.5912',
     'ICBM': '49.3961, 15.5912',
+  },
+  // NÁSLEDUJÍCÍ BLOKY PŘIDÁNY PRO SOCIÁLNÍ SÍTĚ:
+  openGraph: {
+    title: 'IZOLACE RS | Stříkané PUR izolace Vysočina',
+    description: 'Nejuniverzálnější zateplení na trhu. Profesionální zateplení s garancí 24 měsíců.',
+    url: 'https://izolacers.cz',
+    siteName: 'IZOLACE RS',
+    images: [
+      {
+        url: '/images/hero-bg.jpeg', // Použije tvůj široký obrázek
+        width: 1200,
+        height: 630,
+        alt: 'Aplikátor IZOLACE RS při stříkání PUR pěny',
+      },
+    ],
+    locale: 'cs_CZ',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'IZOLACE RS | Stříkané PUR izolace',
+    description: 'Nejuniverzálnější zateplení na trhu. Profesionální zateplení s garancí 24 měsíců.',
+    images: ['/images/hero-bg.jpeg'], 
   },
 }
 
