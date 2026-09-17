@@ -4,8 +4,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Logo from '@/components/Logo'
-import { Menu, X, ArrowRight, Calculator } from 'lucide-react'
-import { motion, AnimatePresence, Variants } from 'framer-motion' // <--- Přidán import Variants
+import { Menu, X, ArrowRight, Calculator, Lock } from 'lucide-react'
+import { motion, AnimatePresence, Variants } from 'framer-motion'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
@@ -13,7 +13,6 @@ export default function Header() {
   const toggleMenu = () => setIsOpen(!isOpen)
   const closeMenu = () => setIsOpen(false)
 
-  // Přidáno explicitní typování ": Variants"
   const menuVariants: Variants = {
     hidden: { opacity: 0, y: -20 },
     visible: { 
@@ -24,7 +23,6 @@ export default function Header() {
     exit: { opacity: 0, y: -10, transition: { duration: 0.2 } }
   }
   
-  // Přidáno explicitní typování ": Variants"
   const itemVariants: Variants = {
     hidden: { opacity: 0, x: -10 },
     visible: { opacity: 1, x: 0 }
@@ -112,7 +110,7 @@ export default function Header() {
               </motion.a>
             </nav>
 
-            <motion.div variants={itemVariants} className="pt-4 border-t border-zinc-100 space-y-3">
+            <motion.div variants={itemVariants} className="pt-4 border-t border-zinc-100 space-y-4">
               <a 
                 href="#poptavka" 
                 onClick={closeMenu}
@@ -120,13 +118,17 @@ export default function Header() {
               >
                 <Calculator size={18} /> Nezávazná kalkulace
               </a>
-              <Link 
-                href="/login" 
-                onClick={closeMenu}
-                className="w-full py-3.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-center"
-              >
-                Přihlášení do systému
-              </Link>
+              
+              {/* Odkaz na přihlášení (diskrétní, jako ve footeru) */}
+              <div className="pt-2 border-t border-zinc-100 flex justify-center">
+                <Link 
+                  href="/login" 
+                  onClick={closeMenu}
+                  className="text-zinc-500 hover:text-[#FF8730] transition-colors flex items-center gap-2 text-sm font-medium py-2"
+                >
+                  <Lock size={14} /> Přihlášení do systému
+                </Link>
+              </div>
             </motion.div>
           </motion.div>
         )}
