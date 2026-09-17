@@ -7,12 +7,11 @@ import { motion } from 'framer-motion'
 export default function Hero() {
   return (
     <section 
-      className="relative overflow-hidden min-h-[calc(100vh-5rem)] flex items-center justify-center bg-cover bg-center bg-no-repeat"
-      // UPOZORNĚNÍ: Tady jsem změnil název fotky. Nahraj svůj nový obrázek s aplikátorem jako hero-aplikator.jpeg do složky public/images/
-      style={{ backgroundImage: "url('/images/hero-bg.jpeg')" }}
+      // Zde je klíčová změna: obrázky se mění podle velikosti displeje (mobil vs. md:)
+      className="relative overflow-hidden min-h-[calc(100vh)] flex items-center justify-center bg-cover bg-center bg-no-repeat bg-[url('/images/hero-bg1.jpeg')] md:bg-[url('/images/hero-bg.jpeg')]"
     >
       {/* Světlý gradientní překryv pro maximální kontrast tmavého textu a viditelnost fotky na pozadí */}
-      <div className="absolute inset-0 bg-linear-to-b from-white/20 via-white/75 to-white/95 z-0 backdrop-blur-[2px]"></div>
+      <div className="absolute inset-0 bg-linear-to-b from-white/15 via-white/35 to-white/95 z-0 backdrop-blur-[2px]"></div>
 
       {/* Dynamické dýchající světelné efekty na pozadí v barvě #FF8730 */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
