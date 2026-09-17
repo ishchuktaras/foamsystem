@@ -5,7 +5,8 @@ import ContactForm from '@/components/landing/LandingContactForm'
 import Hero from '@/components/landing/Hero'
 import Benefits from '@/components/landing/Benefits'
 import Process from '@/components/landing/Process'
-import FaqReviews from '@/components/landing/FaqReviews'
+import Faq from '@/components/landing/Faq' // <-- Změněno
+import Reviews from '@/components/landing/Reviews' // <-- Přidáno
 import ScrollReveal from '@/components/landing/ScrollReveal' 
 import Services from '@/components/landing/Services'
 import ServiceAreas from '@/components/landing/ServiceAreas'
@@ -16,14 +17,13 @@ export default function LandingPage() {
       <Header />
 
       <main className="pt-20">
-        
         <Hero />
 
-        {/* 2. Obalení sekcí pro plynulý nástup při scrollování */}
         <ScrollReveal>
           <Benefits />
         </ScrollReveal>
-<ScrollReveal>
+        
+        <ScrollReveal>
           <Services />
         </ScrollReveal>
 
@@ -31,8 +31,14 @@ export default function LandingPage() {
           <Process />
         </ScrollReveal>
 
+        {/* Nové Recenze */}
         <ScrollReveal delay={0.1}>
-          <FaqReviews />
+          <Reviews />
+        </ScrollReveal>
+
+        {/* Vyčleněné FAQ */}
+        <ScrollReveal delay={0.1}>
+          <Faq />
         </ScrollReveal>
 
         {/* POPTÁVKA */}
@@ -42,7 +48,6 @@ export default function LandingPage() {
               <h2 className="text-3xl md:text-4xl font-black mb-4">Získejte kalkulaci zdarma</h2>
               <p className="text-zinc-400">Vyplňte základní údaje o vašem projektu. Ozveme se vám s orientační cenou.</p>
             </div>
-            
             <ContactForm />
           </ScrollReveal>
         </section>

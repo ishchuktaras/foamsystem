@@ -5,13 +5,30 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Logo from '@/components/Logo'
 import { Menu, X, ArrowRight, Calculator } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, Variants } from 'framer-motion' // <--- Přidán import Variants
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
 
   const toggleMenu = () => setIsOpen(!isOpen)
   const closeMenu = () => setIsOpen(false)
+
+  // Přidáno explicitní typování ": Variants"
+  const menuVariants: Variants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.2, ease: 'easeOut', staggerChildren: 0.1 }
+    },
+    exit: { opacity: 0, y: -10, transition: { duration: 0.2 } }
+  }
+  
+  // Přidáno explicitní typování ": Variants"
+  const itemVariants: Variants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: { opacity: 1, x: 0 }
+  }
 
   return (
     <header className="fixed top-0 w-full bg-[#F9FAFB]/90 backdrop-blur-md z-50 border-b border-zinc-200">
@@ -23,14 +40,14 @@ export default function Header() {
 
         {/* Desktop Navigace */}
         <nav className="hidden md:flex gap-8 text-sm font-bold text-[#000000]">
-          <a href="#vyhody" className="hover:text-[#FF4F00] transition-colors">Proč pěna?</a>
-          <a href="#proces" className="hover:text-[#FF4F00] transition-colors">Jak to funguje</a>
-          <a href="#faq" className="hover:text-[#FF4F00] transition-colors">Časté dotazy</a>
+          <a href="#proces" className="hover:text-[#FF8730] transition-colors">Jak to funguje</a>
+          <a href="#faq" className="hover:text-[#FF8730] transition-colors">Časté dotazy</a>
+          <a href="#recenze" className="hover:text-[#FF8730] transition-colors">Recenze</a>
         </nav>
         
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-4">
-          <a href="#poptavka" className="px-6 py-2.5 bg-[#FF4F00] hover:bg-[#E64700] text-white font-bold rounded-xl transition-all shadow-md hover:scale-105 active:scale-95">
+          <a href="#poptavka" className="px-6 py-2.5 bg-[#FF8730] hover:bg-[#E67020] text-white font-bold rounded-xl transition-all shadow-md hover:scale-105 active:scale-95">
             Nezávazná kalkulace
           </a>
         </div>
@@ -38,55 +55,68 @@ export default function Header() {
         {/* Mobile Burger Tlačítko */}
         <button 
           onClick={toggleMenu}
-          className="md:hidden p-2.5 rounded-xl bg-zinc-100 text-zinc-800 hover:bg-zinc-200 transition-colors focus:outline-none cursor-pointer"
+          className="md:hidden p-2.5 rounded-xl bg-zinc-100 text-zinc-800 hover:bg-zinc-200 transition-colors focus:outline-none cursor-pointer flex items-center justify-center"
           aria-label="Menu"
         >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={isOpen ? "close" : "open"}
+              initial={{ rotate: -90, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              exit={{ rotate: 90, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
+            </motion.div>
+          </AnimatePresence>
         </button>
       </div>
 
-      {/* Mobile Rozbalovací Menu s Framer Motion animací */}
+      {/* Mobile Rozbalovací Menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            variants={menuVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             className="md:hidden absolute top-20 left-0 w-full bg-[#FEFEFA] border-b border-zinc-200 shadow-2xl p-6 space-y-6"
           >
             <nav className="flex flex-col space-y-2 text-base font-bold text-zinc-800">
-              <a 
-                href="#vyhody" 
-                onClick={closeMenu}
-                className="p-3.5 rounded-xl hover:bg-zinc-100 transition-colors flex items-center justify-between"
-              >
-                <span>Proč pěna?</span>
-                <ArrowRight size={16} className="text-zinc-400" />
-              </a>
-              <a 
+              <motion.a 
+                variants={itemVariants}
                 href="#proces" 
                 onClick={closeMenu}
-                className="p-3.5 rounded-xl hover:bg-zinc-100 transition-colors flex items-center justify-between"
+                className="p-3.5 rounded-xl hover:bg-zinc-100 transition-colors flex items-center justify-between group"
               >
                 <span>Jak to funguje</span>
-                <ArrowRight size={16} className="text-zinc-400" />
-              </a>
-              <a 
+                <ArrowRight size={16} className="text-zinc-400 group-hover:text-[#FF8730] transition-colors" />
+              </motion.a>
+              <motion.a 
+                variants={itemVariants}
                 href="#faq" 
                 onClick={closeMenu}
-                className="p-3.5 rounded-xl hover:bg-zinc-100 transition-colors flex items-center justify-between"
+                className="p-3.5 rounded-xl hover:bg-zinc-100 transition-colors flex items-center justify-between group"
               >
                 <span>Časté dotazy</span>
-                <ArrowRight size={16} className="text-zinc-400" />
-              </a>
+                <ArrowRight size={16} className="text-zinc-400 group-hover:text-[#FF8730] transition-colors" />
+              </motion.a>
+              <motion.a 
+                variants={itemVariants}
+                href="#recenze" 
+                onClick={closeMenu}
+                className="p-3.5 rounded-xl hover:bg-zinc-100 transition-colors flex items-center justify-between group"
+              >
+                <span>Recenze</span>
+                <ArrowRight size={16} className="text-zinc-400 group-hover:text-[#FF8730] transition-colors" />
+              </motion.a>
             </nav>
 
-            <div className="pt-4 border-t border-zinc-100 space-y-3">
+            <motion.div variants={itemVariants} className="pt-4 border-t border-zinc-100 space-y-3">
               <a 
                 href="#poptavka" 
                 onClick={closeMenu}
-                className="w-full py-4 bg-[#FF4F00] hover:bg-[#E64700] text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-center"
+                className="w-full py-4 bg-[#FF8730] hover:bg-[#E67020] text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-center hover:scale-[1.02]"
               >
                 <Calculator size={18} /> Nezávazná kalkulace
               </a>
@@ -97,7 +127,7 @@ export default function Header() {
               >
                 Přihlášení do systému
               </Link>
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
