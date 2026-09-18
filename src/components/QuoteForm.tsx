@@ -39,6 +39,8 @@ interface QuoteFormProps {
     street?: string;
     city?: string;
     zip?: string;
+    phone?: string | null; // Přidán telefon
+    email?: string | null; // Přidán e-mail
     totalCost?: string;
     applicatorNotes?: string | null;
   };
@@ -52,6 +54,8 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
   const [street, setStreet] = useState(initialData.street || '')
   const [city, setCity] = useState(initialData.city || '')
   const [zip, setZip] = useState(initialData.zip || '')
+  const [phone, setPhone] = useState(initialData.phone || '') // Stav pro telefon
+  const [email, setEmail] = useState(initialData.email || '') // Stav pro e-mail
   const [applicatorNotes, setApplicatorNotes] = useState(initialData.applicatorNotes || '')
 
   const [selectedMaterialId, setSelectedMaterialId] = useState(initialData.materialId || (materials[0]?.id || ''))
@@ -145,7 +149,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
   const handleGenerateCombined = async () => {
     setIsGeneratingCombined(true)
     await generateCombinedPDF({
-      customerName, ico, street, city, zip,
+      customerName, ico, street, city, zip, phone, email, // Přidán telefon a email
       materialName: selectedMaterial?.name || '',
       area, thickness, basePrice, vat, totalPrice,
       companyProfile
@@ -156,7 +160,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
   const handleGenerateInvoice = async () => {
     setIsGeneratingInvoice(true)
     await generateInvoicePDF({
-      customerName, ico, street, city, zip,
+      customerName, ico, street, city, zip, phone, email, // Přidán telefon a email
       materialName: selectedMaterial?.name || '',
       area, thickness, basePrice, vat, totalPrice,
       companyProfile
@@ -168,7 +172,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     e.preventDefault()
     setIsSubmitting(true)
     const formData = {
-      customerName, ico, street, city, zip,
+      customerName, ico, street, city, zip, phone, email, // Přidán telefon a email do DB
       materialName: selectedMaterial?.name || 'Nespecifikováno',
       area: String(area), thickness: String(thickness),
       totalCost: String(basePrice),
@@ -231,6 +235,18 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
             <div className="sm:col-span-1 space-y-2">
               <label className="block text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide">PSČ</label>
               <input type="text" value={zip} onChange={(e) => setZip(e.target.value)} className="w-full px-3 md:px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none text-[#000000] font-medium bg-zinc-50/50"/>
+            </div>
+          </div>
+
+          {/* NOVÁ SEKCE: Telefon a E-mail */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="block text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide">Telefon</label>
+              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+420..." className="w-full px-3 md:px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none text-[#000000] font-medium bg-zinc-50/50"/>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide">E-mail</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="info@izolacers.cz" className="w-full px-3 md:px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none text-[#000000] font-medium bg-zinc-50/50"/>
             </div>
           </div>
         </div>

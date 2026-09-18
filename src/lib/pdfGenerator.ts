@@ -7,6 +7,8 @@ export interface PDFDataParams {
   street: string
   city: string
   zip: string
+  phone?: string
+  email?: string
   materialName: string
   area: string | number
   thickness: string | number
@@ -100,29 +102,35 @@ export const generateCombinedPDF = async (data: PDFDataParams) => {
   
   drawLogo(15, 15, 45, 35)
 
+  // Zhotovitel dle nového zadání
   doc.setFontSize(10)
   doc.setFont("Roboto", "bold")
-  doc.text("Dodavatel (Zhotovitel):", 15, 60)
+  doc.text("Dodavatel (Zhotovitel):", 15, 58)
   doc.setFont("Roboto", "normal")
-  doc.text(data.companyProfile?.companyName || "IZOLACE RS", 15, 66)
-  doc.text(`IČO: ${data.companyProfile?.ico || "88707351"}`, 15, 71)
-  doc.text(`Sídlo: Jihlava, Kraj Vysočina`, 15, 76)
-  doc.text(`E-mail: info@izolacers.cz`, 15, 81)
+  doc.text("Richard Molnár", 15, 64)
+  doc.text("Brtnická 5535/35", 15, 69)
+  doc.text("58601", 15, 74)
+  doc.text("IČ 88707351", 15, 79)
+  doc.text("DIČ CZ7308068889", 15, 84)
 
+  // Odběratel
   doc.setFontSize(10)
   doc.setFont("Roboto", "bold")
-  doc.text("Odběratel (Zákazník):", 110, 60)
+  doc.text("Odběratel (Zákazník):", 110, 58)
   doc.setFont("Roboto", "normal")
-  doc.text(data.customerName, 110, 66)
+  doc.text(data.customerName, 110, 64)
   
-  let currentYRight = 71
+  let currentYRight = 69
   if (data.ico) { doc.text(`IČO: ${data.ico}`, 110, currentYRight); currentYRight += 5 }
   if (data.street) { doc.text(data.street, 110, currentYRight); currentYRight += 5 }
   doc.text(`${data.city} ${data.zip || ''}`, 110, currentYRight)
+  currentYRight += 5
+  if (data.phone) { doc.text(`Tel: ${data.phone}`, 110, currentYRight); currentYRight += 5 }
+  if (data.email) { doc.text(`E-mail: ${data.email}`, 110, currentYRight) }
 
   doc.setFontSize(14)
   doc.setFont("Roboto", "bold")
-  doc.text("CENOVÁ NABÍDKA A NÁVRH SMLOUVY O DÍLO", 105, 100, { align: "center" })
+  doc.text("CENOVÁ NABÍDKA A NÁVRH SMLOUVY O DÍLO", 105, 102, { align: "center" })
 
   let y = 110
   doc.setDrawColor(0, 0, 0)
@@ -136,7 +144,7 @@ export const generateCombinedPDF = async (data: PDFDataParams) => {
   doc.setFontSize(9)
   doc.setFont("Roboto", "bold")
   doc.text("Číslo nabídky:", 17, y+5)
-  doc.text("Objekt:", 17, y+12)
+  doc.text("Místo realizace díla:", 17, y+12)
   doc.text("Zákazník:", 17, y+19)
   doc.text("Adresa:", 17, y+26)
 
@@ -146,15 +154,15 @@ export const generateCombinedPDF = async (data: PDFDataParams) => {
   doc.text("Kontaktní osoba:", 107, y+26)
 
   doc.setFont("Roboto", "normal")
-  doc.text(offerNumber, 45, y+5)
-  doc.text(data.city || "-", 45, y+12)
-  doc.text(data.customerName, 45, y+19)
-  doc.text(`${data.street}, ${data.zip} ${data.city}`, 45, y+26)
+  doc.text(offerNumber, 48, y+5)
+  doc.text(data.city || "-", 48, y+12)
+  doc.text(data.customerName, 48, y+19)
+  doc.text(`${data.street || ''}, ${data.zip || ''} ${data.city || ''}`, 48, y+26)
 
   doc.text(offerCurrent, 135, y+5)
   doc.text(offerValid, 135, y+12)
   doc.text(data.ico || "-", 135, y+19)
-  doc.text(data.customerName, 135, y+26)
+  doc.text(data.phone ? `${data.customerName}, tel. ${data.phone}` : data.customerName, 135, y+26)
 
   y += 38
 
@@ -187,9 +195,9 @@ export const generateCombinedPDF = async (data: PDFDataParams) => {
 
   doc.setFillColor(245, 245, 245)
   doc.rect(15, y, 180, 8, 'F')
-  doc.rect(15, y, 180, 32) // Zvětšeno na výšku kvůli delšímu textu
+  doc.rect(15, y, 180, 32)
   doc.line(15, y+8, 195, y+8)
-  doc.line(15, y+20, 195, y+20) // Upravena čára pro 2 řádky
+  doc.line(15, y+20, 195, y+20)
   
   const vLines = [75, 95, 120, 150, 165]
   vLines.forEach(vx => doc.line(vx, y, vx, y+32))
@@ -203,7 +211,7 @@ export const generateCombinedPDF = async (data: PDFDataParams) => {
   doc.text("Cena s DPH", 167, y+5.5)
 
   doc.setFont("Roboto", "normal")
-  const unitPrice = Math.round(data.basePrice / Number(data.area))
+  const unitPrice = Math.round(data.basePrice / Number(data.area || 1))
   doc.text(`Aplikace PUR pěny (${data.thickness} cm)`, 17, y+13)
   doc.text(`${data.area} m²`, 77, y+13)
   doc.text(`${unitPrice} Kč`, 97, y+13)
@@ -211,7 +219,6 @@ export const generateCombinedPDF = async (data: PDFDataParams) => {
   doc.text("21 %", 152, y+13)
   doc.text(`${data.totalPrice.toLocaleString('cs-CZ')} Kč`, 167, y+13)
 
-  // Rozdělení dlouhého textu na dva řádky, aby se vešel do tabulky
   doc.text("Doprava materiálu, příprava stavby,", 17, y+25)
   doc.text("práce ve výškách a ztíženém prostředí", 17, y+29)
   doc.text("1 ks", 77, y+27)
@@ -291,55 +298,59 @@ export const generateInvoicePDF = async (data: PDFDataParams) => {
 
   doc.setFontSize(10)
   doc.setFont("Roboto", "bold")
-  doc.text('Dodavatel:', 15, 60)
+  doc.text('Dodavatel:', 15, 58)
   doc.setFont("Roboto", "normal")
-  doc.text(data.companyProfile?.companyName || 'IZOLACE RS', 15, 66)
-  doc.text(`IČO: ${data.companyProfile?.ico || "88707351"}`, 15, 71)
-  doc.text(`Sídlo: Jihlava, Kraj Vysočina`, 15, 76)
-  doc.text(`E-mail: info@izolacers.cz`, 15, 81)
+  doc.text("Richard Molnár", 15, 64)
+  doc.text("Brtnická 5535/35", 15, 69)
+  doc.text("58601", 15, 74)
+  doc.text("IČ 88707351", 15, 79)
+  doc.text("DIČ CZ7308068889", 15, 84)
   
   doc.setFontSize(10)
   doc.setFont("Roboto", "bold")
-  doc.text("Odběratel:", 110, 60)
+  doc.text("Odběratel:", 110, 58)
   doc.setFont("Roboto", "normal")
-  doc.text(data.customerName, 110, 66)
-  let currentYRight = 71
+  doc.text(data.customerName, 110, 64)
+  let currentYRight = 69
   if (data.ico) { doc.text(`IČO: ${data.ico}`, 110, currentYRight); currentYRight += 5 }
   if (data.street) { doc.text(data.street, 110, currentYRight); currentYRight += 5 }
   doc.text(`${data.city} ${data.zip || ''}`, 110, currentYRight)
+  currentYRight += 5
+  if (data.phone) { doc.text(`Tel: ${data.phone}`, 110, currentYRight); currentYRight += 5 }
+  if (data.email) { doc.text(`E-mail: ${data.email}`, 110, currentYRight) }
 
   doc.setFontSize(20)
   doc.setFont("Roboto", "bold")
-  doc.text("ZÁLOHOVÁ FAKTURA", 15, 100)
+  doc.text("ZÁLOHOVÁ FAKTURA", 15, 105)
 
   doc.setFontSize(10)
   doc.setDrawColor(200, 200, 200)
-  doc.line(15, 108, 195, 108)
+  doc.line(15, 112, 195, 112)
 
   doc.setFont("Roboto", "normal")
-  doc.text(`Datum vystavení: ${invoiceDate.toLocaleDateString('cs-CZ')}`, 15, 118)
+  doc.text(`Datum vystavení: ${invoiceDate.toLocaleDateString('cs-CZ')}`, 15, 122)
   doc.setFont("Roboto", "bold")
   doc.setTextColor(220, 38, 38)
-  doc.text(`Datum splatnosti: ${dueDate.toLocaleDateString('cs-CZ')}`, 110, 118)
+  doc.text(`Datum splatnosti: ${dueDate.toLocaleDateString('cs-CZ')}`, 110, 122)
   doc.setTextColor(0, 0, 0)
 
   doc.setFont("Roboto", "normal")
-  doc.text('Položka', 15, 135)
-  doc.text('Částka s DPH', 150, 135)
-  doc.line(15, 140, 195, 140)
+  doc.text('Položka', 15, 138)
+  doc.text('Částka s DPH', 150, 138)
+  doc.line(15, 143, 195, 143)
   
   doc.setFont("Roboto", "bold")
-  doc.text(`Záloha 80 % na aplikaci PUR pěny (${data.materialName})`, 15, 150)
-  doc.text(`${zaloha.toLocaleString('cs-CZ')} Kč`, 150, 150)
+  doc.text(`Záloha 80 % na aplikaci PUR pěny (${data.materialName})`, 15, 153)
+  doc.text(`${zaloha.toLocaleString('cs-CZ')} Kč`, 150, 153)
 
   doc.setFillColor(245, 245, 245)
-  doc.rect(15, 170, 180, 45, 'F')
+  doc.rect(15, 172, 180, 45, 'F')
   doc.setFontSize(12)
-  doc.text('PLATEBNÍ ÚDAJE:', 20, 182)
+  doc.text('PLATEBNÍ ÚDAJE:', 20, 184)
   
   doc.setFontSize(14)
-  doc.text(`Číslo účtu: ${data.companyProfile?.bankAccount || ''}`, 20, 195)
-  doc.text(`Variabilní symbol: ${vs}`, 20, 205)
+  doc.text(`Číslo účtu: ${data.companyProfile?.bankAccount || ''}`, 20, 197)
+  doc.text(`Variabilní symbol: ${vs}`, 20, 207)
 
   doc.setFontSize(9)
   doc.setTextColor(150, 150, 150)

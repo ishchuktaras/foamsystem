@@ -147,6 +147,8 @@ model Quote {
   street           String?
   city             String
   zip              String?
+  phone            String?      // NOVÉ: Telefon zákazníka
+  email            String?      // NOVÉ: E-mail zákazníka
   materialName     String
   area             String
   thickness        String
