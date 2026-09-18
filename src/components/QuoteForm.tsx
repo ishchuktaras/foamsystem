@@ -183,7 +183,6 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     await loadFont('/fonts/Roboto-Bold.ttf', 'Roboto', 'bold')
     doc.setFont('Roboto', 'normal') 
 
-    // Pokus o načtení reálného SVG loga
     let logoData = ''
     try {
       logoData = await getBase64ImageFromURL('/logo-orange.svg')
@@ -195,7 +194,6 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       if (logoData) {
         doc.addImage(logoData, 'PNG', x, y, w, h)
       } else {
-        // Fallback pro jistotu
         doc.setFont("Roboto", "bold")
         doc.setFontSize(22)
         doc.setTextColor(0, 0, 0)
@@ -245,14 +243,14 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       doc.text(`Sídlo: Jihlava, Kraj Vysočina`, 15, 76)
       doc.text(`E-mail: info@izolacers.cz`, 15, 81)
 
-      // 3. Odběratel (vpravo nahoře)
+      // 3. Odběratel (vpravo pod logem - ZAROVNÁNO)
       doc.setFontSize(10)
       doc.setFont("Roboto", "bold")
-      doc.text("Odběratel (Zákazník):", 110, 20)
+      doc.text("Odběratel (Zákazník):", 110, 60)
       doc.setFont("Roboto", "normal")
-      doc.text(customerName, 110, 26)
+      doc.text(customerName, 110, 66)
       
-      let currentYRight = 31
+      let currentYRight = 71
       if (ico) {
         doc.text(`IČO: ${ico}`, 110, currentYRight)
         currentYRight += 5
@@ -462,13 +460,13 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       doc.text(`Sídlo: Jihlava, Kraj Vysočina`, 15, 76)
       doc.text(`E-mail: info@izolacers.cz`, 15, 81)
       
-      // Odběratel
+      // Odběratel (ZAROVNÁNO S DODAVATELEM)
       doc.setFontSize(10)
       doc.setFont("Roboto", "bold")
-      doc.text("Odběratel:", 110, 20)
+      doc.text("Odběratel:", 110, 60)
       doc.setFont("Roboto", "normal")
-      doc.text(customerName, 110, 26)
-      let currentYRight = 31
+      doc.text(customerName, 110, 66)
+      let currentYRight = 71
       if (ico) {
         doc.text(`IČO: ${ico}`, 110, currentYRight)
         currentYRight += 5
