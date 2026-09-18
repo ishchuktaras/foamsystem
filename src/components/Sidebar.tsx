@@ -3,10 +3,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Boxes, Calculator, FileText, Settings, LogOut, X, Users, ClipboardCheck, CalendarDays, Scan, ChevronLeft, ChevronRight } from 'lucide-react'
+import { LayoutDashboard, Boxes, FileText, Settings, LogOut, X, Users, ClipboardCheck, CalendarDays, Scan, ChevronLeft, ChevronRight } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import CompanyBadge from './CompanyBadge'
-import Logo from './Logo' // <-- Import nového loga
+import Logo from './Logo' 
 
 interface SidebarProps {
   isOpen?: boolean
@@ -40,9 +40,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed = false, setIsC
     { name: 'Přehled', href: '/admin', icon: LayoutDashboard, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR', 'TECHNIK', 'APLIKATOR'] },
     { name: 'Dispečink', href: '/admin/dispatch', icon: CalendarDays, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR'] },
     { name: 'Pracovníci', href: '/admin/users', icon: Users, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR'] },
-    // ZDE PŘIDÁN SUPERVIZOR DO SPRÁVY MATERIÁLŮ
     { name: 'Správa materiálů', href: '/admin/materials', icon: Boxes, roles: ['ADMIN', 'JEDNATEL', 'TECHNIK', 'SUPERVIZOR'] },
-    { name: 'Kalkulátor spotřeby', href: '/admin/calculator', icon: Calculator, roles: ['ADMIN', 'JEDNATEL', 'TECHNIK', 'SUPERVIZOR'] },
     { name: 'Nabídky a poptávky', href: '/admin/quotes', icon: FileText, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR', 'TECHNIK', 'APLIKATOR'] },
     { name: 'Evidence práce', href: '/admin/evidence', icon: ClipboardCheck, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR', 'APLIKATOR'] },
     { name: 'Chytré měření', href: '/admin/mereni', icon: Scan, roles: ['ADMIN', 'JEDNATEL', 'SUPERVIZOR', 'TECHNIK', 'APLIKATOR'] },
@@ -68,7 +66,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed = false, setIsC
         ${!isOpen && isCollapsed ? 'md:w-20' : 'md:w-64'}
       `}>
         
-        {/* HLAVIČKA S NOVÝM LOGEM */}
+        {/* HLAVIČKA S LOGEM */}
         <div className={`p-6 pt-8 flex items-center shrink-0 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
           <Link href="/admin" onClick={() => setIsOpen?.(false)} className={`flex flex-col ${isCollapsed ? 'items-center' : 'items-start'} hover:opacity-90 transition-opacity`}>
             <Logo collapsed={isCollapsed} className="h-10 w-auto" />

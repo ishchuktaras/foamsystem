@@ -10,6 +10,8 @@ export async function createQuote(data: {
   street?: string
   city: string
   zip?: string
+  phone: string
+  email: string
   materialName: string
   area: string
   thickness: string
@@ -24,6 +26,8 @@ export async function createQuote(data: {
         street: data.street,
         city: data.city,
         zip: data.zip,
+        phone: data.phone,
+        email: data.email,
         materialName: data.materialName,
         area: data.area,
         thickness: data.thickness,
@@ -43,9 +47,7 @@ export async function createQuote(data: {
 export async function deleteQuote(id: string) {
   try {
     // 1. KROK: Nejprve se pokusíme smazat případnou existující evidenci
-    // (ochrana proti databázové chybě P2003 - Foreign Key Constraint)
     try {
-      // TypeScript-safe volání dynamických modelů přes unknown
       type DynamicModel = { deleteMany?: (args: { where: { quoteId: string } }) => Promise<unknown> }
       const dynamicDb = db as unknown as Record<string, DynamicModel>
       
@@ -75,7 +77,6 @@ export async function deleteQuote(id: string) {
     
     let errMsg = "Nepodařilo se smazat nabídku ze serveru."
     
-    // Typově bezpečné zpracování chyby
     if (typeof error === 'object' && error !== null) {
       const err = error as Record<string, unknown>
       if (err.code === 'P2003') {
@@ -100,6 +101,8 @@ export async function updateQuote(id: string, data: {
   street?: string
   city: string
   zip?: string
+  phone?: string  // PŘIDÁNO
+  email?: string  // PŘIDÁNO
   materialName: string
   area: string
   thickness: string
@@ -115,6 +118,8 @@ export async function updateQuote(id: string, data: {
         street: data.street,
         city: data.city,
         zip: data.zip,
+        phone: data.phone, // PŘIDÁNO
+        email: data.email, // PŘIDÁNO
         materialName: data.materialName,
         area: data.area,
         thickness: data.thickness,
