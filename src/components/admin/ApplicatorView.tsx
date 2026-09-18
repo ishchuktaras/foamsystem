@@ -3,6 +3,14 @@ import { db } from '@/lib/db'
 import { CalendarDays, MapPin, CheckCircle2, Clock, Thermometer, User, ArrowRight, Wrench, Wind } from 'lucide-react'
 import Link from 'next/link'
 
+// PŘIDÁNO
+const STATUS_MAP: Record<string, string> = {
+  INQUIRY: 'Poptávka',
+  ORDER: 'Objednávka',
+  CONTRACT: 'Smlouva',
+  COMPLETED: 'Dokončeno',
+}
+
 type ApplicatorViewProps = {
   userId: string;
   userName: string;
@@ -10,7 +18,6 @@ type ApplicatorViewProps = {
 }
 
 export default async function ApplicatorView({ userId, userName }: ApplicatorViewProps) {
-  // Načteme aktivní zakázky přiřazené tomuto aplikátorovi a jeho dokončené stavby
   const [activeQuotes, completedQuotes] = await Promise.all([
     db.quote.findMany({
       where: {
@@ -32,7 +39,6 @@ export default async function ApplicatorView({ userId, userName }: ApplicatorVie
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full pb-16">
       
-      {/* BANNER */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-6 md:p-10 text-[#FEFEFA] shadow-xl">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3">Ahoj, {userName}!</h1>
@@ -45,7 +51,6 @@ export default async function ApplicatorView({ userId, userName }: ApplicatorVie
         </div>
       </div>
 
-      {/* RYCHLÉ STATISTICKÉ KARTY */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-[#FEFEFA] p-5 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4 border-l-4 border-l-amber-500">
           <div className="p-3 bg-amber-50 text-amber-600 rounded-xl"><Clock size={24} /></div>
@@ -64,7 +69,6 @@ export default async function ApplicatorView({ userId, userName }: ApplicatorVie
         </div>
       </div>
 
-      {/* SEKCE 1: MŮJ PLÁN REALIZACÍ (AKTIVNÍ) */}
       <div className="space-y-4">
         <h2 className="text-xl font-bold text-[#000000] flex items-center gap-2">
           <CalendarDays size={22} className="text-[#FF4F00]" /> Můj plán realizací ({activeQuotes.length})
@@ -85,8 +89,9 @@ export default async function ApplicatorView({ userId, userName }: ApplicatorVie
                 <div key={quote.id} className="bg-[#FEFEFA] p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-between hover:border-[#FF4F00]/50 transition-all">
                   <div>
                     <div className="flex justify-between items-start mb-3">
+                      {/* OPRAVA STAVU */}
                       <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
-                        {quote.status}
+                        {STATUS_MAP[quote.status] || quote.status}
                       </span>
                       <span className="text-xs font-bold text-[#FF4F00] flex items-center gap-1">
                         <CalendarDays size={14} /> {dateValue}
@@ -118,7 +123,6 @@ export default async function ApplicatorView({ userId, userName }: ApplicatorVie
         )}
       </div>
 
-      {/* SEKCE 2: MOJE DOKONČENÉ STAVBY & TECHNICKÉ DENÍKY */}
       <div className="pt-8 border-t border-zinc-200 space-y-4">
         <h2 className="text-xl font-bold text-[#000000] flex items-center gap-2">
           <CheckCircle2 size={22} className="text-emerald-600" /> Moje dokončené stavby & Odeslané deníky ({completedQuotes.length})
@@ -158,10 +162,8 @@ export default async function ApplicatorView({ userId, userName }: ApplicatorVie
                     </div>
                   </div>
 
-                  {/* TELEMETRIE Z TECHNICKÉHO DENÍKU */}
                   {ev ? (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 text-sm">
-                      
                       <div className="bg-zinc-50 p-3.5 rounded-xl border border-zinc-100">
                         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 flex items-center gap-1">
                           <Thermometer size={12}/> Teploty (Ven / In / Podklad)
@@ -188,14 +190,12 @@ export default async function ApplicatorView({ userId, userName }: ApplicatorVie
                         </p>
                         <p className="text-[11px] text-emerald-600 font-bold mt-0.5">Úspěšně odesláno</p>
                       </div>
-
                     </div>
                   ) : (
                     <div className="mt-4 p-3 bg-amber-50 text-amber-800 text-xs rounded-xl font-medium">
                       Stavba je v systému označena jako dokončená.
                     </div>
                   )}
-
                 </div>
               )
             })}

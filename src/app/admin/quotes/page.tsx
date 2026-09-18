@@ -9,6 +9,14 @@ import DeleteButton from '@/components/DeleteButton'
 
 export const dynamic = 'force-dynamic'
 
+// PŘIDÁNO: Překladový slovník
+const STATUS_MAP: Record<string, string> = {
+  INQUIRY: 'Poptávka',
+  ORDER: 'Objednávka',
+  CONTRACT: 'Smlouva',
+  COMPLETED: 'Dokončeno',
+}
+
 export default async function QuotesPage() {
   const session = await auth()
   const currentUser = session?.user as { id?: string; role?: string } | undefined
@@ -104,8 +112,9 @@ export default async function QuotesPage() {
                       <div className="font-extrabold text-[#000000] text-lg">{Number(quote.totalCost).toLocaleString('cs-CZ')} Kč</div>
                     )}
                     <div className="text-xs text-zinc-400 mt-1">Stav: 
+                      {/* OPRAVA STAVU */}
                       <span className={`ml-1 font-bold ${quote.status === 'COMPLETED' ? 'text-green-600' : 'text-amber-600'}`}>
-                        {quote.status}
+                        {STATUS_MAP[quote.status] || quote.status}
                       </span>
                     </div>
                   </div>
@@ -202,11 +211,10 @@ export default async function QuotesPage() {
                       </td>
                       
                       <td className="py-4 px-6">
-                        {quote.status === 'COMPLETED' ? (
-                          <span className="text-green-600 font-bold bg-green-50 px-2.5 py-1 rounded-md text-xs border border-green-200 inline-block mb-1.5">Dokončeno</span>
-                        ) : (
-                          <span className="text-amber-600 font-bold bg-amber-50 px-2.5 py-1 rounded-md text-xs border border-amber-200 inline-block mb-1.5">K realizaci</span>
-                        )}
+                        {/* OPRAVA STAVU */}
+                        <span className={`font-bold px-2.5 py-1 rounded-md text-xs border inline-block mb-1.5 uppercase ${quote.status === 'COMPLETED' ? 'text-green-600 bg-green-50 border-green-200' : 'text-amber-600 bg-amber-50 border-amber-200'}`}>
+                          {STATUS_MAP[quote.status] || quote.status}
+                        </span>
                         {quote.scheduledDate ? (
                           <div className="text-xs font-bold text-[#FF4F00] flex items-center gap-1 mt-1">
                             <Calendar size={13} /> {new Date(quote.scheduledDate).toLocaleDateString('cs-CZ')}

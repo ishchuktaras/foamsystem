@@ -2,10 +2,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Building2, MapPin, Search, Save, Loader2, AlertCircle, FileDown, Percent, FileSignature, Receipt } from 'lucide-react'
+import { Building2, MapPin, Search, Save, Loader2, AlertCircle, FileDown, Percent, Receipt, Settings } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createQuote, updateQuote } from '@/actions/quote'
-import { calculateFoamProject, parseLambda } from '@/lib/calculations'
 import jsPDF from 'jspdf'
 
 interface Material {
@@ -59,41 +58,60 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
   const [area, setArea] = useState<number | ''>(initialData.area ? Number(initialData.area) : '')
   const [thickness, setThickness] = useState<number | ''>(initialData.thickness ? Number(initialData.thickness) : '')
   
+  const [lossPercent, setLossPercent] = useState<number>(10) // Dynamická ztráta 5-15%
   const [marginPercent, setMarginPercent] = useState<number>(100)
 
   const [isFetchingAres, setIsFetchingAres] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  
-  const [isGeneratingQuote, setIsGeneratingQuote] = useState(false)
-  const [isGeneratingContract, setIsGeneratingContract] = useState(false)
+  const [isGeneratingCombined, setIsGeneratingCombined] = useState(false)
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false)
-  
   const [aresError, setAresError] = useState('')
 
   const selectedMaterial = materials.find(m => m.id === selectedMaterialId)
   
-  let calcResults = null
-  let clientFinalPrice = 0
+  let basePrice = 0 // Cena bez DPH
+  let vat = 0       // DPH 21%
+  let totalPrice = 0 // Cena s DPH
+  let techData = null
 
+  // Sjednocené dynamické výpočetní jádro
   if (selectedMaterial && area && thickness) {
-    calcResults = calculateFoamProject({
-      areaM2: Number(area),
-      thicknessCm: Number(thickness),
-      density: selectedMaterial.density,
-      wasteFactor: selectedMaterial.wasteFactor,
-      yieldPerSetM3: selectedMaterial.yieldPerSetM3,
-      buyPricePerSet: selectedMaterial.buyPricePerSet || 0,
-      lambda: parseLambda(selectedMaterial.lambda)
-    })
+    const thicknessM = Number(thickness) / 100
+    const pureVolumeM3 = Number(area) * thicknessM
+    const lossMultiplier = 1 + (lossPercent / 100)
+    const totalVolumeM3 = pureVolumeM3 * lossMultiplier
     
-    if (initialData.id && initialData.totalCost && clientFinalPrice === 0) {
+    const exactSets = totalVolumeM3 / selectedMaterial.yieldPerSetM3
+    const totalSets = Math.ceil(exactSets)
+    const estimatedLifts = Math.round(exactSets * 4011) // Predikce Graco A25
+
+    const buyPricePerSet = selectedMaterial.buyPricePerSet || 0
+    const exactMaterialCost = exactSets * buyPricePerSet
+    
+    // Inicializace marže při úpravě existující zakázky
+    if (initialData.id && initialData.totalCost && basePrice === 0) {
        const storedCost = Number(initialData.totalCost)
-       const calculatedMargin = Math.round(((storedCost / calcResults.exactMaterialCost) - 1) * 100)
+       const calculatedMargin = Math.round(((storedCost / exactMaterialCost) - 1) * 100)
        if(marginPercent === 100 && calculatedMargin !== 100) {
            setMarginPercent(calculatedMargin > 0 ? calculatedMargin : 0)
        }
     }
-    clientFinalPrice = Math.round(calcResults.exactMaterialCost * (1 + (marginPercent / 100)))
+    
+    // Finanční výpočty
+    basePrice = Math.round(exactMaterialCost * (1 + (marginPercent / 100)))
+    vat = Math.round(basePrice * 0.21)
+    totalPrice = basePrice + vat
+
+    // Uložení technických dat pro UI
+    techData = {
+      pureVolumeM3: pureVolumeM3.toFixed(2),
+      totalVolumeM3: totalVolumeM3.toFixed(2),
+      wastedVolumeM3: (totalVolumeM3 - pureVolumeM3).toFixed(2),
+      exactSets: exactSets.toFixed(2),
+      totalSets,
+      estimatedLifts,
+      exactMaterialCost: Math.round(exactMaterialCost)
+    }
   }
 
   const fetchAresData = async () => {
@@ -128,12 +146,9 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     setApplicatorNotes(prev => prev ? `${prev}\n• ${presetText}` : `• ${presetText}`)
   }
 
-  // ==========================================
-  // INICIALIZACE PDF S FONTEM A VEKTOROVÝM LOGEM
-  // ==========================================
+  // --- INICIALIZACE PDF ---
   const initPdf = async () => {
     const doc = new jsPDF()
-    
     const loadFont = async (url: string, name: string, style: string) => {
       try {
         const res = await fetch(url)
@@ -150,10 +165,8 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
         console.warn(`Font ${url} nelze načíst.`)
       }
     }
-
     await loadFont('/fonts/Roboto-Regular.ttf', 'Roboto', 'normal')
     await loadFont('/fonts/Roboto-Bold.ttf', 'Roboto', 'bold')
-    
     doc.setFont('Roboto', 'normal') 
 
     const drawLogo = (x: number, y: number) => {
@@ -161,185 +174,212 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       doc.setFontSize(22)
       doc.setTextColor(0, 0, 0)
       doc.text("IZOLACE", x, y)
-      
       const w = doc.getTextWidth("IZOLACE")
-      doc.setFillColor(255, 79, 0) 
+      doc.setFillColor(255, 135, 48) 
       doc.roundedRect(x + w + 3, y - 7, 13, 9, 1.5, 1.5, 'F')
-      
       doc.setTextColor(255, 255, 255)
       doc.setFontSize(11)
       doc.text("RS", x + w + 4.5, y - 0.5)
       doc.setTextColor(0, 0, 0) 
     }
-
     return { doc, drawLogo }
   }
 
-  // ==========================================
-  // 1. GENERÁTOR: CENOVÁ NABÍDKA
-  // ==========================================
-  const handleGenerateQuotePDF = async () => {
-    if (!calcResults || !selectedMaterial || !customerName) return alert("Vyplňte jméno zákazníka a parametry.")
-    setIsGeneratingQuote(true)
+  // --- 1. SMLOUVA A NABÍDKA PDF ---
+  const handleGenerateCombinedPDF = async () => {
+    if (!techData || !selectedMaterial || !customerName) return alert("Vyplňte jméno zákazníka a parametry.")
+    setIsGeneratingCombined(true)
     
     try {
       const { doc, drawLogo } = await initPdf()
-      const date = new Date().toLocaleDateString('cs-CZ')
-      const companyName = companyProfile?.companyName || 'IZOLACE RS'
+      const currentDate = new Date()
+      const validUntilDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+      const offerNumber = `NB-${currentDate.getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`
       
-      drawLogo(20, 25)
-
-      doc.setFontSize(22)
-      doc.text('Cenová nabídka', 20, 42)
-      doc.setFontSize(10)
+      drawLogo(15, 25)
+      doc.setFontSize(8)
       doc.setFont("Roboto", "normal")
-      doc.setTextColor(100, 100, 100)
-      doc.text(`Datum vystavení: ${date}`, 20, 49)
-      
-      doc.setFont("Roboto", "bold")
+      doc.setTextColor(255, 135, 48)
+      doc.text("Izolace, která šetří až 70 % nákladů na vytápění", 15, 30)
       doc.setTextColor(0, 0, 0)
-      doc.text('Dodavatel:', 120, 35)
-      doc.setFont("Roboto", "normal")
-      doc.text(companyName, 120, 42)
-      if (companyProfile?.ico) doc.text(`IČO: ${companyProfile.ico}`, 120, 47)
-      
-      doc.setDrawColor(255, 79, 0) 
-      doc.setLineWidth(0.5)
-      doc.line(20, 58, 190, 58)
 
-      doc.setFont("Roboto", "bold")
-      doc.text('Odběratel:', 20, 68)
-      doc.setFont("Roboto", "normal")
-      doc.text(customerName, 20, 75)
-      if (ico) doc.text(`IČO: ${ico}`, 20, 80)
-      doc.text(`${street || ''}, ${city || ''} ${zip || ''}`, 20, ico ? 85 : 80)
-
-      doc.setFont("Roboto", "bold")
-      doc.text('Technická specifikace zateplení:', 20, 105)
-      doc.setFont("Roboto", "normal")
-      doc.text(`Aplikovaný materiál: ${selectedMaterial.name} (${selectedMaterial.type})`, 20, 115)
-      doc.text(`Celková odhadovaná plocha: ${area} m²`, 20, 122)
-      doc.text(`Požadovaná tloušťka izolační vrstvy: ${thickness} cm`, 20, 129)
-
-      doc.setFillColor(0, 0, 0) 
-      doc.rect(20, 145, 170, 30, 'F')
-      doc.setTextColor(255, 255, 255)
       doc.setFontSize(14)
-      doc.text('Celková odhadovaná cena díla:', 25, 157)
-      doc.setFontSize(20)
       doc.setFont("Roboto", "bold")
-      doc.text(`${clientFinalPrice.toLocaleString('cs-CZ')} Kč`, 25, 168)
+      doc.text("CENOVÁ NABÍDKA A NÁVRH SMLOUVY O DÍLO", 105, 42, { align: "center" })
 
-      doc.setTextColor(150, 150, 150)
+      let y = 50
+      doc.setDrawColor(0, 0, 0)
+      doc.setLineWidth(0.2)
+      doc.rect(15, y, 180, 28) 
+      doc.line(15, y+7, 195, y+7)
+      doc.line(15, y+14, 195, y+14)
+      doc.line(15, y+21, 195, y+21)
+      doc.line(105, y, 105, y+28) 
+
       doc.setFontSize(9)
-      doc.setFont("Roboto", "normal")
-      doc.text('Uvedená cena obsahuje spotřebu materiálu a samotnou aplikaci.', 20, 190)
-      doc.text('Tato nabídka je informativní a nepředstavuje závaznou smlouvu do jejího podpisu.', 20, 195)
+      doc.setFont("Roboto", "bold")
+      doc.text("Číslo nabídky:", 17, y+5)
+      doc.text("Objekt:", 17, y+12)
+      doc.text("Zákazník:", 17, y+19)
+      doc.text("Adresa:", 17, y+26)
 
-      doc.save(`Nabidka-${customerName.replace(/\s+/g, '-').toLowerCase()}.pdf`)
+      doc.text("Datum:", 107, y+5)
+      doc.text("Platí do:", 107, y+12)
+      doc.text("IČO:", 107, y+19)
+      doc.text("Kontaktní osoba:", 107, y+26)
+
+      doc.setFont("Roboto", "normal")
+      doc.text(offerNumber, 45, y+5)
+      doc.text(city || "-", 45, y+12)
+      doc.text(customerName, 45, y+19)
+      doc.text(`${street}, ${zip} ${city}`, 45, y+26)
+
+      doc.text(currentDate.toLocaleDateString('cs-CZ'), 135, y+5)
+      doc.text(validUntilDate.toLocaleDateString('cs-CZ'), 135, y+12)
+      doc.text(ico || "-", 135, y+19)
+      doc.text(customerName, 135, y+26)
+
+      y += 38
+
+      const checkPageBreak = (currentY: number, heightNeeded: number) => {
+        if (currentY + heightNeeded > 280) { doc.addPage(); return 20 }
+        return currentY
+      }
+
+      const printParagraph = (num: string, title: string, texts: string[], startY: number) => {
+        let currentY = checkPageBreak(startY, 15)
+        doc.setFont("Roboto", "bold")
+        doc.text(`${num}. ${title}`, 15, currentY)
+        currentY += 5
+        doc.setFont("Roboto", "normal")
+        texts.forEach(text => {
+          const lines = doc.splitTextToSize(text, 180)
+          currentY = checkPageBreak(currentY, lines.length * 5)
+          doc.text(lines, 15, currentY)
+          currentY += lines.length * 5 + 1
+        })
+        return currentY + 4
+      }
+
+      y = printParagraph("1", "Předmět díla", ["Zhotovitel se zavazuje provést pro objednatele dodávku a odbornou aplikaci tepelně izolačního systému na objektu uvedeném v této nabídce, v rozsahu a za podmínek uvedených níže. Objednatel se zavazuje dílo převzít a uhradit sjednanou cenu."], y)
+
+      y = checkPageBreak(y, 60)
+      doc.setFont("Roboto", "bold")
+      doc.text("2. Cenová nabídka", 15, y)
+      y += 5
+
+      doc.setFillColor(245, 245, 245)
+      doc.rect(15, y, 180, 8, 'F')
+      doc.rect(15, y, 180, 24)
+      doc.line(15, y+8, 195, y+8)
+      doc.line(15, y+16, 195, y+16)
+      
+      const vLines = [75, 95, 120, 150, 165]
+      vLines.forEach(vx => doc.line(vx, y, vx, y+24))
+
+      doc.setFontSize(8)
+      doc.text("Označení dodávky", 17, y+5.5)
+      doc.text("Množství", 77, y+5.5)
+      doc.text("J. cena", 97, y+5.5)
+      doc.text("Cena bez DPH", 122, y+5.5)
+      doc.text("DPH", 152, y+5.5)
+      doc.text("Cena s DPH", 167, y+5.5)
+
+      doc.setFont("Roboto", "normal")
+      const unitPrice = Math.round(basePrice / Number(area))
+      doc.text(`Aplikace PUR pěny (${thickness} cm)`, 17, y+13)
+      doc.text(`${area} m²`, 77, y+13)
+      doc.text(`${unitPrice} Kč`, 97, y+13)
+      doc.text(`${basePrice.toLocaleString('cs-CZ')} Kč`, 122, y+13)
+      doc.text("21 %", 152, y+13)
+      doc.text(`${totalPrice.toLocaleString('cs-CZ')} Kč`, 167, y+13)
+
+      doc.text("Doprava materiálu", 17, y+21)
+      doc.text("1 ks", 77, y+21)
+      doc.text("-", 97, y+21)
+      doc.text("V ceně", 122, y+21)
+      doc.text("21 %", 152, y+21)
+      doc.text("V ceně", 167, y+21)
+
+      y += 24
+
+      doc.setFontSize(9)
+      doc.setFont("Roboto", "bold")
+      doc.text("Součet bez DPH", 100, y+7)
+      doc.text(`${basePrice.toLocaleString('cs-CZ')} Kč`, 167, y+7)
+      
+      doc.text("DPH celkem", 100, y+14)
+      doc.text(`${vat.toLocaleString('cs-CZ')} Kč`, 167, y+14)
+
+      doc.setFillColor(255, 135, 48)
+      doc.rect(15, y+18, 180, 9, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.text("CELKEM K ÚHRADĚ", 100, y+24)
+      doc.text(`${totalPrice.toLocaleString('cs-CZ')} Kč`, 167, y+24)
+      
+      doc.setTextColor(0, 0, 0)
+      y += 35
+
+      y = printParagraph("3", "Rozsah nabídky a podmínky realizace", ["Nabídka vychází z dostupných podkladů a z předpokládaného rozsahu prací. Konečný rozsah dodávky bude potvrzen po prohlídce místa a upřesnění technického řešení. Uvedené ceny jsou kalkulovány bez DPH; daň bude účtována v zákonné výši. Změny rozsahu nebo požadavky nad rámec této nabídky budou předem odsouhlaseny objednatelem. Termín provedení bude stanoven po vzájemné dohodě s ohledem na připravenost stavby a kapacity realizačního týmu."], y)
+      y = printParagraph("4", "Cena a platební podmínky", [
+        "Zálohová faktura ve výši 50 % bude vystavena po uzavření smlouvy. Záloha bude započtena na cenu díla a její vyúčtování bude provedeno v konečné faktuře.",
+        "Zhotovitel není povinen zahájit realizaci díla před připsáním sjednané zálohy na svůj účet, pokud se smluvní strany nedohodnou jinak.",
+        "Doplatek ceny díla bude uhrazen na základě konečné faktury vystavené po dokončení a předání díla.",
+        "Cena díla je stanovena na základě rozsahu uvedeného v této nabídce. Vícepráce a dodávky nad rámec nabídky budou provedeny pouze po předchozím odsouhlasení objednatelem."
+      ], y)
+      y = printParagraph("5", "Termín a předání díla", ["Předpokládaný termín zahájení bude stanoven po vzájemné dohodě.", "Dílo je provedeno jeho dokončením a předáním objednateli."], y)
+      y = printParagraph("6", "Záruka a odpovědnost za vady", [
+        "Zhotovitel poskytuje objednateli záruku za jakost provedeného díla v délce 5 let ode dne předání díla.",
+        "Záruka se vztahuje na vady provedené aplikací PUR pěny, které mají původ ve vadném provedení nebo nedodržení technologického postupu zhotovitelem, zejména na prokazatelné vady soudržnosti, oddělování vrstev, nadměrné smršťování či jiné vady způsobené provedením aplikace.",
+        "Záruka se poskytuje v rozsahu vlastností použitého systému garantovaných výrobcem, pokud byly při realizaci dodrženy podmínky výrobce a systém byl vhodný pro danou konstrukci.",
+        "Záruka se nevztahuje na vady způsobené mechanickým poškozením, zásahem třetí osoby, následnými stavebními úpravami, konstrukčními vadami objektu, nevhodným stavem podkladu, který nebylo možné při běžné kontrole zjistit, dlouhodobým působením vlhkosti nebo zatékáním, pokud nebyly způsobeny zhotovitelem, nevhodným užíváním ani jinými vnějšími vlivy nezpůsobenými zhotovitelem.",
+        "Objednatel je povinen oznámit zjištěnou vadu zhotoviteli bez zbytečného odkladu a umožnit mu její prohlídku. Oprávněnou reklamaci zhotovitel odstraní v přiměřené lhůtě."
+      ], y)
+      y = printParagraph("7", "Součinnost objednatele", ["Objednatel je povinen zajistit zhotoviteli přístup k objektu, potřebnou součinnost a podmínky umožňující bezpečné provedení prací. Objednatel odpovídá za pravdivost jím poskytnutých údajů o objektu a konstrukci."], y)
+      y = printParagraph("8", "Uzavření smlouvy", [
+        "Tato cenová nabídka je současně návrhem smlouvy o dílo. Podpisem objednatele objednatel potvrzuje, že se seznámil s celým obsahem této nabídky včetně smluvních, záručních a platebních podmínek a přijímá ji jako návrh smlouvy o dílo.",
+        "Smlouva o dílo je uzavřena okamžikem, kdy je podepsaná nabídka doručena zhotoviteli, pokud si strany písemně nesjednají jiný okamžik účinnosti.",
+        "Nedílnou součástí smlouvy jsou údaje uvedené v cenové nabídce a případné písemné přílohy nebo technické podklady, na které tato nabídka výslovně odkazuje."
+      ], y)
+      y = printParagraph("9", "Závěrečná ustanovení", [
+        "Případné změny nebo doplnění této smlouvy musí být provedeny písemně a odsouhlaseny oběma smluvními stranami.",
+        "Právní vztahy neupravené touto smlouvou se řídí právním řádem České republiky, zejména příslušnými ustanoveními občanského zákoníku.",
+        "Tato nabídka je platná do data uvedeného v záhlaví. Po uplynutí této lhůty není zhotovitel návrhem smlouvy vázán, pokud písemně nepotvrdí její prodloužení."
+      ], y)
+
+      y = checkPageBreak(y, 30)
+      doc.setDrawColor(0, 0, 0)
+      doc.rect(15, y, 180, 20)
+      doc.line(105, y, 105, y+20)
+      doc.setFont("Roboto", "bold")
+      doc.text("Za zhotovitele:", 17, y+6)
+      doc.text("Za objednatele:", 107, y+6)
+      doc.setFont("Roboto", "normal")
+      doc.text("Richard Molnár", 17, y+16)
+
+      doc.save(`Nabidka-Smlouva-${customerName.replace(/\s+/g, '-').toLowerCase()}.pdf`)
     } catch (e) {
       alert("Chyba při generování PDF. Zkontrolujte složku public/fonts.")
     } finally {
-      setIsGeneratingQuote(false)
+      setIsGeneratingCombined(false)
     }
   }
 
-  // ==========================================
-  // 2. GENERÁTOR: SMLOUVA O DÍLO
-  // ==========================================
-  const handleGenerateContractPDF = async () => {
-    if (!calcResults || !selectedMaterial || !customerName) return alert("Vyplňte jméno zákazníka a parametry.")
-    setIsGeneratingContract(true)
-    
-    try {
-      const { doc, drawLogo } = await initPdf()
-      const date = new Date().toLocaleDateString('cs-CZ')
-      const companyName = companyProfile?.companyName || 'IZOLACE RS'
-      
-      drawLogo(20, 25)
-      
-      doc.setFontSize(18)
-      doc.setFont("Roboto", "bold")
-      doc.text('SMLOUVA O DÍLO', 105, 45, { align: 'center' })
-      
-      doc.setFontSize(10)
-      doc.setFont("Roboto", "normal")
-      doc.text('uzavřená podle ustanovení Občanského zákoníku', 105, 52, { align: 'center' })
-
-      doc.setFont("Roboto", "bold")
-      doc.text('1. Smluvní strany', 20, 70)
-      
-      doc.setFont("Roboto", "normal")
-      doc.text('Zhotovitel:', 20, 80)
-      doc.text(`${companyName}`, 45, 80)
-      if (companyProfile?.ico) doc.text(`IČO: ${companyProfile.ico}`, 45, 85)
-      if (companyProfile?.bankAccount) doc.text(`Číslo účtu: ${companyProfile.bankAccount}`, 45, 90)
-
-      doc.text('Objednatel:', 20, 105)
-      doc.text(`${customerName}`, 45, 105)
-      if (ico) doc.text(`IČO: ${ico}`, 45, 110)
-      doc.text(`${street || ''}, ${city || ''} ${zip || ''}`, 45, ico ? 115 : 110)
-
-      const conditions = [
-        "2. Předmět díla",
-        `Zhotovitel se zavazuje k provedení aplikace stříkané izolační PUR pěny (${selectedMaterial.name}). Předpokládaný rozsah prací je ${area} m² o tloušťce ${thickness} cm.`,
-        "3. Cena a platební podmínky",
-        `Celková předběžná cena díla je stanovena na ${clientFinalPrice.toLocaleString('cs-CZ')} Kč. Objednatel uhradí zálohu ve výši 50 % před zahájením prací. Konečná částka bude vyúčtována dle skutečné spotřeby po předání díla.`,
-        "4. Stavební připravenost a realizace",
-        "Objednatel se zavazuje zajistit volný přístup na staveniště a možnost připojení k elektrické síti (380 V, jistič min. 25 A, zásuvka 5 kolík). V případě, že objednatel nemůže zajistit 380V elektrickou síť, bude na stavbě využit generátor a při předání díla budou doúčtovány reálné náklady za spotřebovanou naftu. Plochy, které nemají být zasaženy pěnou (okna, pohledové trámy), musí být předem řádně zakryty fólií; pokud nebudou ze strany objednatele řádně zakryty, budou doúčtovány prostředky za spotřebovanou balicí fólii a práce spojené s balením.",
-        "5. Záruka a kvalita",
-        "Zhotovitel poskytuje záruku na provedené práce v délce 24 měsíců. Životnost a tvarová stálost PUR pěny (nesesedá, neřídne) je garantována výrobcem po celou dobu životnosti stavby."
-      ]
-
-      let y = 135
-      conditions.forEach(line => {
-        if (line.match(/^[0-9]\./)) {
-           doc.setFont("Roboto", "bold")
-           y += 6
-        } else {
-           doc.setFont("Roboto", "normal")
-        }
-        const lines = doc.splitTextToSize(line, 170)
-        doc.text(lines, 20, y)
-        y += lines.length * 5 + 3
-      })
-
-      doc.setFont("Roboto", "bold")
-      doc.text('6. Podpisy smluvních stran', 20, y + 10)
-      doc.setFont("Roboto", "normal")
-      doc.text(`V .......................... dne ${date}`, 20, y + 20)
-      
-      doc.text('......................................................', 20, y + 45)
-      doc.text('Za zhotovitele', 30, y + 52)
-
-      doc.text('......................................................', 120, y + 45)
-      doc.text('Za objednatele', 130, y + 52)
-
-      doc.save(`Smlouva-o-dilo-${customerName.replace(/\s+/g, '-').toLowerCase()}.pdf`)
-    } catch (e) {
-      alert("Chyba při generování PDF. Zkontrolujte složku public/fonts.")
-    } finally {
-      setIsGeneratingContract(false)
-    }
-  }
-
-  // ==========================================
-  // 3. GENERÁTOR: ZÁLOHOVÁ FAKTURA
-  // ==========================================
+  // --- 2. ZÁLOHOVÁ FAKTURA PDF ---
   const handleGenerateInvoicePDF = async () => {
-    if (!calcResults || !selectedMaterial || !customerName) return alert("Vyplňte jméno zákazníka a parametry.")
+    if (!techData || !selectedMaterial || !customerName) return alert("Vyplňte jméno zákazníka a parametry.")
     if (!companyProfile?.bankAccount) return alert("Pro fakturu si v Nastavení doplňte číslo bankovního účtu!")
     
     setIsGeneratingInvoice(true)
     
     try {
       const { doc, drawLogo } = await initPdf()
-      const date = new Date()
+      const invoiceDate = new Date()
       const dueDate = new Date()
-      dueDate.setDate(date.getDate() + 7) 
+      dueDate.setDate(invoiceDate.getDate() + 7) 
       
-      const zaloha = Math.round(clientFinalPrice * 0.5) 
-      const vs = date.getFullYear().toString() + (date.getMonth() + 1).toString().padStart(2, '0') + date.getDate().toString().padStart(2, '0')
+      const zaloha = Math.round(totalPrice * 0.5)
+      const vs = invoiceDate.getFullYear().toString() + (invoiceDate.getMonth() + 1).toString().padStart(2, '0') + invoiceDate.getDate().toString().padStart(2, '0')
       
       drawLogo(20, 25)
 
@@ -364,7 +404,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       doc.setDrawColor(200, 200, 200)
       doc.line(20, 75, 190, 75)
 
-      doc.text(`Datum vystavení: ${date.toLocaleDateString('cs-CZ')}`, 20, 90)
+      doc.text(`Datum vystavení: ${invoiceDate.toLocaleDateString('cs-CZ')}`, 20, 90)
       doc.setFont("Roboto", "bold")
       doc.setTextColor(220, 38, 38)
       doc.text(`Datum splatnosti: ${dueDate.toLocaleDateString('cs-CZ')}`, 120, 90)
@@ -372,12 +412,12 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       doc.setFont("Roboto", "normal")
 
       doc.text('Položka', 20, 115)
-      doc.text('Částka', 160, 115)
+      doc.text('Částka s DPH', 150, 115)
       doc.line(20, 120, 190, 120)
       
       doc.setFont("Roboto", "bold")
-      doc.text(`Záloha na aplikaci PUR pěny (${selectedMaterial.name})`, 20, 130)
-      doc.text(`${zaloha.toLocaleString('cs-CZ')} Kč`, 160, 130)
+      doc.text(`Záloha 50% na aplikaci PUR pěny (${selectedMaterial.name})`, 20, 130)
+      doc.text(`${zaloha.toLocaleString('cs-CZ')} Kč`, 150, 130)
 
       doc.setFillColor(245, 245, 245)
       doc.rect(20, 150, 170, 45, 'F')
@@ -408,7 +448,8 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       customerName, ico, street, city, zip,
       materialName: selectedMaterial?.name || 'Nespecifikováno',
       area: String(area), thickness: String(thickness),
-      totalCost: String(clientFinalPrice), applicatorNotes
+      totalCost: String(basePrice),
+      applicatorNotes
     }
 
     let result;
@@ -436,7 +477,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
           <div className="space-y-2">
             <label className="block text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide">IČO (pro firmy)</label>
             <div className="flex gap-2 md:gap-3">
-              <input type="text" value={ico} onChange={(e) => setIco(e.target.value.replace(/\D/g, ''))} placeholder="Např. 00006947" className="w-full px-3 py-3 md:px-4 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] bg-zinc-50"/>
+              <input type="text" value={ico} onChange={(e) => setIco(e.target.value.replace(/\D/g, ''))} placeholder="Např. 00006947" className="w-full px-3 py-3 md:px-4 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none text-[#000000] bg-zinc-50"/>
               <button type="button" onClick={fetchAresData} disabled={isFetchingAres} className="px-4 md:px-6 py-3 bg-[#000000] hover:bg-zinc-800 text-[#FEFEFA] font-bold rounded-xl transition-colors flex items-center gap-2 cursor-pointer shrink-0">
                 {isFetchingAres ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
                 <span className="hidden sm:inline">Načíst</span>
@@ -449,7 +490,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
             <label className="block text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide">Název firmy / Jméno *</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 md:pl-4 flex items-center pointer-events-none text-zinc-400"><Building2 size={18} /></div>
-              <input type="text" required value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full pl-10 pr-3 md:pl-11 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium bg-zinc-50/50"/>
+              <input type="text" required value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full pl-10 pr-3 md:pl-11 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none text-[#000000] font-medium bg-zinc-50/50"/>
             </div>
           </div>
 
@@ -458,16 +499,16 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
               <label className="block text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide">Ulice a č.p.</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 md:pl-4 flex items-center pointer-events-none text-zinc-400"><MapPin size={18} /></div>
-                <input type="text" value={street} onChange={(e) => setStreet(e.target.value)} className="w-full pl-10 pr-3 md:pl-11 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium bg-zinc-50/50"/>
+                <input type="text" value={street} onChange={(e) => setStreet(e.target.value)} className="w-full pl-10 pr-3 md:pl-11 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none text-[#000000] font-medium bg-zinc-50/50"/>
               </div>
             </div>
             <div className="sm:col-span-2 space-y-2">
               <label className="block text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide">Město *</label>
-              <input type="text" required value={city} onChange={(e) => setCity(e.target.value)} className="w-full px-3 md:px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium bg-zinc-50/50"/>
+              <input type="text" required value={city} onChange={(e) => setCity(e.target.value)} className="w-full px-3 md:px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none text-[#000000] font-medium bg-zinc-50/50"/>
             </div>
             <div className="sm:col-span-1 space-y-2">
               <label className="block text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide">PSČ</label>
-              <input type="text" value={zip} onChange={(e) => setZip(e.target.value)} className="w-full px-3 md:px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium bg-zinc-50/50"/>
+              <input type="text" value={zip} onChange={(e) => setZip(e.target.value)} className="w-full px-3 md:px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none text-[#000000] font-medium bg-zinc-50/50"/>
             </div>
           </div>
         </div>
@@ -477,7 +518,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
           
           <div className="space-y-2">
             <label className="block text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide">Materiál *</label>
-            <select value={selectedMaterialId} onChange={(e) => setSelectedMaterialId(e.target.value)} className="w-full px-3 md:px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-medium bg-zinc-50/50 truncate">
+            <select value={selectedMaterialId} onChange={(e) => setSelectedMaterialId(e.target.value)} className="w-full px-3 md:px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none text-[#000000] font-medium bg-zinc-50/50 truncate">
               {materials.map(m => (
                 <option key={m.id} value={m.id}>
                   {m.name} ({m.type}, {m.density} kg/m³)
@@ -489,44 +530,52 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
           <div className="grid grid-cols-2 gap-4 md:gap-6">
             <div className="space-y-2">
               <label className="block text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide">Plocha (m²) *</label>
-              <input type="number" required value={area} onChange={(e) => setArea(Number(e.target.value))} className="w-full px-3 md:px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-bold bg-zinc-50/50"/>
+              <input type="number" required value={area} onChange={(e) => setArea(Number(e.target.value))} className="w-full px-3 md:px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none text-[#000000] font-bold bg-zinc-50/50"/>
             </div>
             <div className="space-y-2">
               <label className="block text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide">Tloušťka (cm) *</label>
-              <input type="number" required value={thickness} onChange={(e) => setThickness(Number(e.target.value))} className="w-full px-3 md:px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] font-bold bg-zinc-50/50"/>
+              <input type="number" required value={thickness} onChange={(e) => setThickness(Number(e.target.value))} className="w-full px-3 md:px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none text-[#000000] font-bold bg-zinc-50/50"/>
             </div>
           </div>
 
-          <div className="space-y-3 pt-2">
+          {/* NOVÉ: DYNAMICKÁ ZTRÁTA INTEGROVÁNA DO FORMULÁŘE */}
+          <div className="space-y-4 pt-4 border-t border-zinc-100">
+            <div className="flex justify-between items-center">
+              <label className="flex text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide items-center gap-2">
+                <Settings size={16} className="text-[#FF8730]" /> Předpokládaný přestřik
+              </label>
+              <span className="font-black text-[#FF8730] text-lg">{lossPercent} %</span>
+            </div>
+            <input 
+              type="range" min="5" max="15" step="1" value={lossPercent}
+              onChange={(e) => setLossPercent(Number(e.target.value))}
+              className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-[#FF8730]"
+            />
+            <div className="flex justify-between text-xs text-zinc-400 font-medium">
+              <span>5 % (Ideální podmínky)</span>
+              <span>15 % (Ztížený přístup)</span>
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-4 border-t border-zinc-100">
             <label className="flex text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide items-center gap-2">
-              <AlertCircle size={16} className="text-[#FF4F00]" />
+              <AlertCircle size={16} className="text-[#FF8730]" />
               Upozornění a pokyny pro aplikátora na stavbě
             </label>
-            
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => handleAddPreset('Volat vždy 30 minut předem zákazníkovi')} className="text-xs bg-zinc-100 hover:bg-orange-50 hover:text-[#FF4F00] text-zinc-700 font-semibold px-3 py-1.5 rounded-lg border border-zinc-200 transition-colors cursor-pointer">
-                + Volat 30 min předem
-              </button>
-              <button type="button" onClick={() => handleAddPreset('Zakrýt: Trámy, omítky + střešní okna')} className="text-xs bg-zinc-100 hover:bg-orange-50 hover:text-[#FF4F00] text-zinc-700 font-semibold px-3 py-1.5 rounded-lg border border-zinc-200 transition-colors cursor-pointer">
-                + Zakrýt trámy/okna
-              </button>
-              <button type="button" onClick={() => handleAddPreset('Přípojka 380 V, jistič 25 A + zásuvka pětikolík')} className="text-xs bg-zinc-100 hover:bg-orange-50 hover:text-[#FF4F00] text-zinc-700 font-semibold px-3 py-1.5 rounded-lg border border-zinc-200 transition-colors cursor-pointer">
-                + Přípojka 380V
-              </button>
+              <button type="button" onClick={() => handleAddPreset('Volat vždy 30 minut předem zákazníkovi')} className="text-xs bg-zinc-100 hover:bg-orange-50 hover:text-[#FF8730] text-zinc-700 font-semibold px-3 py-1.5 rounded-lg border border-zinc-200 transition-colors cursor-pointer">+ Volat 30 min předem</button>
+              <button type="button" onClick={() => handleAddPreset('Zakrýt: Trámy, omítky + střešní okna')} className="text-xs bg-zinc-100 hover:bg-orange-50 hover:text-[#FF8730] text-zinc-700 font-semibold px-3 py-1.5 rounded-lg border border-zinc-200 transition-colors cursor-pointer">+ Zakrýt trámy/okna</button>
+              <button type="button" onClick={() => handleAddPreset('Přípojka 380 V, jistič 25 A + zásuvka pětikolík')} className="text-xs bg-zinc-100 hover:bg-orange-50 hover:text-[#FF8730] text-zinc-700 font-semibold px-3 py-1.5 rounded-lg border border-zinc-200 transition-colors cursor-pointer">+ Přípojka 380V</button>
             </div>
-
             <textarea 
-              rows={4}
-              value={applicatorNotes}
-              onChange={(e) => setApplicatorNotes(e.target.value)}
-              placeholder="• Zde se propisují jednotné pokyny pro aplikátora na stavbě..."
-              className="w-full p-3 bg-zinc-50/50 border border-zinc-200 rounded-xl font-medium text-sm text-[#000000] focus:ring-2 focus:ring-[#FF4F00] outline-none"
+              rows={4} value={applicatorNotes} onChange={(e) => setApplicatorNotes(e.target.value)} placeholder="• Zde se propisují jednotné pokyny pro aplikátora na stavbě..."
+              className="w-full p-3 bg-zinc-50/50 border border-zinc-200 rounded-xl font-medium text-sm text-[#000000] focus:ring-2 focus:ring-[#FF8730] outline-none"
             />
           </div>
         </div>
 
         <div className="pt-2 flex justify-end">
-          <button type="submit" disabled={isSubmitting} className="w-full md:w-auto px-8 py-3.5 bg-[#FF4F00] hover:bg-[#E64700] text-[#FEFEFA] font-bold rounded-xl shadow-md transition-all flex justify-center items-center gap-2 hover:scale-[1.01] cursor-pointer">
+          <button type="submit" disabled={isSubmitting} className="w-full md:w-auto px-8 py-3.5 bg-[#FF8730] hover:bg-[#E67020] text-[#FEFEFA] font-bold rounded-xl shadow-md transition-all flex justify-center items-center gap-2 hover:scale-[1.01] cursor-pointer">
             {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
             {initialData.id ? 'Uložit změny v databázi' : 'Uložit do evidence'}
           </button>
@@ -536,57 +585,80 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       {/* PRAVÝ SLOUPEC: Obchodní cenotvorba a Dokumenty */}
       <div className="lg:col-span-1 space-y-4 md:space-y-6">
         
+        {techData && (
+          <div className="bg-[#FEFEFA] p-4 sm:p-6 rounded-xl md:rounded-2xl shadow-sm border border-zinc-200">
+            <h3 className="font-bold text-[#000000] mb-4 text-sm uppercase tracking-wide">Technická predikce spotřeby</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-zinc-50 p-3 rounded-lg border border-zinc-200 text-center">
+                <p className="text-zinc-500 text-[10px] uppercase font-bold mb-1">Odhad sad k naložení</p>
+                <p className="text-2xl font-black text-[#000000]">{techData.totalSets} <span className="text-sm font-medium text-zinc-500">ks</span></p>
+                <p className="text-[10px] text-zinc-400 mt-1">Přesně: {techData.exactSets}</p>
+              </div>
+              <div className="bg-zinc-50 p-3 rounded-lg border border-zinc-200 text-center">
+                <p className="text-zinc-500 text-[10px] uppercase font-bold mb-1">Předpoklad Graco A25</p>
+                <p className="text-xl font-black text-[#000000] mt-1">{techData.estimatedLifts.toLocaleString('cs-CZ')} <span className="text-xs font-medium text-zinc-500">zdvihů</span></p>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-between text-xs text-zinc-500 border-t border-zinc-100 pt-3">
+              <span>Čistý objem: {techData.pureVolumeM3} m³</span>
+              <span className="text-red-500 font-bold">+ {techData.wastedVolumeM3} m³ odpad</span>
+            </div>
+          </div>
+        )}
+
         <div className="bg-[#FEFEFA] p-4 sm:p-6 rounded-xl md:rounded-2xl shadow-sm border border-zinc-200">
           <div className="flex items-center gap-2 mb-3 md:mb-4">
-            <Percent className="text-[#FF4F00]" size={20} />
+            <Percent className="text-[#FF8730]" size={20} />
             <h3 className="font-bold text-[#000000]">Obchodní marže</h3>
           </div>
           <p className="text-xs md:text-sm text-zinc-500 mb-4">Nastavte procentuální přirážku k nákupní ceně materiálu.</p>
-          
           <input 
             type="range" min="0" max="300" step="5" value={marginPercent}
             onChange={(e) => setMarginPercent(Number(e.target.value))}
-            className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-[#FF4F00]"
+            className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-[#FF8730]"
           />
-          <div className="text-center mt-3 font-black text-2xl text-[#FF4F00]">{marginPercent} %</div>
+          <div className="text-center mt-3 font-black text-2xl text-[#FF8730]">{marginPercent} %</div>
         </div>
 
-        {calcResults && (
+        {techData && (
           <div className="bg-linear-to-br from-[#000000] to-[#1a1a1a] p-5 sm:p-6 rounded-xl md:rounded-2xl shadow-lg text-[#FEFEFA] border border-zinc-800">
-            <p className="text-zinc-400 text-xs md:text-sm font-semibold uppercase tracking-wider mb-1">Celková cena</p>
-            <div className="text-3xl md:text-4xl font-black mb-4 truncate">{clientFinalPrice.toLocaleString('cs-CZ')} <span className="text-xl">Kč</span></div>
+            <p className="text-zinc-400 text-xs md:text-sm font-semibold uppercase tracking-wider mb-2 border-b border-zinc-800 pb-2">Rozpad ceny</p>
             
-            <div className="space-y-2 text-xs md:text-sm text-zinc-300 pt-4 border-t border-zinc-800 mb-6">
+            <div className="space-y-2 text-xs md:text-sm text-zinc-300 mb-4">
               <div className="flex justify-between">
-                <span>Čistý náklad:</span>
-                <span className="font-medium text-[#FEFEFA]">{calcResults.exactMaterialCost.toLocaleString('cs-CZ')} Kč</span>
+                <span>Cena bez DPH:</span>
+                <span className="font-medium text-[#FEFEFA]">{basePrice.toLocaleString('cs-CZ')} Kč</span>
+              </div>
+              <div className="flex justify-between">
+                <span>DPH (21 %):</span>
+                <span className="font-medium text-[#FEFEFA]">{vat.toLocaleString('cs-CZ')} Kč</span>
+              </div>
+            </div>
+
+            <div className="text-3xl md:text-4xl font-black mb-4 text-[#FF8730] truncate pt-4 border-t border-zinc-700">
+              {totalPrice.toLocaleString('cs-CZ')} <span className="text-xl">Kč</span>
+            </div>
+            
+            <div className="space-y-2 text-xs md:text-sm text-zinc-300 pt-2 border-t border-zinc-800 mb-6">
+              <div className="flex justify-between">
+                <span>Čistý náklad (vč. odpadu):</span>
+                <span className="font-medium text-[#FEFEFA]">{techData.exactMaterialCost.toLocaleString('cs-CZ')} Kč</span>
               </div>
               <div className="flex justify-between">
                 <span>Záloha pro klienta (50 %):</span>
-                <span className="font-bold text-[#FF4F00]">{(clientFinalPrice / 2).toLocaleString('cs-CZ')} Kč</span>
+                <span className="font-bold text-[#FF8730]">{(totalPrice / 2).toLocaleString('cs-CZ')} Kč</span>
               </div>
             </div>
 
-            {/* GENERÁTORY DOKUMENTŮ */}
             <div className="space-y-3">
               <p className="text-xs text-zinc-500 uppercase font-bold tracking-wider mb-2">Generování PDF</p>
-              
-              <button onClick={handleGenerateQuotePDF} disabled={isGeneratingQuote || !customerName} type="button" className="w-full py-2.5 px-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl text-sm transition-colors flex items-center gap-3 cursor-pointer">
-                {isGeneratingQuote ? <Loader2 size={18} className="animate-spin text-[#FF4F00]" /> : <FileDown size={18} className="text-[#FF4F00]" />}
-                Cenová nabídka
+              <button onClick={handleGenerateCombinedPDF} disabled={isGeneratingCombined || !customerName} type="button" className="w-full py-2.5 px-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl text-sm transition-colors flex items-center gap-3 cursor-pointer">
+                {isGeneratingCombined ? <Loader2 size={18} className="animate-spin text-[#FF8730]" /> : <FileDown size={18} className="text-[#FF8730]" />} Smlouva o dílo a nabídka
               </button>
-              
-              <button onClick={handleGenerateContractPDF} disabled={isGeneratingContract || !customerName} type="button" className="w-full py-2.5 px-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl text-sm transition-colors flex items-center gap-3 cursor-pointer">
-                {isGeneratingContract ? <Loader2 size={18} className="animate-spin text-[#FF4F00]" /> : <FileSignature size={18} className="text-[#FF4F00]" />}
-                Smlouva o dílo
-              </button>
-
               <button onClick={handleGenerateInvoicePDF} disabled={isGeneratingInvoice || !customerName} type="button" className="w-full py-2.5 px-4 bg-[#FEFEFA] text-[#000000] hover:bg-zinc-200 rounded-xl text-sm font-bold transition-colors flex items-center gap-3 cursor-pointer mt-2">
-                {isGeneratingInvoice ? <Loader2 size={18} className="animate-spin text-[#FF4F00]" /> : <Receipt size={18} className="text-[#FF4F00]" />}
-                Zálohová faktura
+                {isGeneratingInvoice ? <Loader2 size={18} className="animate-spin text-[#FF8730]" /> : <Receipt size={18} className="text-[#FF8730]" />} Zálohová faktura (50 %)
               </button>
             </div>
-            
             {!customerName && <p className="text-xs text-red-400 text-center mt-4">Pro generování PDF vyplňte zákazníka</p>}
             {!companyProfile?.bankAccount && customerName && <p className="text-xs text-amber-400 text-center mt-4">Pro fakturu chybí číslo účtu (Nastavení)</p>}
           </div>

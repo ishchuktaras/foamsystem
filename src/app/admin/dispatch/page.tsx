@@ -7,7 +7,14 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
-// Pomocná funkce pro získání formátovaného čísla zakázky (YYYYMM-XXX)
+// PŘIDÁNO: Překladový slovník pro stavy zakázek
+const STATUS_MAP: Record<string, string> = {
+  INQUIRY: 'Poptávka',
+  ORDER: 'Objednávka',
+  CONTRACT: 'Smlouva',
+  COMPLETED: 'Dokončeno',
+}
+
 async function getFormattedQuoteNumber(quoteId: string, createdAt: Date) {
   const date = new Date(createdAt)
   const year = date.getFullYear()
@@ -48,7 +55,6 @@ export default async function DispatchPage() {
     })
   ])
 
-  // Paralelní výpočet formátovaných čísel pro všechny zobrazené zakázky
   const activeQuotes = await Promise.all(activeQuotesRaw.map(async (q) => ({
     ...q,
     formattedId: await getFormattedQuoteNumber(q.id, q.createdAt)
@@ -62,7 +68,6 @@ export default async function DispatchPage() {
   return (
     <div className="space-y-8 p-4 md:p-8 animate-in fade-in duration-500 w-full min-w-0 pb-16">
       
-      {/* Banner */}
       <div className="relative w-full overflow-hidden rounded-2xl bg-linear-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-8 md:p-10 text-[#FEFEFA] shadow-xl">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
@@ -77,7 +82,6 @@ export default async function DispatchPage() {
         </div>
       </div>
 
-      {/* SEKCE 1: AKTIVNÍ / ROZPRACOVANÉ ZAKÁZKY K PLANOVÁNÍ */}
       <div className="space-y-4">
         <h2 className="text-xl font-bold text-[#000000] flex items-center gap-2">
           <Clock size={22} className="text-[#FF4F00]" /> Aktivní zakázky k naplánování ({activeQuotes.length})
@@ -110,8 +114,9 @@ export default async function DispatchPage() {
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="text-amber-600 font-bold bg-amber-50 px-2 py-1 rounded-md text-xs border border-amber-200">
-                          {quote.status}
+                        {/* OPRAVA STAVU */}
+                        <span className="text-amber-600 font-bold bg-amber-50 px-2 py-1 rounded-md text-xs border border-amber-200 uppercase">
+                          {STATUS_MAP[quote.status] || quote.status}
                         </span>
                       </div>
                     </div>
@@ -179,8 +184,9 @@ export default async function DispatchPage() {
                           </td>
 
                           <td className="py-4 px-6">
-                            <span className="text-amber-600 font-bold bg-amber-50 px-2.5 py-1 rounded-md text-xs border border-amber-200">
-                              {quote.status}
+                            {/* OPRAVA STAVU */}
+                            <span className="text-amber-600 font-bold bg-amber-50 px-2.5 py-1 rounded-md text-xs border border-amber-200 uppercase">
+                              {STATUS_MAP[quote.status] || quote.status}
                             </span>
                           </td>
 
@@ -205,7 +211,6 @@ export default async function DispatchPage() {
         )}
       </div>
 
-      {/* SEKCE 2: DOKONČENÉ STAVBY A TECHNICKÉ DENÍKY Z TERÉNU */}
       <div className="pt-8 border-t border-zinc-200 space-y-4">
         <h2 className="text-xl font-bold text-[#000000] flex items-center gap-2">
           <CheckCircle2 size={22} className="text-emerald-600" /> Dokončené stavby & Technické deníky ({completedQuotes.length})
@@ -230,7 +235,6 @@ export default async function DispatchPage() {
                         <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
                           Dokončeno
                         </span>
-                        {/* ZMĚNA: Tady už se používá vygenerované pořadové číslo zakázky */}
                         <span className="text-xs text-zinc-400 font-mono tracking-widest">{quote.formattedId}</span>
                       </div>
                       <h3 className="font-extrabold text-xl text-[#000000]">{quote.customerName}</h3>
@@ -247,11 +251,8 @@ export default async function DispatchPage() {
                     </div>
                   </div>
 
-                  {/* TELEMETRIE A TECHNICKÁ DATA Z DENÍKU */}
                   {ev ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-sm">
-                      
-                      {/* 1. Kdo a kdy */}
                       <div className="bg-zinc-50 p-3.5 rounded-xl border border-zinc-100">
                         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 flex items-center gap-1">
                           <User size={12}/> Vyplnil aplikátor
@@ -262,7 +263,6 @@ export default async function DispatchPage() {
                         </p>
                       </div>
 
-                      {/* 2. Teploty */}
                       <div className="bg-zinc-50 p-3.5 rounded-xl border border-zinc-100">
                         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 flex items-center gap-1">
                           <Thermometer size={12}/> Teploty (Ven / In / Podklad)
@@ -273,7 +273,6 @@ export default async function DispatchPage() {
                         <p className="text-[11px] text-zinc-500 mt-0.5">Podklad: {ev.surfaceType}</p>
                       </div>
 
-                      {/* 3. Spotřeba na reaktoru */}
                       <div className="bg-orange-50/50 p-3.5 rounded-xl border border-orange-100">
                         <p className="text-[10px] font-bold text-orange-600 uppercase tracking-wider mb-1">Spotřeba / Zdvihy reaktoru</p>
                         <p className="font-black text-[#FF4F00]">
@@ -282,7 +281,6 @@ export default async function DispatchPage() {
                         <p className="text-[11px] text-zinc-500 mt-0.5">Koeficient stroje aplikován</p>
                       </div>
 
-                      {/* 4. Vícepráce */}
                       <div className="bg-zinc-50 p-3.5 rounded-xl border border-zinc-100">
                         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Vícepráce a příplatky</p>
                         <p className="font-bold text-zinc-800 text-xs">
@@ -293,7 +291,6 @@ export default async function DispatchPage() {
                           {ev.finalInvoiceTotal ? `Fakturováno: ${Math.round(ev.finalInvoiceTotal).toLocaleString('cs-CZ')} Kč` : 'Čeká na uložení vyúčtování'}
                         </p>
                       </div>
-
                     </div>
                   ) : (
                     <div className="mt-4 p-3 bg-amber-50 text-amber-800 text-xs rounded-xl font-medium">

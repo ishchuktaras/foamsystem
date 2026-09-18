@@ -1,11 +1,11 @@
 // src/components/CalculatorForm.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Calculator, FileDown, FileText, ClipboardSignature, Ruler, Maximize, Loader2 } from 'lucide-react'
+import { Calculator, FileDown, FileText, ClipboardSignature, Ruler, Maximize, Loader2, AlertTriangle, Layers, Droplets, Settings } from 'lucide-react'
 import jsPDF from 'jspdf'
-import { calculateFoamProject, parseLambda } from '@/lib/calculations'
+import { parseLambda } from '@/lib/calculations'
 
 type Material = {
   id: string;
@@ -13,39 +13,16 @@ type Material = {
   type: string;
   density: number;
   yieldPerSetM3: number;
-  wasteFactor: number;
+  wasteFactor: number; // Starý DB faktor, nyní nahrazen dynamickým posuvníkem
   buyPricePerSet: number | null;
   lambda?: string | null; 
 }
 
-// Přidán typ pro existující poptávky
 type QuoteOption = {
   id: string;
   customerName: string;
   city: string | null;
   status: string;
-}
-
-type CalculatorResult = {
-  materialName: string;
-  areaSqm: number;
-  thicknessCm: number;
-  coveragePerM3: number;
-  pureVolumeM3: number;
-  totalVolumeM3: number;
-  totalVolumeLiters: number;
-  totalMassKg: number;
-  kgPerM2: number;
-  exactSets: number;
-  totalSets: number;
-  totalCost: number;
-  costPerM2: number;
-  costPerM3: number;
-  exactMaterialCost: number;
-  thermalResistance: number | null;
-  buyPricePerSet: number;
-  density: number;
-  yieldPerSetM3: number;
 }
 
 export default function CalculatorForm({ 
@@ -58,44 +35,81 @@ export default function CalculatorForm({
   const router = useRouter()
   
   const [selectedMaterialId, setSelectedMaterialId] = useState(materials[0]?.id || '')
-  const [area, setArea] = useState<number | ''>('')
-  const [thickness, setThickness] = useState<number | ''>('')
+  const [area, setArea] = useState<number | ''>(150)
+  const [thickness, setThickness] = useState<number | ''>(25)
+  const [lossPercent, setLossPercent] = useState<number>(10) // Nový dynamický faktor ztráty 5-15%
   
-  // Stav pro cílovou zakázku
   const [targetQuoteId, setTargetQuoteId] = useState<string>('new')
   
-  const [result, setResult] = useState<CalculatorResult | null>(null)
-
   const [isExportingPDF, setIsExportingPDF] = useState(false)
   const [isExportingDOC, setIsExportingDOC] = useState(false)
   const [isRedirecting, setIsRedirecting] = useState(false)
 
-  const handleCalculate = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!area || !thickness || !selectedMaterialId) return
-    const material = materials.find(m => m.id === selectedMaterialId)
-    if (!material) return
+  const selectedMaterial = materials.find(m => m.id === selectedMaterialId)
 
-    const calcResults = calculateFoamProject({
-      areaM2: Number(area),
-      thicknessCm: Number(thickness),
-      density: material.density,
-      wasteFactor: material.wasteFactor,
-      yieldPerSetM3: material.yieldPerSetM3,
-      buyPricePerSet: material.buyPricePerSet || 0,
-      lambda: parseLambda(material.lambda)
-    })
+  // Hlavní výpočetní jádro (reaguje okamžitě na každou změnu)
+  const result = useMemo(() => {
+    if (!selectedMaterial || !area || !thickness) return null
 
-    setResult({
-      materialName: material.name,
+    const thicknessM = Number(thickness) / 100
+    
+    // Vydatnost jedné sady v m² (Objem sady / Tloušťka)
+    const yieldM2PerSet = selectedMaterial.yieldPerSetM3 / thicknessM
+
+    // Čistý objem bez ztrát
+    const pureVolumeM3 = Number(area) * thicknessM
+
+    // Aplikace dynamické ztráty
+    const lossMultiplier = 1 + (lossPercent / 100)
+    const totalVolumeM3 = pureVolumeM3 * lossMultiplier
+    const wastedVolumeM3 = totalVolumeM3 - pureVolumeM3
+
+    // Výpočet sad
+    const exactSets = totalVolumeM3 / selectedMaterial.yieldPerSetM3
+    const totalSets = Math.ceil(exactSets)
+
+    // Predikce stroje (Graco A25 = 4011 zdvihů na sadu)
+    const liftsPerSet = 4011
+    const estimatedLifts = Math.round(exactSets * liftsPerSet)
+
+    // Finanční údaje
+    const buyPricePerSet = selectedMaterial.buyPricePerSet || 0
+    const exactMaterialCost = exactSets * buyPricePerSet
+    const totalCost = totalSets * buyPricePerSet
+    
+    // Tepelný odpor
+    const lambda = parseLambda(selectedMaterial.lambda)
+    const thermalResistance = lambda ? Number((thicknessM / lambda).toFixed(2)) : null
+
+    // Jednotkové parametry
+    const totalMassKg = totalVolumeM3 * selectedMaterial.density
+    const kgPerM2 = Number((totalMassKg / Number(area)).toFixed(2))
+    const costPerM2 = Math.round(exactMaterialCost / Number(area))
+
+    return {
+      materialName: selectedMaterial.name,
       areaSqm: Number(area),
       thicknessCm: Number(thickness),
-      buyPricePerSet: material.buyPricePerSet || 0,
-      density: material.density,
-      yieldPerSetM3: material.yieldPerSetM3,
-      ...calcResults
-    })
-  }
+      thicknessM,
+      yieldM2PerSet,
+      pureVolumeM3: Number(pureVolumeM3.toFixed(2)),
+      totalVolumeM3: Number(totalVolumeM3.toFixed(2)),
+      wastedVolumeM3: Number(wastedVolumeM3.toFixed(2)),
+      totalMassKg: Math.round(totalMassKg),
+      kgPerM2,
+      exactSets: Number(exactSets.toFixed(2)),
+      totalSets,
+      estimatedLifts,
+      exactMaterialCost: Math.round(exactMaterialCost),
+      totalCost,
+      costPerM2,
+      thermalResistance,
+      buyPricePerSet,
+      density: selectedMaterial.density,
+      yieldPerSetM3: selectedMaterial.yieldPerSetM3
+    }
+  }, [selectedMaterial, area, thickness, lossPercent])
+
 
   const handleExportPDF = async () => {
     if (!result) return
@@ -139,7 +153,7 @@ export default function CalculatorForm({
       doc.setTextColor(100, 100, 100)
       doc.text(`Vygenerováno systémem Izolace RS dne: ${date}`, 20, 28)
 
-      doc.setDrawColor(255, 79, 0) 
+      doc.setDrawColor(255, 135, 48) // Aktualizováno na #FF8730
       doc.setLineWidth(0.5)
       doc.line(20, 32, 190, 32)
 
@@ -151,28 +165,29 @@ export default function CalculatorForm({
       doc.setFont("Roboto", "normal")
       doc.text(`Zadaná plocha: ${result.areaSqm} m²`, 20, 50)
       doc.text(`Požadovaná tloušťka: ${result.thicknessCm} cm`, 20, 58)
+      doc.text(`Ztráta (přestřik): ${lossPercent} %`, 20, 66)
       
-      doc.text(`Jednotková cena / m³: ${Math.round(pricePerM3).toLocaleString('cs-CZ')} Kč`, 20, 70)
-      doc.text(`Jednotková cena / kg: ${Math.round(pricePerKg).toLocaleString('cs-CZ')} Kč`, 20, 78)
+      doc.text(`Jednotková cena / m³: ${Math.round(pricePerM3).toLocaleString('cs-CZ')} Kč`, 20, 78)
+      doc.text(`Jednotková cena / kg: ${Math.round(pricePerKg).toLocaleString('cs-CZ')} Kč`, 20, 86)
 
-      doc.text(`Čistý objem: ${result.pureVolumeM3} m³`, 20, 92)
-      doc.text(`Objem vč. ztrát: ${result.totalVolumeM3} m³ (${result.totalVolumeLiters} litrů)`, 20, 100)
-      doc.text(`Celková hmotnost materiálu: ${result.totalMassKg} kg`, 20, 108)
+      doc.text(`Čistý objem: ${result.pureVolumeM3} m³`, 20, 100)
+      doc.text(`Objem vč. ztrát: ${result.totalVolumeM3} m³ (Odpad: ${result.wastedVolumeM3} m³)`, 20, 108)
+      doc.text(`Celková hmotnost materiálu: ${result.totalMassKg} kg`, 20, 116)
       
       if (result.thermalResistance) {
-        doc.setTextColor(255, 79, 0) 
-        doc.text(`Dosažený tepelný odpor (R): ${result.thermalResistance} m²K/W`, 20, 116)
+        doc.setTextColor(255, 135, 48) 
+        doc.text(`Dosažený tepelný odpor (R): ${result.thermalResistance} m²K/W`, 20, 124)
         doc.setTextColor(0, 0, 0)
       }
 
       doc.setFillColor(0, 0, 0) 
-      doc.rect(20, 126, 170, 30, 'F')
+      doc.rect(20, 134, 170, 30, 'F')
       
       doc.setFontSize(13)
       doc.setTextColor(255, 255, 255)
       doc.setFont("Roboto", "bold")
-      doc.text(`Potřebný počet sad: ${result.totalSets} ks`, 25, 136)
-      doc.text(`Celkový náklad na materiál: ${result.totalCost.toLocaleString('cs-CZ')} Kč`, 25, 146)
+      doc.text(`Potřebný počet sad: ${result.totalSets} ks (Přesně: ${result.exactSets})`, 25, 144)
+      doc.text(`Celkový náklad na materiál: ${result.totalCost.toLocaleString('cs-CZ')} Kč`, 25, 154)
 
       doc.save(`kalkulace-${result.materialName.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.pdf`)
     } catch (error) {
@@ -191,7 +206,7 @@ export default function CalculatorForm({
         <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
         <head><meta charset="utf-8"><title>Kalkulace spotřeby</title></head>
         <body style="font-family: Arial, sans-serif; color: #000; line-height: 1.6;">
-          <h1 style="color: #FF4F00; border-bottom: 2px solid #FF4F00; padding-bottom: 10px;">Kalkulace spotřeby materiálu - Izolace RS</h1>
+          <h1 style="color: #FF8730; border-bottom: 2px solid #FF8730; padding-bottom: 10px;">Kalkulace spotřeby materiálu - Izolace RS</h1>
           <p><strong>Datum:</strong> ${new Date().toLocaleDateString('cs-CZ')}</p>
           <hr/>
           <h3>Zadané parametry:</h3>
@@ -199,6 +214,7 @@ export default function CalculatorForm({
             <li><strong>Materiál:</strong> ${result.materialName}</li>
             <li><strong>Plocha:</strong> ${result.areaSqm} m²</li>
             <li><strong>Tloušťka:</strong> ${result.thicknessCm} cm</li>
+            <li><strong>Ztráta:</strong> ${lossPercent} %</li>
           </ul>
           <h3>Výsledek kalkulace:</h3>
           <ul>
@@ -206,7 +222,7 @@ export default function CalculatorForm({
             <li><strong>Objem vč. ztrát:</strong> ${result.totalVolumeM3} m³</li>
             <li><strong>Celková hmotnost:</strong> ${result.totalMassKg} kg</li>
             <li><strong>Potřebné sady:</strong> ${result.totalSets} ks</li>
-            <li><strong>Celkový náklad na materiál:</strong> ${result.totalCost.toLocaleString('cs-CZ')} Kč</li>
+            <li><strong>Celkový náklad na nákup materiálu:</strong> ${result.totalCost.toLocaleString('cs-CZ')} Kč</li>
           </ul>
         </body>
         </html>
@@ -227,7 +243,6 @@ export default function CalculatorForm({
     }
   }
 
-  // Upravená funkce pro přesměrování podle výběru zakázky
   const handleAttachToInquiry = () => {
     if (!result) return
     setIsRedirecting(true)
@@ -236,7 +251,7 @@ export default function CalculatorForm({
       materialName: result.materialName,
       area: result.areaSqm.toString(),
       thickness: result.thicknessCm.toString(),
-      cost: result.totalCost.toString(),
+      cost: result.exactMaterialCost.toString(), // Přenášíme čistou cenu bez marže
       sets: result.totalSets.toString()
     })
 
@@ -247,208 +262,162 @@ export default function CalculatorForm({
     }
   }
 
-  const pricePerSet = result ? result.buyPricePerSet : 0
-  const yieldM3 = result ? result.yieldPerSetM3 : 0
-  const density = result ? result.density : 0
-  const calcPricePerM3 = yieldM3 > 0 ? pricePerSet / yieldM3 : 0
-  const totalWeightPerSet = yieldM3 * density
-  const calcPricePerKg = totalWeightPerSet > 0 ? pricePerSet / totalWeightPerSet : 0
-
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleCalculate} className="bg-[#FEFEFA] p-6 md:p-8 rounded-2xl shadow-sm border border-zinc-200 space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+      
+      {/* LEVÝ SLOUPEC: Vstupní parametry */}
+      <div className="lg:col-span-5 bg-[#FEFEFA] p-6 md:p-8 rounded-2xl shadow-sm border border-zinc-200 space-y-6">
+        <h2 className="text-xl font-black text-[#000000] flex items-center gap-2 border-b border-zinc-100 pb-4">
+          <Settings className="text-[#FF8730]" /> Parametry výpočtu
+        </h2>
+
         <div className="space-y-2">
-          <label className="block text-sm font-bold text-zinc-700 uppercase tracking-wide">Izolační materiál</label>
+          <label className="block text-xs font-bold text-zinc-500 uppercase">Materiál</label>
           <select 
             value={selectedMaterialId}
             onChange={(e) => setSelectedMaterialId(e.target.value)}
-            className="w-full px-4 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] bg-zinc-50 cursor-pointer font-medium"
+            className="w-full p-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none bg-zinc-50 font-medium"
           >
-            {materials.map((mat) => (
-              <option key={mat.id} value={mat.id}>
-                {mat.name} (Typ: {mat.type}, Hustota: {mat.density} kg/m³)
+            {materials.map(m => (
+              <option key={m.id} value={m.id}>
+                {m.name} ({m.yieldPerSetM3} m³ / sada)
               </option>
             ))}
           </select>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="block text-sm font-bold text-zinc-700 uppercase tracking-wide">Plocha k izolaci</label>
+            <label className="block text-xs font-bold text-zinc-500 uppercase">Plocha (m²)</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400">
-                <Maximize size={18} />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                <Maximize size={16} />
               </div>
               <input 
-                type="number" 
-                min="0.1" step="0.1"
-                value={area}
-                onChange={(e) => setArea(e.target.value ? Number(e.target.value) : '')}
-                placeholder="Např. 150" 
-                className="w-full pl-11 pr-12 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] bg-zinc-50 font-semibold"
-                required 
+                type="number" min="0.1" step="0.1" value={area} onChange={(e) => setArea(e.target.value ? Number(e.target.value) : '')}
+                className="w-full pl-9 p-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] font-bold outline-none bg-zinc-50"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">m²</span>
             </div>
           </div>
-
           <div className="space-y-2">
-            <label className="block text-sm font-bold text-zinc-700 uppercase tracking-wide">Požadovaná tloušťka</label>
+            <label className="block text-xs font-bold text-zinc-500 uppercase">Tloušťka (cm)</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-400">
-                <Ruler size={18} />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                <Ruler size={16} />
               </div>
               <input 
-                type="number" 
-                min="1" step="1"
-                value={thickness}
-                onChange={(e) => setThickness(e.target.value ? Number(e.target.value) : '')}
-                placeholder="Např. 20" 
-                className="w-full pl-11 pr-12 py-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none text-[#000000] bg-zinc-50 font-semibold"
-                required 
+                type="number" min="1" step="1" value={thickness} onChange={(e) => setThickness(e.target.value ? Number(e.target.value) : '')}
+                className="w-full pl-9 p-3 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] font-bold outline-none bg-zinc-50"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">cm</span>
             </div>
           </div>
         </div>
 
-        <button 
-          type="submit" 
-          className="w-full py-4 bg-[#000000] hover:bg-zinc-800 text-[#FEFEFA] font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.01] cursor-pointer"
-        >
-          <Calculator size={20} className="text-[#FF4F00]" />
-          Zpracovat kalkulaci spotřeby
-        </button>
-      </form>
-
-      {/* VÝSLEDKY KALKULACE */}
-      {result && (
-        <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 overflow-hidden mt-8 animate-in fade-in zoom-in-95 duration-300">
-          <div className="bg-gradient-to-r from-[#000000] to-zinc-900 px-6 py-5 border-b-4 border-[#FF4F00]">
-            <h3 className="text-[#FEFEFA] font-bold text-xl flex items-center gap-2">
-              Výsledek pro: {result.materialName}
-            </h3>
-            <p className="text-zinc-400 text-sm mt-1">
-              Plocha: {result.areaSqm} m² | Tloušťka: {result.thicknessCm} cm
-            </p>
+        <div className="space-y-4 pt-4 border-t border-zinc-100">
+          <div className="flex justify-between items-center">
+            <label className="text-xs font-bold text-zinc-500 uppercase">Předpokládaný přestřik / ztráta</label>
+            <span className="font-black text-[#FF8730] text-lg">{lossPercent} %</span>
           </div>
-          
-          <div className="p-6">
-            <h3 className="text-lg font-extrabold text-[#000000] border-b border-zinc-200 pb-2 mb-6">
-              Detailní analýza zakázky
-            </h3>
+          <input 
+            type="range" min="5" max="15" step="1" value={lossPercent}
+            onChange={(e) => setLossPercent(Number(e.target.value))}
+            className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-[#FF8730]"
+          />
+          <div className="flex justify-between text-xs text-zinc-400 font-medium">
+            <span>5 % (Ideální)</span>
+            <span>15 % (Ztížené)</span>
+          </div>
+        </div>
+      </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              
-              <div className="bg-[#FEFEFA] border border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
-                <div className="bg-zinc-100 px-5 py-3 border-b border-zinc-200">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-800">Fyzický objem & Hmota</h4>
-                </div>
-                <div className="p-5 space-y-4">
-                  <div>
-                    <p className="text-sm text-zinc-500 font-medium">Celkový objem pěny</p>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-extrabold text-[#000000]">{result.totalVolumeM3} <span className="text-sm font-semibold">m³</span></span>
-                      <span className="text-sm text-zinc-400 font-medium">({result.totalVolumeLiters.toLocaleString('cs-CZ')} l)</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-zinc-500 font-medium">Celková hmotnost</p>
-                    <p className="text-xl font-bold text-[#000000]">{result.totalMassKg.toLocaleString('cs-CZ')} <span className="text-sm">kg</span></p>
-                  </div>
-                  <div className="pt-3 border-t border-zinc-200">
-                    <p className="text-sm text-zinc-500 font-medium">Spotřeba na 1 m²</p>
-                    <p className="text-lg font-bold text-[#000000]">{result.kgPerM2} <span className="text-xs text-zinc-500">kg / m²</span></p>
-                  </div>
-                </div>
+      {/* PRAVÝ SLOUPEC: Výsledky výpočtu a Akce */}
+      <div className="lg:col-span-7 space-y-4">
+        
+        {result ? (
+          <div className="space-y-4">
+            
+            {/* Box 1: Technická vydatnost */}
+            <div className="bg-[#000000] text-white p-6 rounded-2xl shadow-md border border-zinc-800 flex items-center justify-between">
+              <div>
+                <p className="text-zinc-400 text-xs font-bold uppercase tracking-wide mb-1">Vydatnost 1 sady ({thickness} cm)</p>
+                <div className="text-3xl font-black">{Math.round(result.yieldM2PerSet)} <span className="text-xl text-[#FF8730]">m²</span></div>
+                <p className="text-zinc-500 text-xs mt-1">Výpočet: {selectedMaterial?.yieldPerSetM3} m³ / {result.thicknessM} m</p>
               </div>
-
-              <div className="bg-[#FEFEFA] border border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
-                <div className="bg-zinc-100 px-5 py-3 border-b border-zinc-200">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-800">Jednotkové náklady</h4>
-                </div>
-                <div className="p-5 space-y-4">
-                  <div>
-                    <p className="text-sm text-zinc-500 font-medium">Náklad na 1 m²</p>
-                    <p className="text-2xl font-extrabold text-[#000000]">{result.costPerM2.toLocaleString('cs-CZ')} <span className="text-sm font-semibold">Kč</span></p>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    <div>
-                      <p className="text-xs text-zinc-500 font-medium">Cena / m³</p>
-                      <p className="text-base font-bold text-blue-600">{Math.round(calcPricePerM3).toLocaleString('cs-CZ')} Kč</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-zinc-500 font-medium">Cena / kg</p>
-                      <p className="text-base font-bold text-emerald-600">{Math.round(calcPricePerKg).toLocaleString('cs-CZ')} Kč</p>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t border-zinc-200">
-                    <p className="text-sm text-zinc-500 font-medium">Vystříkaný materiál (čistá cena)</p>
-                    <p className="text-lg font-bold text-[#FF4F00]">{result.exactMaterialCost.toLocaleString('cs-CZ')} <span className="text-xs text-zinc-500">Kč</span></p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-[#FEFEFA] border border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
-                <div className="bg-zinc-100 px-5 py-3 border-b border-zinc-200">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-800">Logistika & Sklad</h4>
-                </div>
-                <div className="p-5 space-y-4">
-                  <div>
-                    <p className="text-sm text-zinc-500 font-medium">Potřebné sady (Nákup)</p>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-extrabold text-[#000000]">{result.totalSets} <span className="text-sm font-semibold">sad(y)</span></span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-zinc-500 font-medium">Přesná spotřeba</p>
-                    <p className="text-xl font-bold text-[#000000]">{result.exactSets} <span className="text-sm">sady</span></p>
-                  </div>
-                  
-                  {result.thermalResistance && (
-                    <div className="pt-3 border-t border-zinc-200">
-                      <p className="text-sm text-zinc-500 font-medium">Tepelný odpor (R)</p>
-                      <p className="text-lg font-bold text-[#FF4F00]">{result.thermalResistance} <span className="text-xs text-zinc-500">m²·K/W</span></p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
+              <Layers size={40} className="text-zinc-800" />
             </div>
 
-            <div className="border-t border-zinc-200 pt-8">
-              <h4 className="text-[#000000] font-extrabold mb-5 text-lg">Další kroky a obchodní zpracování</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Box 2: Spotřeba a Ztráty */}
+            <div className="bg-[#FEFEFA] p-6 rounded-2xl shadow-sm border border-zinc-200">
+              <h3 className="font-bold text-[#000000] border-b border-zinc-100 pb-3 mb-4 flex items-center gap-2">
+                <Droplets className="text-[#FF8730]" size={18} /> Celková spotřeba materiálu
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <p className="text-zinc-500 text-xs font-bold uppercase mb-1">Čistý objem</p>
+                  <p className="text-2xl font-black text-[#000000]">{result.pureVolumeM3} <span className="text-base font-bold">m³</span></p>
+                </div>
+                <div>
+                  <p className="text-zinc-500 text-xs font-bold uppercase mb-1 flex items-center gap-1">
+                    S přestřikem <AlertTriangle size={12} className="text-[#FF8730]" />
+                  </p>
+                  <p className="text-2xl font-black text-[#000000]">{result.totalVolumeM3} <span className="text-base font-bold">m³</span></p>
+                  <p className="text-xs text-red-500 font-medium mt-1">+{result.wastedVolumeM3} m³ odpad</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Box 3: Logistika a Predikce stroje */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-[#FF8730]/10 p-6 rounded-2xl border border-[#FF8730]/20">
+                <p className="text-[#FF8730] text-xs font-bold uppercase mb-2">Potřebné sady k naložení</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-black text-[#000000]">{result.totalSets}</span>
+                  <span className="text-zinc-600 font-medium">ks</span>
+                </div>
+                <p className="text-xs text-zinc-500 mt-2">Přesně: {result.exactSets} sad</p>
+              </div>
+
+              <div className="bg-zinc-50 p-6 rounded-2xl border border-zinc-200">
+                <p className="text-zinc-500 text-xs font-bold uppercase mb-2">Predikce Graco A25</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-black text-[#000000]">{result.estimatedLifts.toLocaleString('cs-CZ')}</span>
+                  <span className="text-zinc-600 font-medium">zdvihů</span>
+                </div>
+                <p className="text-xs text-zinc-500 mt-2">Při {lossPercent}% ztrátě a tloušťce {thickness} cm</p>
+              </div>
+            </div>
+
+            {/* AKCE A EXPORTY */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 mt-4">
+              <h4 className="text-[#000000] font-extrabold mb-4 text-sm uppercase tracking-wide">Obchodní zpracování</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 
-                <button onClick={handleExportPDF} disabled={isExportingPDF} className="flex flex-col border border-zinc-200 rounded-xl p-5 hover:border-[#FF4F00] transition-all group text-left cursor-pointer">
-                  <div className="flex items-center gap-2 font-bold text-[#000000] group-hover:text-[#FF4F00] mb-2">
-                    {isExportingPDF ? <Loader2 size={22} className="animate-spin text-[#FF4F00]" /> : <FileDown size={22} className="text-[#FF4F00]" />} Uložit do PDF
-                  </div>
+                <button onClick={handleExportPDF} disabled={isExportingPDF} className="flex flex-col border border-zinc-200 rounded-xl p-4 hover:border-[#FF8730] transition-all group text-left cursor-pointer items-center text-center">
+                  {isExportingPDF ? <Loader2 size={24} className="animate-spin text-[#FF8730] mb-2" /> : <FileDown size={24} className="text-[#FF8730] mb-2" />} 
+                  <span className="font-bold text-sm text-[#000000] group-hover:text-[#FF8730]">Uložit PDF</span>
                 </button>
 
-                <button onClick={handleExportDOC} disabled={isExportingDOC} className="flex flex-col border border-zinc-200 rounded-xl p-5 hover:border-[#FF4F00] transition-all group text-left cursor-pointer">
-                  <div className="flex items-center gap-2 font-bold text-[#000000] group-hover:text-[#FF4F00] mb-2">
-                    {isExportingDOC ? <Loader2 size={22} className="animate-spin text-[#FF4F00]" /> : <FileText size={22} className="text-[#FF4F00]" />} Uložit do DOC
-                  </div>
+                <button onClick={handleExportDOC} disabled={isExportingDOC} className="flex flex-col border border-zinc-200 rounded-xl p-4 hover:border-[#FF8730] transition-all group text-left cursor-pointer items-center text-center">
+                  {isExportingDOC ? <Loader2 size={24} className="animate-spin text-[#FF8730] mb-2" /> : <FileText size={24} className="text-[#FF8730] mb-2" />} 
+                  <span className="font-bold text-sm text-[#000000] group-hover:text-[#FF8730]">Uložit DOC</span>
                 </button>
 
-                {/* Rozšířené tlačítko pro výběr existující zakázky */}
-                <div className="flex flex-col border border-[#FF4F00]/30 bg-[#FF4F00]/5 rounded-xl p-5 transition-all group">
-                  <div className="flex items-center gap-2 font-bold text-[#000000] mb-3">
-                    <ClipboardSignature size={22} className="text-[#FF4F00]" /> Vložit do nabídky
+                {/* Vložení do nabídky */}
+                <div className="flex flex-col border border-[#FF8730]/30 bg-[#FF8730]/5 rounded-xl p-4 transition-all">
+                  <div className="flex items-center justify-center gap-2 font-bold text-[#000000] mb-3 text-sm">
+                    <ClipboardSignature size={18} className="text-[#FF8730]" /> Vložit do nabídky
                   </div>
                   
                   <select 
                     value={targetQuoteId}
                     onChange={e => setTargetQuoteId(e.target.value)}
-                    className="w-full p-2 mb-3 bg-white border border-[#FF4F00]/20 rounded-lg text-sm font-medium text-zinc-800 focus:outline-none focus:ring-2 focus:ring-[#FF4F00]"
+                    className="w-full p-2 mb-2 bg-white border border-[#FF8730]/20 rounded-lg text-xs font-medium text-zinc-800 focus:outline-none focus:ring-2 focus:ring-[#FF8730]"
                   >
-                    <option value="new">➕ Nová poptávka / nabídka</option>
+                    <option value="new">➕ Nová nabídka</option>
                     {existingQuotes.map(q => (
-                      <option key={q.id} value={q.id}>
-                        📁 {q.customerName} ({q.city || 'bez lokace'})
+                      <option key={q.id} value={q.id} className="truncate">
+                        📁 {q.customerName}
                       </option>
                     ))}
                   </select>
@@ -456,17 +425,24 @@ export default function CalculatorForm({
                   <button 
                     onClick={handleAttachToInquiry} 
                     disabled={isRedirecting}
-                    className="w-full py-2.5 bg-[#FF4F00] hover:bg-orange-600 text-white font-bold text-sm rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-auto"
+                    className="w-full py-2 bg-[#FF8730] hover:bg-[#E67020] text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-auto"
                   >
-                    {isRedirecting ? <Loader2 size={16} className="animate-spin" /> : 'Pokračovat'}
+                    {isRedirecting ? <Loader2 size={14} className="animate-spin" /> : 'Pokračovat'}
                   </button>
                 </div>
 
               </div>
             </div>
+
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="h-full bg-[#FEFEFA] border border-dashed border-zinc-200 rounded-2xl flex flex-col items-center justify-center p-8 text-zinc-400 min-h-[400px]">
+            <Calculator size={48} className="mb-4 opacity-50" />
+            <p className="font-medium text-sm text-center">Vyplňte parametry zakázky vlevo<br/>pro okamžitý výpočet spotřeby.</p>
+          </div>
+        )}
+
+      </div>
     </div>
   )
 }

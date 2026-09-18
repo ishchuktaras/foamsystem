@@ -5,8 +5,15 @@ import { CalendarDays, MapPin, CheckCircle2, Clock, ArrowRight, Wrench, Thermome
 
 export const dynamic = 'force-dynamic'
 
+// PŘIDÁNO
+const STATUS_MAP: Record<string, string> = {
+  INQUIRY: 'Poptávka',
+  ORDER: 'Objednávka',
+  CONTRACT: 'Smlouva',
+  COMPLETED: 'Dokončeno',
+}
+
 export default async function EvidencePage() {
-  // 1. ZAKÁZKY ČEKAJÍCÍ NA REALIZACI (mají termín, ale nejsou COMPLETED)
   const pendingQuotes = await db.quote.findMany({
     where: {
       scheduledDate: { not: null },
@@ -16,7 +23,6 @@ export default async function EvidencePage() {
     orderBy: { scheduledDate: 'asc' }
   })
 
-  // 2. ARCHIV DOKONČENÝCH STAVEB (mají vyplněnou evidenci)
   const completedQuotes = await db.quote.findMany({
     where: {
       status: 'COMPLETED',
@@ -29,7 +35,6 @@ export default async function EvidencePage() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full pb-16">
       
-      {/* BANNER PRO SUPERVIZORA */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#000000] to-[#1a1a1a] border border-zinc-800 p-6 md:p-10 text-[#FEFEFA] shadow-xl">
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight mb-3">Evidence práce (Zástup)</h1>
@@ -42,7 +47,6 @@ export default async function EvidencePage() {
         </div>
       </div>
 
-      {/* SEKCE 1: KARTY K ODKLIKÁNÍ (STEJNÉ JAKO MÁ APLIKÁTOR) */}
       <div className="space-y-4">
         <h2 className="text-xl font-bold text-[#000000] flex items-center gap-2">
           <Clock size={22} className="text-[#FF4F00]" /> Čeká na zadání realizace ({pendingQuotes.length})
@@ -63,8 +67,9 @@ export default async function EvidencePage() {
                 <div key={quote.id} className="bg-[#FEFEFA] p-5 rounded-2xl border border-zinc-200 shadow-sm flex flex-col justify-between hover:border-[#FF4F00]/50 transition-all">
                   <div>
                     <div className="flex justify-between items-start mb-3">
+                      {/* OPRAVA STAVU */}
                       <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
-                        {quote.status}
+                        {STATUS_MAP[quote.status] || quote.status}
                       </span>
                       <span className="text-xs font-bold text-[#FF4F00] flex items-center gap-1">
                         <CalendarDays size={14} /> {dateValue}
@@ -101,7 +106,6 @@ export default async function EvidencePage() {
         )}
       </div>
 
-      {/* SEKCE 2: ARCHIV ODEVZDANÝCH STAVEB */}
       <div className="pt-8 border-t border-zinc-200 space-y-4">
         <h2 className="text-xl font-bold text-[#000000] flex items-center gap-2">
           <CheckCircle2 size={22} className="text-emerald-600" /> Archiv odevzdaných staveb ({completedQuotes.length})
