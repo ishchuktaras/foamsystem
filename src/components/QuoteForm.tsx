@@ -31,7 +31,8 @@ interface QuoteFormProps {
   companyProfile: CompanyProfile | null;
   initialData: {
     id?: string;
-    materialId: string;
+    materialId?: string;
+    materialName?: string; // PŘIDÁNO: pro správné spárování z DB
     area: string;
     thickness: string;
     customerName?: string;
@@ -39,8 +40,8 @@ interface QuoteFormProps {
     street?: string;
     city?: string;
     zip?: string;
-    phone?: string | null; // Přidán telefon
-    email?: string | null; // Přidán e-mail
+    phone?: string | null;
+    email?: string | null;
     totalCost?: string;
     applicatorNotes?: string | null;
   };
@@ -54,11 +55,16 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
   const [street, setStreet] = useState(initialData.street || '')
   const [city, setCity] = useState(initialData.city || '')
   const [zip, setZip] = useState(initialData.zip || '')
-  const [phone, setPhone] = useState(initialData.phone || '') // Stav pro telefon
-  const [email, setEmail] = useState(initialData.email || '') // Stav pro e-mail
+  const [phone, setPhone] = useState(initialData.phone || '') 
+  const [email, setEmail] = useState(initialData.email || '') 
   const [applicatorNotes, setApplicatorNotes] = useState(initialData.applicatorNotes || '')
 
-  const [selectedMaterialId, setSelectedMaterialId] = useState(initialData.materialId || (materials[0]?.id || ''))
+  // ZMĚNA ZDE: Spárování uloženého názvu materiálu s materiály v ceníku
+  const matchedMaterial = materials.find(m => m.name === initialData.materialName)
+  const [selectedMaterialId, setSelectedMaterialId] = useState(
+    initialData.materialId || matchedMaterial?.id || (materials[0]?.id || '')
+  )
+
   const [area, setArea] = useState<number | ''>(initialData.area ? Number(initialData.area) : '')
   const [thickness, setThickness] = useState<number | ''>(initialData.thickness ? Number(initialData.thickness) : '')
   
@@ -149,7 +155,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
   const handleGenerateCombined = async () => {
     setIsGeneratingCombined(true)
     await generateCombinedPDF({
-      customerName, ico, street, city, zip, phone, email, // Přidán telefon a email
+      customerName, ico, street, city, zip, phone, email, 
       materialName: selectedMaterial?.name || '',
       area, thickness, basePrice, vat, totalPrice,
       companyProfile
@@ -160,7 +166,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
   const handleGenerateInvoice = async () => {
     setIsGeneratingInvoice(true)
     await generateInvoicePDF({
-      customerName, ico, street, city, zip, phone, email, // Přidán telefon a email
+      customerName, ico, street, city, zip, phone, email, 
       materialName: selectedMaterial?.name || '',
       area, thickness, basePrice, vat, totalPrice,
       companyProfile
@@ -172,7 +178,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     e.preventDefault()
     setIsSubmitting(true)
     const formData = {
-      customerName, ico, street, city, zip, phone, email, // Přidán telefon a email do DB
+      customerName, ico, street, city, zip, phone, email, 
       materialName: selectedMaterial?.name || 'Nespecifikováno',
       area: String(area), thickness: String(thickness),
       totalCost: String(basePrice),
@@ -238,7 +244,6 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
             </div>
           </div>
 
-          {/* NOVÁ SEKCE: Telefon a E-mail */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="block text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide">Telefon</label>
