@@ -29,11 +29,13 @@ export default function LandingContactForm() {
     const dbResult = await createQuote({
       customerName: formData.name,
       city: formData.city || 'Nezadáno',
+      phone: formData.phone, // PŘIDÁNO
+      email: formData.email, // PŘIDÁNO
       area: formData.area || '0',
       thickness: formData.thickness || '0',
       materialName: `Poptávka z webu: ${formData.type}`,
       totalCost: '0',
-      applicatorNotes: `KONTAKT Z WEBU:\nTelefon: ${formData.phone}\nE-mail: ${formData.email}\nTyp izolace: ${formData.type}`
+      applicatorNotes: `Typ izolace: ${formData.type}`
     })
 
     // 2. Odeslání e-mailového upozornění (neblokujeme UI)
