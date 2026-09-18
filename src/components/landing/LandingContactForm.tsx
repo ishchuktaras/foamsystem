@@ -15,7 +15,7 @@ export default function LandingContactForm() {
     phone: '',
     email: '',
     city: '',
-    type: 'Šikmá střecha / Podkroví', // Výchozí hodnota
+    type: 'Šikmá střecha / Podkroví',
     area: '',
     thickness: ''
   })
@@ -59,7 +59,7 @@ export default function LandingContactForm() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 xl:gap-16 items-center">
       
       {/* LEVÝ SLOUPEC: Kontakty a "živá komunikace" */}
       <div className="lg:col-span-5 space-y-8 text-zinc-300">
@@ -124,33 +124,34 @@ export default function LandingContactForm() {
             <p className="text-zinc-400 text-lg">Děkujeme za váš zájem. Vaši žádost jsme přijali a brzy se vám ozveme s naceněním.</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="bg-white text-[#000000] p-8 md:p-10 rounded-3xl shadow-2xl border border-zinc-100">
+          <form onSubmit={handleSubmit} className="bg-white text-[#000000] p-6 sm:p-8 md:p-10 rounded-3xl shadow-2xl border border-zinc-100 w-full">
             
             <h4 className="text-2xl font-black mb-6 border-b border-zinc-100 pb-4">Nezávazná kalkulace on-line</h4>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6 mb-6">
               <div className="space-y-2">
                 <label className="font-bold text-sm text-zinc-600">Jméno a příjmení *</label>
-                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none transition-all" />
+                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none transition-all" />
               </div>
               <div className="space-y-2">
                 <label className="font-bold text-sm text-zinc-600">Město realizace *</label>
-                <input required type="text" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none transition-all" />
+                <input required type="text" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} className="w-full px-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none transition-all" />
               </div>
               <div className="space-y-2">
                 <label className="font-bold text-sm text-zinc-600">Telefon *</label>
-                <input required type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none transition-all" />
+                <input required type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full px-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none transition-all" />
               </div>
               <div className="space-y-2">
                 <label className="font-bold text-sm text-zinc-600">E-mail *</label>
-                <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none transition-all" />
+                <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none transition-all" />
               </div>
             </div>
 
-            <div className="border-t border-zinc-100 pt-6 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
-              <div className="space-y-2 md:col-span-1">
+            {/* OPRAVENÁ RESPONZIVITA - Rozdělení na 4 sloupce (2 pro select, 1+1 pro čísla) */}
+            <div className="border-t border-zinc-100 pt-6 grid grid-cols-1 sm:grid-cols-4 gap-5 md:gap-6 mb-8">
+              <div className="space-y-2 sm:col-span-2">
                 <label className="font-bold text-sm text-zinc-600">Co zateplujeme?</label>
-                <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none font-medium transition-all">
+                <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full px-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none font-medium transition-all">
                   <option>Šikmá střecha / Podkroví</option>
                   <option>Plochá střecha</option>
                   <option>Strop / Podlaha</option>
@@ -158,13 +159,13 @@ export default function LandingContactForm() {
                   <option>Hala / Průmysl</option>
                 </select>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 sm:col-span-1">
                 <label className="font-bold text-sm text-zinc-600">Plocha (m²)</label>
-                <input type="number" placeholder="cca" value={formData.area} onChange={e => setFormData({...formData, area: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none transition-all" />
+                <input type="number" placeholder="cca" value={formData.area} onChange={e => setFormData({...formData, area: e.target.value})} className="w-full px-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none transition-all" />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 sm:col-span-1">
                 <label className="font-bold text-sm text-zinc-600">Tloušťka (cm)</label>
-                <input type="number" placeholder="cca" value={formData.thickness} onChange={e => setFormData({...formData, thickness: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none transition-all" />
+                <input type="number" placeholder="cca" value={formData.thickness} onChange={e => setFormData({...formData, thickness: e.target.value})} className="w-full px-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none transition-all" />
               </div>
             </div>
 
