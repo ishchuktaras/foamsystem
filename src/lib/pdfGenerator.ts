@@ -187,12 +187,12 @@ export const generateCombinedPDF = async (data: PDFDataParams) => {
 
   doc.setFillColor(245, 245, 245)
   doc.rect(15, y, 180, 8, 'F')
-  doc.rect(15, y, 180, 24)
+  doc.rect(15, y, 180, 32) // Zvětšeno na výšku kvůli delšímu textu
   doc.line(15, y+8, 195, y+8)
-  doc.line(15, y+16, 195, y+16)
+  doc.line(15, y+20, 195, y+20) // Upravena čára pro 2 řádky
   
   const vLines = [75, 95, 120, 150, 165]
-  vLines.forEach(vx => doc.line(vx, y, vx, y+24))
+  vLines.forEach(vx => doc.line(vx, y, vx, y+32))
 
   doc.setFontSize(8)
   doc.text("Označení dodávky", 17, y+5.5)
@@ -211,14 +211,16 @@ export const generateCombinedPDF = async (data: PDFDataParams) => {
   doc.text("21 %", 152, y+13)
   doc.text(`${data.totalPrice.toLocaleString('cs-CZ')} Kč`, 167, y+13)
 
-  doc.text("Doprava materiálu", 17, y+21)
-  doc.text("1 ks", 77, y+21)
-  doc.text("-", 97, y+21)
-  doc.text("V ceně", 122, y+21)
-  doc.text("21 %", 152, y+21)
-  doc.text("V ceně", 167, y+21)
+  // Rozdělení dlouhého textu na dva řádky, aby se vešel do tabulky
+  doc.text("Doprava materiálu, příprava stavby,", 17, y+25)
+  doc.text("práce ve výškách a ztíženém prostředí", 17, y+29)
+  doc.text("1 ks", 77, y+27)
+  doc.text("-", 97, y+27)
+  doc.text("V ceně", 122, y+27)
+  doc.text("21 %", 152, y+27)
+  doc.text("V ceně", 167, y+27)
 
-  y += 24
+  y += 32
 
   doc.setFontSize(9)
   doc.setFont("Roboto", "bold")
