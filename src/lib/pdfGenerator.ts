@@ -155,7 +155,11 @@ export const generateCombinedPDF = async (data: PDFDataParams) => {
 
   doc.setFont("Roboto", "normal")
   doc.text(offerNumber, 48, y+5)
-  doc.text(data.city || "-", 48, y+12)
+  
+  // ZMĚNA: Skládání místa realizace z ulice a města
+  const realizaceMisto = data.street ? `${data.street}, ${data.city}` : (data.city || "-")
+  doc.text(realizaceMisto, 48, y+12)
+  
   doc.text(data.customerName, 48, y+19)
   doc.text(`${data.street || ''}, ${data.zip || ''} ${data.city || ''}`, 48, y+26)
 
