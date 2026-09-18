@@ -192,9 +192,20 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     
     try {
       const { doc, drawLogo } = await initPdf()
-      const currentDate = new Date()
-      const validUntilDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
-      const offerNumber = `NB-${currentDate.getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`
+      
+      // OPRAVA: Dynamické proměnné definovány v lokálním bloku těsně před použitím
+      const generateOfferDetails = () => {
+        const today = new Date()
+        const future = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)
+        const rand = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+        return {
+          current: today.toLocaleDateString('cs-CZ'),
+          valid: future.toLocaleDateString('cs-CZ'),
+          number: `NB-${today.getFullYear()}-${rand}`
+        }
+      }
+      
+      const offer = generateOfferDetails()
       
       drawLogo(15, 25)
       doc.setFontSize(8)
@@ -229,13 +240,13 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       doc.text("Kontaktní osoba:", 107, y+26)
 
       doc.setFont("Roboto", "normal")
-      doc.text(offerNumber, 45, y+5)
+      doc.text(offer.number, 45, y+5)
       doc.text(city || "-", 45, y+12)
       doc.text(customerName, 45, y+19)
       doc.text(`${street}, ${zip} ${city}`, 45, y+26)
 
-      doc.text(currentDate.toLocaleDateString('cs-CZ'), 135, y+5)
-      doc.text(validUntilDate.toLocaleDateString('cs-CZ'), 135, y+12)
+      doc.text(offer.current, 135, y+5)
+      doc.text(offer.valid, 135, y+12)
       doc.text(ico || "-", 135, y+19)
       doc.text(customerName, 135, y+26)
 
@@ -374,12 +385,20 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     
     try {
       const { doc, drawLogo } = await initPdf()
-      const invoiceDate = new Date()
-      const dueDate = new Date()
-      dueDate.setDate(invoiceDate.getDate() + 7) 
       
+      // OPRAVA: Dynamické proměnné definovány v lokálním bloku těsně před použitím
+      const generateInvoiceDetails = () => {
+        const invoiceDate = new Date()
+        const due = new Date(invoiceDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+        return {
+          date: invoiceDate,
+          dueDate: due,
+          vs: `${invoiceDate.getFullYear()}${(invoiceDate.getMonth() + 1).toString().padStart(2, '0')}${invoiceDate.getDate().toString().padStart(2, '0')}`
+        }
+      }
+      
+      const invoice = generateInvoiceDetails()
       const zaloha = Math.round(totalPrice * 0.5)
-      const vs = invoiceDate.getFullYear().toString() + (invoiceDate.getMonth() + 1).toString().padStart(2, '0') + invoiceDate.getDate().toString().padStart(2, '0')
       
       drawLogo(20, 25)
 
@@ -404,10 +423,10 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       doc.setDrawColor(200, 200, 200)
       doc.line(20, 75, 190, 75)
 
-      doc.text(`Datum vystavení: ${invoiceDate.toLocaleDateString('cs-CZ')}`, 20, 90)
+      doc.text(`Datum vystavení: ${invoice.date.toLocaleDateString('cs-CZ')}`, 20, 90)
       doc.setFont("Roboto", "bold")
       doc.setTextColor(220, 38, 38)
-      doc.text(`Datum splatnosti: ${dueDate.toLocaleDateString('cs-CZ')}`, 120, 90)
+      doc.text(`Datum splatnosti: ${invoice.dueDate.toLocaleDateString('cs-CZ')}`, 120, 90)
       doc.setTextColor(0, 0, 0)
       doc.setFont("Roboto", "normal")
 
@@ -426,7 +445,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       
       doc.setFontSize(14)
       doc.text(`Číslo účtu: ${companyProfile.bankAccount}`, 25, 175)
-      doc.text(`Variabilní symbol: ${vs}`, 25, 185)
+      doc.text(`Variabilní symbol: ${invoice.vs}`, 25, 185)
 
       doc.setFontSize(9)
       doc.setTextColor(150, 150, 150)
@@ -538,7 +557,6 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
             </div>
           </div>
 
-          {/* NOVÉ: DYNAMICKÁ ZTRÁTA INTEGROVÁNA DO FORMULÁŘE */}
           <div className="space-y-4 pt-4 border-t border-zinc-100">
             <div className="flex justify-between items-center">
               <label className="flex text-xs md:text-sm font-bold text-zinc-700 uppercase tracking-wide items-center gap-2">

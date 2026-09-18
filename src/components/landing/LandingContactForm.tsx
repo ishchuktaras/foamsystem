@@ -4,6 +4,8 @@
 import { useState } from 'react'
 import { Send, Loader2, CheckCircle2, Phone, Mail, Building2, Globe } from 'lucide-react'
 import { createQuote } from '@/actions/quote'
+// Přidáme import naší nové funkce pro e-maily
+import { sendInquiryNotification } from '@/actions/sendEmail'
 
 export default function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -24,7 +26,8 @@ export default function ContactForm() {
     if (!gdprConsent) return
     setIsSubmitting(true)
     
-    const result = await createQuote({
+    // 1. Uložíme do databáze
+    const dbResult = await createQuote({
       customerName: formData.name,
       city: formData.city || 'Nezadáno',
       area: formData.area || '0',
@@ -34,14 +37,29 @@ export default function ContactForm() {
       applicatorNotes: `KONTAKT Z WEBU:\nTelefon: ${formData.phone}\nE-mail: ${formData.email}\nTyp izolace: ${formData.type}`
     })
 
-    setIsSubmitting(false)
-    if (result.success) {
+    // 2. Pokud se uložení povedlo, odešleme e-mail na poptavky@izolacers.cz
+    if (dbResult.success) {
+      // Vytvoříme zprávu pro e-mailový notifikátor
+      const emailMessage = `Město realizace: ${formData.city}\nTyp izolace: ${formData.type}\nPlocha: ${formData.area} m²\nTloušťka: ${formData.thickness} cm`
+
+      // Nečekáme na výsledek e-mailu (await nepoužijeme, nebo ho zachytíme bez blokování UI), 
+      // aby zákazník nemusel zbytečně dlouho čekat na zelenou obrazovku, pokud by se SMTP zpozdil.
+      sendInquiryNotification({
+        customerName: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        message: emailMessage,
+        quoteId: dbResult.id // Pokud akce `createQuote` vrací ID vytvořené zakázky
+      }).catch(err => console.error("Chyba při odesílání e-mailového upozornění:", err))
+
       setFormSuccess(true)
       setFormData({ name: '', phone: '', email: '', city: '', type: '', area: '', thickness: '' })
       setGdprConsent(false)
     } else {
       alert('Něco se pokazilo. Zkuste to prosím znovu.')
     }
+    
+    setIsSubmitting(false)
   }
 
   if (formSuccess) {
@@ -60,20 +78,18 @@ export default function ContactForm() {
       {/* KOMPLETNÍ KONTAKTNÍ A FIREMNÍ ÚDAJE */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 p-4 bg-zinc-50 rounded-2xl border border-zinc-100 text-xs">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl shrink-0"><Phone size={16} /></div>
+          <div className="p-2 bg-[#FF8730]/10 text-[#FF8730] rounded-xl shrink-0"><Phone size={16} /></div>
           <div>
             <span className="block font-bold text-zinc-400 uppercase text-[10px]">Telefon</span>
-            <a href="tel:+420734617462" className="font-extrabold text-[#000000] hover:text-[#FF4F00] transition-colors">+420 734 617 462</a>
+            <a href="tel:+420734617462" className="font-extrabold text-[#000000] hover:text-[#FF8730] transition-colors">+420 734 617 462</a>
           </div>
         </div>
 
-        {/* NOVÉ E-MAILY */}
         <div className="flex items-start gap-2.5">
-          <div className="p-2 bg-[#FF4F00]/10 text-[#FF4F00] rounded-xl shrink-0 mt-0.5"><Mail size={16} /></div>
+          <div className="p-2 bg-[#FF8730]/10 text-[#FF8730] rounded-xl shrink-0 mt-0.5"><Mail size={16} /></div>
           <div>
-            <span className="block font-bold text-zinc-400 uppercase text-[10px] mb-1">E-maily</span>
-            <a href="mailto:info@izolacers.cz" className="font-extrabold text-[#000000] hover:text-[#FF4F00] transition-colors block mb-0.5">info@izolacers.cz</a>
-            <a href="mailto:poptavky@izolacers.cz" className="font-extrabold text-[#000000] hover:text-[#FF4F00] transition-colors block">poptavky@izolacers.cz</a>
+            <span className="block font-bold text-zinc-400 uppercase text-[10px] mb-1">E-mail pro dotazy</span>
+            <a href="mailto:info@izolacers.cz" className="font-extrabold text-[#000000] hover:text-[#FF8730] transition-colors block mb-0.5">info@izolacers.cz</a>
           </div>
         </div>
 
@@ -97,26 +113,26 @@ export default function ContactForm() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="space-y-2">
           <label className="font-bold text-sm text-zinc-600">Jméno a příjmení *</label>
-          <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none" />
+          <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none" />
         </div>
         <div className="space-y-2">
           <label className="font-bold text-sm text-zinc-600">Město realizace *</label>
-          <input required type="text" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none" />
+          <input required type="text" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none" />
         </div>
         <div className="space-y-2">
           <label className="font-bold text-sm text-zinc-600">Telefon *</label>
-          <input required type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none" />
+          <input required type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none" />
         </div>
         <div className="space-y-2">
           <label className="font-bold text-sm text-zinc-600">E-mail *</label>
-          <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none" />
+          <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none" />
         </div>
       </div>
 
       <div className="border-t border-zinc-200 pt-8 grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="space-y-2">
           <label className="font-bold text-sm text-zinc-600">Co zateplujeme?</label>
-          <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none font-medium">
+          <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none font-medium">
             <option>Šikmá střecha / Podkroví</option>
             <option>Plochá střecha</option>
             <option>Strop / Podlaha</option>
@@ -126,11 +142,11 @@ export default function ContactForm() {
         </div>
         <div className="space-y-2">
           <label className="font-bold text-sm text-zinc-600">Plocha (m²)</label>
-          <input type="number" placeholder="cca" value={formData.area} onChange={e => setFormData({...formData, area: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none" />
+          <input type="number" placeholder="cca" value={formData.area} onChange={e => setFormData({...formData, area: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none" />
         </div>
         <div className="space-y-2">
           <label className="font-bold text-sm text-zinc-600">Tloušťka (cm)</label>
-          <input type="number" placeholder="cca" value={formData.thickness} onChange={e => setFormData({...formData, thickness: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF4F00] outline-none" />
+          <input type="number" placeholder="cca" value={formData.thickness} onChange={e => setFormData({...formData, thickness: e.target.value})} className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none" />
         </div>
       </div>
 
@@ -143,18 +159,18 @@ export default function ContactForm() {
               required
               checked={gdprConsent}
               onChange={(e) => setGdprConsent(e.target.checked)}
-              className="w-5 h-5 rounded border-zinc-300 text-[#FF4F00] focus:ring-[#FF4F00] transition-colors cursor-pointer accent-[#FF4F00]"
+              className="w-5 h-5 rounded border-zinc-300 text-[#FF8730] focus:ring-[#FF8730] transition-colors cursor-pointer accent-[#FF8730]"
             />
           </div>
           <span className="text-sm text-zinc-500 leading-snug">
-            Odesláním souhlasíte se sdílením a <a href="/ochrana-osobnich-udaju" target="_blank" rel="noopener noreferrer" className="font-bold text-[#FF4F00] hover:underline transition-colors">zpracováním osobních údajů</a> (pouze pro účely přípravy smlouvy, faktury a naší účetní evidence v souladu s legislativou).
+            Odesláním souhlasíte se sdílením a <a href="/ochrana-osobnich-udaju" target="_blank" rel="noopener noreferrer" className="font-bold text-[#FF8730] hover:underline transition-colors">zpracováním osobních údajů</a> (pouze pro účely přípravy smlouvy, faktury a naší účetní evidence v souladu s legislativou).
           </span>
         </label>
 
         <button 
           type="submit" 
           disabled={!gdprConsent || isSubmitting}
-          className="w-full py-4 bg-[#FF4F00] hover:bg-[#E64700] text-white font-black text-lg rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 hover:scale-[1.02] cursor-pointer"
+          className="w-full py-4 bg-[#FF8730] hover:bg-[#E67020] text-white font-black text-lg rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 hover:scale-[1.02] cursor-pointer"
         >
           {isSubmitting ? <Loader2 size={24} className="animate-spin" /> : <Send size={24} />}
           Odeslat nezávaznou poptávku

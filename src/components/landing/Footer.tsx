@@ -65,7 +65,7 @@ export default function Footer() {
                 <Mail className="text-[#FF8730] shrink-0 mt-0.5" size={18} />
                 <div className="flex flex-col space-y-1">
                   <a href="mailto:info@izolacers.cz" className="text-zinc-400 hover:text-[#FF8730] transition-colors text-sm">info@izolacers.cz</a>
-                  <a href="mailto:poptavky@izolacers.cz" className="text-zinc-400 hover:text-[#FF8730] transition-colors text-sm">poptavky@izolacers.cz</a>
+                  
                 </div>
               </li>
               <li className="flex items-start gap-3">
@@ -91,7 +91,6 @@ export default function Footer() {
 
         </div>
 
-        {/* Spodní lišta - Copyright, Legální odkazy a Vývojář */}
         <div className="flex flex-col lg:flex-row justify-between items-center gap-4 text-xs text-zinc-500">
           <p>© {currentYear} IZOLACE RS. Všechna práva vyhrazena.</p>
           
