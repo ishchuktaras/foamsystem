@@ -29,8 +29,8 @@ export default function LandingContactForm() {
     const dbResult = await createQuote({
       customerName: formData.name,
       city: formData.city || 'Nezadáno',
-      phone: formData.phone, // PŘIDÁNO
-      email: formData.email, // PŘIDÁNO
+      phone: formData.phone, 
+      email: formData.email, 
       area: formData.area || '0',
       thickness: formData.thickness || '0',
       materialName: `Poptávka z webu: ${formData.type}`,
