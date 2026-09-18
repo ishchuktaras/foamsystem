@@ -358,9 +358,9 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
                 type="number" min="0" step="1" 
                 value={marginPercent}
                 onChange={(e) => setMarginPercent(Number(e.target.value))}
-                className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none text-2xl font-black text-[#FF8730] text-center"
+                className="w-full py-4 pl-12 pr-12 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-[#FF8730] outline-none text-2xl font-black text-[#FF8730] text-center"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold">%</span>
+              <span className="absolute right-8 top-1/2 -translate-y-1/2 text-zinc-400 font-bold pointer-events-none">%</span>
             </div>
             <div className="grid grid-cols-4 gap-2 mt-1">
               {[20, 50, 80, 100].map(val => (
