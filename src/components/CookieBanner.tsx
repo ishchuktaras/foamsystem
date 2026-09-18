@@ -4,8 +4,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Cookie } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 
 export default function CookieBanner() {
+  const pathname = usePathname()
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
@@ -29,21 +31,26 @@ export default function CookieBanner() {
     setIsVisible(false)
   }
 
+  // Skrytí Cookie lišty na přihlašovací stránce a v administraci
+  if (pathname.startsWith('/login') || pathname.startsWith('/admin')) {
+    return null
+  }
+
   if (!isVisible) return null
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 pointer-events-none flex justify-center">
-      <div className="pointer-events-auto bg-[#000000] text-white p-6 rounded-3xl shadow-2xl shadow-[#FF4F00]/20 max-w-4xl w-full flex flex-col md:flex-row items-center gap-6 border border-zinc-800 animate-in slide-in-from-bottom-10 fade-in duration-700">
+      <div className="pointer-events-auto bg-[#000000] text-white p-6 rounded-3xl shadow-2xl shadow-[#FF8730]/20 max-w-4xl w-full flex flex-col md:flex-row items-center gap-6 border border-zinc-800 animate-in slide-in-from-bottom-10 fade-in duration-700">
         
         <div className="flex-1 flex gap-4 items-start">
-          <div className="bg-[#FF4F00]/20 text-[#FF4F00] p-3 rounded-full shrink-0">
+          <div className="bg-[#FF8730]/20 text-[#FF8730] p-3 rounded-full shrink-0">
             <Cookie size={24} />
           </div>
           <div>
             <h3 className="font-bold text-lg mb-1">Vážíme si vašeho soukromí</h3>
             <p className="text-zinc-400 text-sm leading-relaxed">
               Tento web používá k poskytování služeb, personalizaci reklam a analýze návštěvnosti soubory cookies. 
-              Kliknutím na „Přijmout vše“ s tím souhlasíte. Více informací najdete v našich <Link href="/cookies" className="text-[#FF4F00] hover:underline transition-all">zásadách cookies</Link>.
+              Kliknutím na „Přijmout vše“ s tím souhlasíte. Více informací najdete v našich <Link href="/cookies" className="text-[#FF8730] hover:underline transition-all">zásadách cookies</Link>.
             </p>
           </div>
         </div>
@@ -57,7 +64,7 @@ export default function CookieBanner() {
           </button>
           <button 
             onClick={handleAcceptAll}
-            className="px-6 py-3 rounded-xl font-bold text-sm bg-[#FF4F00] hover:bg-[#E64700] text-white transition-all shadow-lg text-center"
+            className="px-6 py-3 rounded-xl font-bold text-sm bg-[#FF8730] hover:bg-[#E67020] text-white transition-all shadow-lg text-center"
           >
             Přijmout vše
           </button>
