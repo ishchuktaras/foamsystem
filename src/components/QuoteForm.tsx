@@ -44,6 +44,24 @@ interface QuoteFormProps {
   };
 }
 
+// Funkce pro načtení SVG loga a převod do formátu podporovaného v PDF
+const getBase64ImageFromURL = (url: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image()
+    img.crossOrigin = 'Anonymous'
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width || 385
+      canvas.height = img.height || 306
+      const ctx = canvas.getContext('2d')
+      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height)
+      resolve(canvas.toDataURL('image/png'))
+    }
+    img.onerror = error => reject(error)
+    img.src = url
+  })
+}
+
 export default function QuoteForm({ materials, companyProfile, initialData }: QuoteFormProps) {
   const router = useRouter()
   
@@ -58,7 +76,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
   const [area, setArea] = useState<number | ''>(initialData.area ? Number(initialData.area) : '')
   const [thickness, setThickness] = useState<number | ''>(initialData.thickness ? Number(initialData.thickness) : '')
   
-  const [lossPercent, setLossPercent] = useState<number>(10) // Dynamická ztráta 5-15%
+  const [lossPercent, setLossPercent] = useState<number>(10)
   const [marginPercent, setMarginPercent] = useState<number>(100)
 
   const [isFetchingAres, setIsFetchingAres] = useState(false)
@@ -69,12 +87,11 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
 
   const selectedMaterial = materials.find(m => m.id === selectedMaterialId)
   
-  let basePrice = 0 // Cena bez DPH
-  let vat = 0       // DPH 21%
-  let totalPrice = 0 // Cena s DPH
+  let basePrice = 0
+  let vat = 0
+  let totalPrice = 0
   let techData = null
 
-  // Sjednocené dynamické výpočetní jádro
   if (selectedMaterial && area && thickness) {
     const thicknessM = Number(thickness) / 100
     const pureVolumeM3 = Number(area) * thicknessM
@@ -83,12 +100,11 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     
     const exactSets = totalVolumeM3 / selectedMaterial.yieldPerSetM3
     const totalSets = Math.ceil(exactSets)
-    const estimatedLifts = Math.round(exactSets * 4011) // Predikce Graco A25
+    const estimatedLifts = Math.round(exactSets * 4011)
 
     const buyPricePerSet = selectedMaterial.buyPricePerSet || 0
     const exactMaterialCost = exactSets * buyPricePerSet
     
-    // Inicializace marže při úpravě existující zakázky
     if (initialData.id && initialData.totalCost && basePrice === 0) {
        const storedCost = Number(initialData.totalCost)
        const calculatedMargin = Math.round(((storedCost / exactMaterialCost) - 1) * 100)
@@ -97,12 +113,10 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
        }
     }
     
-    // Finanční výpočty
     basePrice = Math.round(exactMaterialCost * (1 + (marginPercent / 100)))
     vat = Math.round(basePrice * 0.21)
     totalPrice = basePrice + vat
 
-    // Uložení technických dat pro UI
     techData = {
       pureVolumeM3: pureVolumeM3.toFixed(2),
       totalVolumeM3: totalVolumeM3.toFixed(2),
@@ -146,7 +160,7 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     setApplicatorNotes(prev => prev ? `${prev}\n• ${presetText}` : `• ${presetText}`)
   }
 
-  // --- INICIALIZACE PDF ---
+  // --- INICIALIZACE PDF S FONTEM A OPRAVDOVÝM LOGEM ---
   const initPdf = async () => {
     const doc = new jsPDF()
     const loadFont = async (url: string, name: string, style: string) => {
@@ -169,18 +183,31 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     await loadFont('/fonts/Roboto-Bold.ttf', 'Roboto', 'bold')
     doc.setFont('Roboto', 'normal') 
 
-    const drawLogo = (x: number, y: number) => {
-      doc.setFont("Roboto", "bold")
-      doc.setFontSize(22)
-      doc.setTextColor(0, 0, 0)
-      doc.text("IZOLACE", x, y)
-      const w = doc.getTextWidth("IZOLACE")
-      doc.setFillColor(255, 135, 48) 
-      doc.roundedRect(x + w + 3, y - 7, 13, 9, 1.5, 1.5, 'F')
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(11)
-      doc.text("RS", x + w + 4.5, y - 0.5)
-      doc.setTextColor(0, 0, 0) 
+    // Pokus o načtení reálného SVG loga
+    let logoData = ''
+    try {
+      logoData = await getBase64ImageFromURL('/logo-orange.svg')
+    } catch (e) {
+      console.warn('SVG logo se nepodařilo načíst pro PDF.')
+    }
+
+    const drawLogo = (x: number, y: number, w: number, h: number) => {
+      if (logoData) {
+        doc.addImage(logoData, 'PNG', x, y, w, h)
+      } else {
+        // Fallback pro jistotu
+        doc.setFont("Roboto", "bold")
+        doc.setFontSize(22)
+        doc.setTextColor(0, 0, 0)
+        doc.text("IZOLACE", x, y + 10)
+        const tw = doc.getTextWidth("IZOLACE")
+        doc.setFillColor(255, 135, 48) 
+        doc.roundedRect(x + tw + 3, y + 3, 13, 9, 1.5, 1.5, 'F')
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(11)
+        doc.text("RS", x + tw + 4.5, y + 9.5)
+        doc.setTextColor(0, 0, 0) 
+      }
     }
     return { doc, drawLogo }
   }
@@ -193,7 +220,6 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     try {
       const { doc, drawLogo } = await initPdf()
       
-      // OPRAVA: Dynamické proměnné definovány v lokálním bloku těsně před použitím
       const generateOfferDetails = () => {
         const today = new Date()
         const future = new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000)
@@ -204,21 +230,46 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
           number: `NB-${today.getFullYear()}-${rand}`
         }
       }
-      
       const offer = generateOfferDetails()
       
-      drawLogo(15, 25)
-      doc.setFontSize(8)
-      doc.setFont("Roboto", "normal")
-      doc.setTextColor(255, 135, 48)
-      doc.text("Izolace, která šetří až 70 % nákladů na vytápění", 15, 30)
-      doc.setTextColor(0, 0, 0)
+      // 1. Logo vlevo nahoře
+      drawLogo(15, 15, 45, 35)
 
+      // 2. Dodavatel (vlevo pod logem)
+      doc.setFontSize(10)
+      doc.setFont("Roboto", "bold")
+      doc.text("Dodavatel (Zhotovitel):", 15, 60)
+      doc.setFont("Roboto", "normal")
+      doc.text(companyProfile?.companyName || "IZOLACE RS", 15, 66)
+      doc.text(`IČO: ${companyProfile?.ico || "88707351"}`, 15, 71)
+      doc.text(`Sídlo: Jihlava, Kraj Vysočina`, 15, 76)
+      doc.text(`E-mail: info@izolacers.cz`, 15, 81)
+
+      // 3. Odběratel (vpravo nahoře)
+      doc.setFontSize(10)
+      doc.setFont("Roboto", "bold")
+      doc.text("Odběratel (Zákazník):", 110, 20)
+      doc.setFont("Roboto", "normal")
+      doc.text(customerName, 110, 26)
+      
+      let currentYRight = 31
+      if (ico) {
+        doc.text(`IČO: ${ico}`, 110, currentYRight)
+        currentYRight += 5
+      }
+      if (street) {
+        doc.text(street, 110, currentYRight)
+        currentYRight += 5
+      }
+      doc.text(`${city} ${zip || ''}`, 110, currentYRight)
+
+      // 4. Hlavní nadpis
       doc.setFontSize(14)
       doc.setFont("Roboto", "bold")
-      doc.text("CENOVÁ NABÍDKA A NÁVRH SMLOUVY O DÍLO", 105, 42, { align: "center" })
+      doc.text("CENOVÁ NABÍDKA A NÁVRH SMLOUVY O DÍLO", 105, 100, { align: "center" })
 
-      let y = 50
+      // 5. Hlavičková tabulka
+      let y = 110
       doc.setDrawColor(0, 0, 0)
       doc.setLineWidth(0.2)
       doc.rect(15, y, 180, 28) 
@@ -386,7 +437,6 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
     try {
       const { doc, drawLogo } = await initPdf()
       
-      // OPRAVA: Dynamické proměnné definovány v lokálním bloku těsně před použitím
       const generateInvoiceDetails = () => {
         const invoiceDate = new Date()
         const due = new Date(invoiceDate.getTime() + 7 * 24 * 60 * 60 * 1000)
@@ -400,57 +450,73 @@ export default function QuoteForm({ materials, companyProfile, initialData }: Qu
       const invoice = generateInvoiceDetails()
       const zaloha = Math.round(totalPrice * 0.5)
       
-      drawLogo(20, 25)
+      drawLogo(15, 15, 45, 35)
 
-      doc.setFontSize(20)
-      doc.text('ZÁLOHOVÁ FAKTURA', 120, 25)
-      
+      // Dodavatel
       doc.setFontSize(10)
-      const companyName = companyProfile?.companyName || 'IZOLACE RS'
       doc.setFont("Roboto", "bold")
-      doc.text('Dodavatel:', 20, 45)
+      doc.text('Dodavatel:', 15, 60)
       doc.setFont("Roboto", "normal")
-      doc.text(companyName, 20, 52)
-      if (companyProfile?.ico) doc.text(`IČO: ${companyProfile.ico}`, 20, 57)
+      doc.text(companyProfile?.companyName || 'IZOLACE RS', 15, 66)
+      doc.text(`IČO: ${companyProfile?.ico || "88707351"}`, 15, 71)
+      doc.text(`Sídlo: Jihlava, Kraj Vysočina`, 15, 76)
+      doc.text(`E-mail: info@izolacers.cz`, 15, 81)
       
+      // Odběratel
+      doc.setFontSize(10)
       doc.setFont("Roboto", "bold")
-      doc.text('Odběratel:', 120, 45)
+      doc.text("Odběratel:", 110, 20)
       doc.setFont("Roboto", "normal")
-      doc.text(customerName, 120, 52)
-      if (ico) doc.text(`IČO: ${ico}`, 120, 57)
-      doc.text(`${street || ''}, ${city || ''} ${zip || ''}`, 120, ico ? 62 : 57)
+      doc.text(customerName, 110, 26)
+      let currentYRight = 31
+      if (ico) {
+        doc.text(`IČO: ${ico}`, 110, currentYRight)
+        currentYRight += 5
+      }
+      if (street) {
+        doc.text(street, 110, currentYRight)
+        currentYRight += 5
+      }
+      doc.text(`${city} ${zip || ''}`, 110, currentYRight)
 
+      // Nadpis a čáry
+      doc.setFontSize(20)
+      doc.setFont("Roboto", "bold")
+      doc.text("ZÁLOHOVÁ FAKTURA", 15, 100)
+
+      doc.setFontSize(10)
       doc.setDrawColor(200, 200, 200)
-      doc.line(20, 75, 190, 75)
+      doc.line(15, 108, 195, 108)
 
-      doc.text(`Datum vystavení: ${invoice.date.toLocaleDateString('cs-CZ')}`, 20, 90)
+      doc.setFont("Roboto", "normal")
+      doc.text(`Datum vystavení: ${invoice.date.toLocaleDateString('cs-CZ')}`, 15, 118)
       doc.setFont("Roboto", "bold")
       doc.setTextColor(220, 38, 38)
-      doc.text(`Datum splatnosti: ${invoice.dueDate.toLocaleDateString('cs-CZ')}`, 120, 90)
+      doc.text(`Datum splatnosti: ${invoice.dueDate.toLocaleDateString('cs-CZ')}`, 110, 118)
       doc.setTextColor(0, 0, 0)
-      doc.setFont("Roboto", "normal")
 
-      doc.text('Položka', 20, 115)
-      doc.text('Částka s DPH', 150, 115)
-      doc.line(20, 120, 190, 120)
+      doc.setFont("Roboto", "normal")
+      doc.text('Položka', 15, 135)
+      doc.text('Částka s DPH', 150, 135)
+      doc.line(15, 140, 195, 140)
       
       doc.setFont("Roboto", "bold")
-      doc.text(`Záloha 50% na aplikaci PUR pěny (${selectedMaterial.name})`, 20, 130)
-      doc.text(`${zaloha.toLocaleString('cs-CZ')} Kč`, 150, 130)
+      doc.text(`Záloha 50% na aplikaci PUR pěny (${selectedMaterial.name})`, 15, 150)
+      doc.text(`${zaloha.toLocaleString('cs-CZ')} Kč`, 150, 150)
 
       doc.setFillColor(245, 245, 245)
-      doc.rect(20, 150, 170, 45, 'F')
+      doc.rect(15, 170, 180, 45, 'F')
       doc.setFontSize(12)
-      doc.text('PLATEBNÍ ÚDAJE:', 25, 162)
+      doc.text('PLATEBNÍ ÚDAJE:', 20, 182)
       
       doc.setFontSize(14)
-      doc.text(`Číslo účtu: ${companyProfile.bankAccount}`, 25, 175)
-      doc.text(`Variabilní symbol: ${invoice.vs}`, 25, 185)
+      doc.text(`Číslo účtu: ${companyProfile.bankAccount}`, 20, 195)
+      doc.text(`Variabilní symbol: ${invoice.vs}`, 20, 205)
 
       doc.setFontSize(9)
       doc.setTextColor(150, 150, 150)
       doc.setFont("Roboto", "normal")
-      doc.text('Nejedná se o daňový doklad. Vyúčtování proběhne konečnou fakturou po ukoncení prací.', 20, 210)
+      doc.text('Nejedná se o daňový doklad. Vyúčtování proběhne konečnou fakturou po ukoncení prací.', 15, 230)
 
       doc.save(`Zalohovka-${customerName.replace(/\s+/g, '-').toLowerCase()}.pdf`)
     } catch (e) {
